@@ -1,0 +1,64 @@
+\ using fixed-point integers, with bit-shift scaling
+
+: Si* ( n1 n2 -- n3 ) \ scaled integer multiply
+  * 2/ 2/ 2/ 2/ 2/ ;  SeeLatest
+: SiSquare ( n -- n ) \ scaled integer square
+  Dup Si* ;  SeeLatest
+: ToSi ( n -- n ) \ convert integer to scaled intager
+  2* 2* 2* 2* 2* ;  SeeLatest
+
+20  Constant MaxIter  SeeLatest
+-2 ToSi Constant MinVal  SeeLatest
+ 2 ToSi Constant MaxVal  SeeLatest
+
+\ These variables hold values during the escape calculation.
+Variable CReal  Variable CImag
+Variable ZReal  Variable ZImag
+Variable Count
+
+: .Char ( n -- ) \ Type count as ASCII greyscale.
+  S" . .,'~!^:;[/<&?oxOX#  "
+  Drop + 1 Type ;  SeeLatest
+
+: Count_And_Test? ( -- ) \ Increment count and compare to max iterations.
+  Count @ 1+ Dup Count !
+  MaxIter > ;  SeeLatest
+
+: Init_Vars ( n_imag n_real -- ) \ stores the row column values from the stack
+  Dup CReal ! ZReal !
+  Dup CImag ! ZImag !
+  1 Count ! ;  SeeLatest
+
+: DoEscape ( -- ) \ Performs a single iteration of the escape calculation.
+    ZReal @ SiSquare  ZImag @ SiSquare  \ sqr(ZReal) sqr(ZImag)
+    over over + [ 2 dup * ToSi ] literal > If
+      2drop True
+    ELSE
+      - CReal @ +  \ leave result on stack
+      ZReal @ ZImag @ Si* 2*
+      CImag @ + ZImag !
+      ZReal !                  \ Store stack item into ZREAL
+      Count_And_Test?
+    Then ;  SeeLatest
+
+: DoCell ( n n -- ) \ Iterates on a single cell to compute its escape factor.
+  Init_Vars
+  Begin
+    DoEscape
+  Until
+  Count @ .Char ;  SeeLatest
+
+: DoRow ( n -- ) \ For each cell in a row.
+  MaxVal MinVal Do
+    Dup I DoCell
+  2 +Loop
+  Drop ;  SeeLatest
+
+: Mandelbrot ( -- ) \ For each row in the set.
+  CR
+  MaxVal MinVal Do
+    I DoRow CR
+  3 +Loop ;  SeeLatest
+
+\ Run the computation.
+\ Mandelbrot

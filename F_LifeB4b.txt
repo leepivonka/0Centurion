@@ -1,0 +1,225 @@
+\ See http://en.wikipedia.org/wiki/Conway's_Game_of_Life
+\ https://github.com/Martin-H1/Forth-CS-101/blob/master/life.fth
+\ http://forum.6502.org/viewtopic.php?f=9&t=3706&start=75
+
+Decimal  \ set default number base to decimal
+
+: Page ( -- )  \ ANSI Clear screen & leave cursor at top left.
+  $1b Emit  ." [2J"  ;
+  SeeLatest
+: At-XY ( x y -- )  \ ANSI Position cursor.
+  $1b Emit  ." ["  0 .R  ." ;"  0 .R  ." H"  ;  SeeLatest
+
+\ constants for board height and width
+24 Constant Height  SeeLatest
+32 Constant Width   SeeLatest
+Height Width * Constant Size  SeeLatest
+
+\ allocate two arrays to hold current and next generations
+Create gen_curr  Size Allot  ' gen_curr 12 Dump
+Create gen_next  Size Allot  ' gen_next 12 Dump
+
+\ iterators and their associated operators
+Variable Row  SeeLatest
+Variable Col  SeeLatest
+
+: rowFirst ( -- ) \ Sets the row offset to zero
+  row 0! ;  SeeLatest
+: rowMid ( -- )
+  [ size width / 3 / width * ] literal row ! ;  SeeLatest
+: rowNext ( -- ) \ Advances the offset by the width.
+    width row +! ;  SeeLatest
+: rowForEach ( xt -- ) \ Iterator used to apply a function to the rows.
+    rowFirst
+    begin
+      Dup Execute
+     rowNext  row @ size = until
+    drop ;  SeeLatest
+
+: row+ ( -- index ) \ Returns row index +1 using wrap around.
+    row @ width +
+    dup size = if 0 nip then ;  SeeLatest
+
+: row+ ( -- index ) \ CPU6 hand optimized version
+  [  \ switch the command line interpreter out of compile mode
+  $91 c, row ,   \ LDAD row		load the row variable
+  $d0 c, width , \ LDBL width		load the width constant
+  $50 c, $20 c,  \ ADD AW,BW		+
+  $d0 c, size ,  \ LDBL size		load the size constant
+  $59 c,         \ SAB			-
+  $15 c, 1 c,    \ BNZ			if =
+  $3a c,         \ CLA			  zero
+                 \ 			 endif
+  $B5 c, $82 c,  \ STAX ZW,ModBMRB,0	push A onto the param stack
+  ]  \ switch the command line interpreter into compile mode
+  ;  \ end the word definition
+  SeeLatest  \ display the word's code
+
+: row- ( -- index ) \ Returns row index -1 using wrap around.
+    row @ width -
+    dup 0< if  size width - nip  then
+    ;  SeeLatest
+
+: row- ( -- index ) \ CPU6 hand optimized version
+  [
+  $d1 c, row ,     \ LDBD row
+  $90 c, width ,   \ LDAL width
+  $51 c, $20 c,    \ SUB AW,BW
+  $17 c, 3 c,      \ BP
+  $90 c, size width - ,  \ LDAL size-width
+  $B5 c, $82 c,    \ STAX ZW,ModBMRB,0
+  ] ;  SeeLatest
+
+: colFirst ( -- )
+  col 0! ;  SeeLatest
+: colMid ( -- )
+  [ width 3 / ] literal col ! ;  SeeLatest
+: colNext
+    col 1+! ;  SeeLatest
+
+: colForEach ( xt -- )
+    colFirst
+    begin
+      Dup Execute
+     colNext  col @ width = until
+    Drop ;  SeeLatest
+
+: col+ ( -- index ) \ Returns column index +1 using wrap around.
+    col @ 1+
+    dup width = if  0 nip  then ;  SeeLatest
+
+: col+ ( -- index ) \ CPU6 hand optimized version
+  [
+  $91 c, col ,    \ LDAD col
+  $38 c,          \ INA
+  $d0 c, width ,  \ LDBL width
+  $59 c,          \ SAB
+  $15 c, 1 c,     \ BNZ
+  $3a c,          \ CLA
+  $B5 c, $82 c,   \ STAX ZW,ModBMRB,0	push A onto the param stack
+  ] ;  SeeLatest
+
+: col- ( -- index ) \ CPU6 hand optimized version
+    col @  1-
+    dup 0< if  width 1- nip  then
+    ;  SeeLatest
+
+: col- ( -- index ) \ Returns column index -1 using wrap around.
+  [
+  $91 c, col ,    \ LDAD col
+  $39 c,          \ DCA
+  $17 c, 3 c,     \ BP
+  $90 c, width 1- ,  \ LDAL width-1
+  $B5 c, $82 c,   \ STAX ZW,ModBMRB,0
+  ] ;  SeeLatest
+
+: moveCurr ( -- ) \ moves bytes from next gen to current.
+    gen_next gen_curr size move ;  SeeLatest
+
+: currErase ( -- ) \ clears curr array to clear out junk in ram
+    gen_curr size erase ;  SeeLatest
+
+: curr@ ( col row -- n ) \ retrieve a cell value from current generation
+    + gen_curr + c@ ;  SeeLatest
+
+: curr@ ( col row -- n ) \ CPU6 hand optimized version
+  [
+  $95 c, $81 c,  \ lda (Z+)
+  $DC c,         \ ldb (Z)
+  $58 c,         \ aab
+  $90 c, gen_curr ,  \ lda #gen_curr
+  $58 c,         \ aab
+  $3A c,         \ cla
+  $89 c,         \ ldab (B)
+  $BC c,         \ sta (Z)
+  ] ;  SeeLatest
+
+: curr! ( n col row -- ) \ stores a value into a cell of current generation
+    + gen_curr + c! ;  SeeLatest
+
+: >curr ( addr count -- ) \ Parses a pattern string into current board.
+    \ This function is unsafe and will over write memory.
+    currErase
+    rowMid colMid
+    0 Do
+       Dup c@
+       Dup '|' <> if
+          Bl <> 1 And  col @ row @ curr!  colNext
+         Else
+          Drop  rowNext  colMid
+         Then
+       1+
+     Loop
+    Drop ;  SeeLatest
+
+: .cell ( -- )
+    col @ row @ curr@
+    if '*' else '.' then
+    emit ;  SeeLatest
+
+: .currRow ( -- ) \ prints the row from the current generation to output
+    cr ' .cell colForEach ;  SeeLatest
+
+: .curr \ Prints the current board generation to standard output
+    ' .currRow rowForEach
+    cr ;  SeeLatest
+
+\ : next@ ( col row -- n ) \ retrieve a cell value from the next generation
+\     + gen_next + c@ ;  SeeLatest
+
+: next! ( n col row -- ) \ stores a cell into the next generation
+    + gen_next + c! ;  SeeLatest
+
+: calcSum ( -- n ) \ computes the sum of the neigbors of the current cell.
+   col-  row-  curr@
+   col @ row-  curr@ +
+   col+  row-  curr@ +
+   col-  row @ curr@ +
+   col+  row @ curr@ +
+   col-  row+  curr@ +
+   col @ row+  curr@ +
+   col+  row+  curr@ + ;  SeeLatest
+
+: calcCell ( -- )
+    calcSum
+
+    \ Unless explicitly marked live, all cells die in the next generation.
+    \ There are two rules we'll apply to mark a cell live.
+
+    \ Is the current cell dead?
+    col @ row @ curr@ 0=
+    if
+        \ Any dead cell with three live neighbours becomes a live cell.
+   3 =
+    else
+   \ Any live cell with two or three live neighbours survives.
+        dup 2 >= swap 3 <= and
+    then
+    1 and
+    col @ row @ next! ;  SeeLatest
+
+: calcRow ( row -- )
+    ' calcCell colForEach ;  SeeLatest
+
+: calcGen ( -- )
+    ' calcRow rowForEach
+    moveCurr ;  SeeLatest
+
+: life ( -- )
+    Page
+    Begin
+      calcGen
+      0 0 at-xy .curr
+      ?terminal Until
+    ;  SeeLatest
+
+\ Test cases taken from Rosetta code's implementation
+: blinker s" |***" >curr ;  SeeLatest
+: toad s" ***| ***" >curr ;  SeeLatest
+: pentomino s" **| **| *" >curr ;  SeeLatest
+: pi s" **| **|**" >curr ;  SeeLatest
+: glider s"  *|  *|***" >curr ;  SeeLatest
+: pulsar s" *****|*   *" >curr ;  SeeLatest
+: ship s"  ****|*   *|    *|   *" >curr ;  SeeLatest
+: pentadecathalon s" **********" >curr ;  SeeLatest
+: clock s"  *|  **|**|  *" >curr ;  SeeLatest

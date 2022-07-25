@@ -1,0 +1,334 @@
+
+F:\0Centurion>ee200s\release\ee200s forth.lst
+CPU6S Jul 23 2022 12:44:42
+A=2305 B=0000 X=0000 Y=0000 Z=8852 S=0180 C=ddfa mvfli 0171171B 0200 NOP
+.g
+173D
+fig-FORTH CPU6 subroutine
+
+A=0050 B=170B X=0E0A Y=7075 Z=7111 S=7197 C=ddfa mVfli 092F6E09 0111 RSR
+.@f_mandel2.txt
+.g
+\ using fixed-point integers, with bit-shift scaling OK
+ OK
+: Si* ( n1 n2 -- n3 ) \ scaled integer multiply
+  * 2/ 2/ 2/ 2/ 2/ ;  SeeLatest
+1E3A 79 07 20	jsr *		*
+1e3d 9C		lda (z)		2/
+1e3e 3C		sra
+1e3f BC		sta (z)
+1e40 9C		lda (z)		2/
+1e41 3C		sra
+1e42 BC		sta (z)
+1e43 9C		lda (z)		2/
+1e44 3C		sra
+1e45 BC		sta (z)
+1e46 9C		lda (z)		2/
+1e47 3C		sra
+1e48 BC		sta (z)
+1e49 9C		lda (z)		2/
+1E4A 3C		sra
+1e4b BC		sta (z)
+1e4c 09		rsr		;
+  OK
+: SiSquare ( n -- n ) \ scaled integer square
+  Dup Si* ;  SeeLatest
+1E59 9C		lda (z)		Dup
+1e5a B5 82	sta (-z)
+1e5c 79 1E 3A	jsr Si*		Si*
+1e4f 09		rsr		;
+  OK
+: ToSi ( n -- n ) \ convert integer to scaled intager
+  2* 2* 2* 2* 2* ;  SeeLatest
+1E68 9C		lda (z)		2*
+1e69 3D		sla
+1e6a BC		sta (z)
+1e6b 9C		lda (z)		2*
+1e6c 3D		sla
+1e6d BC		sta (z)
+1e6e 9C		lda (z)		2*
+1e6f 3D		sla
+1e70 BC		sta (z)
+1e71 9C		lda (z)		2*
+1e72 3D		sla
+1e73 BC		sta (z)
+1e74 9C		lda (z)		2*
+1e75 3D		sla
+1e76 BC		sta (z)
+1e77 09		rsr		;
+  OK
+ OK
+20  Constant MaxIter  SeeLatest
+1E83 90 00 14	lda #20
+1e86 B5 82	sta (-z)
+1e88 09		rsr
+  OK
+-2 ToSi Constant MinVal  SeeLatest
+1E93 90 FF C0	lda #ToSi(-2)
+1e96 B5 82	sta (-z)
+1e98 09		rsr
+  OK
+ 2 ToSi Constant MaxVal  SeeLatest
+1EA3 90 00 40	lda #ToSi(2)
+1ea6 B5 82	sta (-z)
+1ea8 09		rsr
+  OK
+ OK
+\ These variables hold values during the escape calculation. OK
+Variable CReal  Variable CImag OK
+Variable ZReal  Variable ZImag OK
+Variable CountCount Isn't unique  OK
+ OK
+: .Char ( n -- ) \ Type count as ASCII greyscale.
+  S" . .,'~!^:;[/<&?oxOX#  "
+  Drop + 1 Type ;  SeeLatest
+1EF8 79 13 C9	jsr (S"		S"
+1efb 16 2E 20 2E 2C 27 7E 21 5E 3A 3B 5B 2F
+1F08 3C 26 3F 6F 78 4F 58 23 20 20 00
+1f13 30 81	inr zw,2	Drop
+1f15 95 81	lda (z+)	+
+1f17 DC		ldb (z)
+1F18 58		aab
+1f19 FC		stb (z)
+1f1a 32 01	cla aw,1	1
+1f1c B5 82	sta (-z)
+1f1e 79 0C AB	jsr Type	Type
+1f21 09		rsr		;
+  OK
+ OK
+: Count_And_Test? ( -- ) \ Increment count and compare to max iterations.
+  Count @ 1+ Dup Count !
+  MaxIter > ;  SeeLatest
+1F35 79 1E EA	jsr Count	Count
+1f38 95 84	lda @(z)	@
+1f3a BC		sta (z)
+1f3b 9C		lda (z)		1+
+1f3c 38		ina
+1f3d BC		sta (z)
+1f3e 9C		lda (z)		Dup
+1f3f B5 82	sta (-z)
+1f41 79 1E EA	jsr Count	Count
+1f44 D5 81	ldb (z+)	!
+1f46 95 81	lda (z+)
+1f48 B9		sta (b)
+1f49 79 1E 83	jsr MaxIter	MaxIter
+1f4c 79 05 DF	jsr >		>
+1f4f 09		rsr		;
+  OK
+ OK
+: Init_Vars ( n_imag n_real -- ) \ stores the row column values from the stack
+  Dup CReal ! ZReal !
+  Dup CImag ! ZImag !
+  1 Count ! ;  SeeLatest
+1F5D 9C		lda (z)		Dup
+1f5e B5 82	sta (-z)
+1f60 79 1E B2	jsr CReal	CReal
+1f63 D5 81	ldb (z+)	!
+1f65 95 81	lda (z+)
+1f67 B9		sta (b)
+1f68 79 1E CE	jsr ZReal	ZReal
+1f6b D5 81	ldb (z+)	!
+1F6D 95 81	lda (z+)
+1f6f B9		sta (b)
+1f70 9C		lda (z)		Dup
+1f71 B5 82	sta (-z)
+1f73 79 1E C0	jsr CImag	CImag
+1f76 D5 81	ldb (z+)	!
+1f78 95 81	lda (z+)
+1f7a B9		sta (b)
+1f7b 79 1E DC	jsr ZImag	ZImag
+1f7e D5 81	ldb (z+)	!
+1f80 95 81	lda (z+)
+1f82 B9		sta (b)
+1f83 32 01	cla aw,1	1
+1f85 B5 82	sta (-z)
+1f87 79 1E EA	jsr Count	Count
+1f8a D5 81	ldb (z+)	!
+1f8c 95 81	lda (z+)
+1f8e B9		sta (b)
+1f8f 09		rsr		;
+  OK
+ OK
+: DoEscape ( -- ) \ Performs a single iteration of the escape calculation.
+    ZReal @ SiSquare  ZImag @ SiSquare  \ sqr(ZReal) sqr(ZImag)
+    over over + [ 2 dup * ToSi ] literal > If
+      2drop True
+    ELSE
+      - CReal @ +  \ leave result on stack
+      ZReal @ ZImag @ Si* 2*
+      CImag @ + ZImag !
+      ZReal !                  \ Store stack item into ZREAL
+      Count_And_Test?
+    Then ;  SeeLatest
+1F9C 79 1E CE	jsr ZReal	ZReal
+1f9f 95 84	lda @(z)	@
+1fa1 BC		sta (z)
+1fa2 79 1E 59	jsr SiSquare	SiSquare
+1fa5 79 1E DC	jsr ZImag	ZImag	
+1fa8 95 84	lda @(z)	@
+1faa BC		sta (z)
+1fab 79 1E 59	jsr SiSquare	SiSquare
+1fae 95 88 02	lda 2(z)	over
+1fb1 B5 82	sta (-z)
+1fb3 95 88 02	lda 2(z)	over
+1fb6 B5 82	sta (-z)
+1fb8 95 81	lda (z+)	+
+1fba DC		ldb (z)
+1fbb 58		aab
+1FBC FC		stb (z)
+1fbd 90 00 80	lda #ToSi(2*2)	[ 2 dup * ToSi ] literal
+1fc0 B5 82	sta (-z)
+1fc2 79 05 DF	jsr >	>
+1fc5 D5 81	lda (z+)	If
+1fc7 15 03	bnz 1fcc
+1fc9 71 1F D5	jmp 1fd5
+1FCC 30 83	inr zw,4	  2drop
+1fce 32 01	cla aw,1	  True
+1fd0 B5 82	sta (-z)
+1fd2 71 20 15	jmp 2015	 ELSE
+1fd5 D5 81	lda (z+)	  -
+1fd7 9C		ldb (z)
+1fd8 59		sab
+1fd9 FC		stb (z)
+1fda 79 1E B2	jsr CReal	  CReal
+1fdd 95 84	lda @(z)	  @
+1fdf BC		sta (z)
+1fe0 95 81	lda (Z+)	  +
+1fe2 DC		ldb (z)
+1fe3 58		aab
+1fe4 FC		stb (z)
+1fe5 79 1E CE	jsr ZReal	  ZReal
+1fe8 95 84	lda @(z)	  @
+1fea BC		stb (z)
+1feb 79 1E DC	jsr ZImag	  ZImag
+1fee 95 84	lda @(z)	  @
+1ff0 BC		sta (z)
+1ff1 79 1E 3A	jsr Si*	  Si*
+1ff4 9C		lda (z)		  2*
+1ff5 3D		sla
+1ff6 BC		sta (z)
+1ff7 79 1E C0	jsr CImag	  CImag
+1ffa 95 84	lda @(z)	  @
+1FFC BC		sta (z)
+1ffd 95 81	lda (z+)	  +
+1fff DC		ldb (z)
+2000 58		aab
+2001 FC		stb (z)
+2002 79 1E DC	jsr ZImag	  ZImag
+2005 D5 81	ldb (z+)	  !		
+2007 95 81	lda (z+)
+2009 B9		sta (b)
+200a 79 1E CE	jsr ZReal	  ZReal
+200d D5 81	ldb (z+)	  !
+200f 95 81	lda (z+)
+2010 B9		sta (b)
+2011 79 1F 35	jsr Count_And_Test?	  Count_And_Test?
+		 Then
+2014 09		rsr		;
+  OK
+ OK
+: DoCell ( n n -- ) \ Iterates on a single cell to compute its escape factor.
+  Init_Vars
+  Begin
+    DoEscape
+  Until
+  Count @ .Char ;  SeeLatest
+2020 79 1F 5D	jsr Init_Vars	Init_Vars
+				Begin
+2023 79 1F 9C	jsr DoEscape	  DoEscape
+2026 D5 81	lda (z+)	 Until
+2028 14 F9	bz 2023
+202a 79 1E EA	Count		jsr Count
+202d 95 84	lda @(z)	@
+202f BC		sta (z)
+2030 79 1E F8	jsr .Char	.Char
+2033 09		rsr		;
+  OK
+ OK
+: DoRow ( n -- ) \ For each cell in a row.
+  MaxVal MinVal Do
+    Dup I DoCell
+  2 +Loop
+  Drop ;  SeeLatest
+203D 79 1E A3	jsr MaxVal	MaxVal
+2040 79 1E 93	jsr MinVal	MinVal	
+2043 79 11 88	jsr (Do	Do	
+2046 9C		lda (z)		  Dup
+2047 B5 82	sta (-z)
+2049 79 11 9C	jsr I		  I
+204c 79 20 20	jsr DoCell	  DoCell
+204f 32 02	clr aw,2	  2
+2051 B5 82	sta (-z)
+2053 79 11 E5	jsr (+Loop	 +Loop	
+2056 16 EE	bm 2046
+2058 30 81	inr zw,2	Drop
+205a 09		rsr		;
+  OK
+ OK
+: Mandelbrot ( -- ) \ For each row in the set.
+  CR
+  MaxVal MinVal Do
+    I DoRow CR
+  3 +Loop ;  SeeLatest
+2069 79 0C 76	jsr CR		CR
+206c 79 1E A3	jsr MaxVal	MaxVal	
+206f 79 1E 93	jsr MinVal	MinVal	
+2072 79 11 88	jsr (Do		Do	
+2075 79 11 9C	jsr I		  I	
+2078 79 20 3D	jsr DoRow	  DoRow	
+207b 79 0C 76	jsr CR		  CR	
+207e 32 03	clr aw,3	  3	
+2080 B5 82	sta (-z)
+2082 79 11 E5	jsr (+Loop	 +Loop	
+2085 16 EE	bm 2075
+2087 09		rsr		;
+  OK
+ OK
+\ Run the computation. OK
+\ Mandelbrot eof
+ OK
+mandelbrot
+                              .....
+                      .....................
+                   ...........................
+                .................................
+              .....................................
+            .........................................
+          .............................................
+         ...............................................
+       .........,,,,,,,,,,,,,,,,,.........................
+      ......,,,,,,,,,,,,,,'''~''',,,.......................
+     ....,,,,,,,,,,,,,,''''~!O!!~'',,,,.....................
+    ....,,,,,,,,,,,,,'''''~~^:&<^~''',,,,....................
+    ..,,,,,,,,,,,,,''''''~~:[/ [;~~'''',,,...................
+   ..,,,,,,,,,,,,''''''~!!!:X    ^~~~~'',,,,..................
+  ..,,,,,,,,,,,''''~~~;;[:;[<   /::!!^!'',,,,..................
+  .,,,,,,,,,,''''~~~!^[  &X        / x;~',,,,,.................
+ .,,,,,,,,,''~~~~~~!!:/x              ;!~',,,,,.................
+ .,,,,,''~~!:^^^!!^^:?                //~',,,,,.................
+ ,,''''~~~!^[ [  :::/                   ~'',,,,,................
+ ,''''~~~~^^&     ?&                   &~'',,,,,................
+.''''!!!!//<                           !~'',,,,,...............[
+,:;<^:/  /                            :!~'',,,,,,..............'
+.~~~~!!!:;&                           :!~'',,,,,...............~
+.'''''~~~!;;/                         ?^~'',,,,,...............,
+ ,'''''~~~!^/     ?&X                   ~'',,,,,................
+ ,,,,''''~~!<&;;/<<;[                  &!'',,,,,................
+ .,,,,,,,,''!!!~!!!^^[                X^~'',,,,.................
+  ,,,,,,,,,,'''~~~~!!:[x               !~',,,,,................
+  ..,,,,,,,,,,'''~~~!!:  ?         & / !',,,,,.................
+  ...,,,,,,,,,,,'''''~~^:^:[?    /;!!!:'',,,,..................
+   ..,,,,,,,,,,,,,'''''~~!!^     [!~~''',,,,..................
+    ...,,,,,,,,,,,,,'''''~~~^; <^^~'''',,,...................
+     ....,,,,,,,,,,,,'''''~~!;<< '''',,,....................
+      .....,,,,,,,,,,,,,''''!&^~''',,,.....................
+       .......,,,,,,,,,,,,,,,,,,,,,.......................
+        ..........,,,,,,,,,,,,,..........................
+         ...............................................
+           ...........................................
+            .........................................
+              .....................................
+                 ...............................
+                    .........................
+                        .................
+ OK
