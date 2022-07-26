@@ -1,0 +1,239 @@
+Console log of Forth.ccdp running Forth_Demo.txt in my simulator.
+
+G:\0Centurion>ee200s\release\ee200s
+CPU6S Jul 24 2022 11:37:56
+loader: open error FSub.lst: No such file or directory
+A=5409 B=0000 X=0000 Y=0000 Z=0081 S=0180 C=acf6 mvfli 00000000 0200 HLT
+.v 200 Forth.ccdp             \ load Forth.ccdp
+V: Offset=0x200 Fn="Forth.ccdp"
+7219 bytes loaded at 0x200
+.g         \ start execution
+173D
+fig-FORTH CPU6 subroutine
+
+A=0050 B=170B X=0E0A Y=7075 Z=7111 S=7197 C=acf6 mVfli 092F6E09 0111 RSR
+.@Forth_Demo.txt    \ play the contents of Forth_Demo.txt into the keyboard
+.g
+\ Quick FORTH demo OK
+ OK
+\ Case of names of words is ignored.  OK
+\ Words are separated by spaces.  OK
+\ Backlash makes the rest of the line a comment.  OK
+\ Single precision integers are signed 16 bit.  OK
+\ Detailed documentation of built-in words is in Forth.lst .  OK
+ OK
+33           \ push a number  OK
+.S           \ print the param stack contents, don't change them 33  OK
+77           \ push another number  OK
+.S           \ print the param stack contents, don't change them 33 77  OK
+*            \ multiply top 2 params, push results  OK
+.S           \ print the param stack contents, don't change them 2541  OK
+.            \ print 2541  OK
+.S           \ print the param stack contents, don't change them  OK
+ OK
+31 72 * .    \ push 2 numbers, multiply, & print 2232  OK
+$1234 .    \ hex numbers can be prefixed with $ to override current base 4660  OK
+$e13 3 / .  \ print $e13/3 in current base 1201  OK
+ OK
+$f100 c@ ex2   \ fetch memory byte at $f100, display as 2 hex digits 00 OK
+$f100 @ ex4    \ fetch memory word at $f100, display as 4 hex digits 0000 OK
+0 $100 dump   \ dump memory starting at 0 for $100 bytes
+0000 1E 34 00 04 15 FC 1E 34 71 11 E4 00 AC F6 FF FF
+0010 87 00 00 00 AC F6 FF FF 0A 00 10 00 01 00 00 00
+0020 60 01 00 01 00 00 00 00 01 00 00 00 00 00 00 00
+0030 50 78 E4 00 00 00 00 00 50 78 E4 00 DC F3 B8 00
+0040 7F 00 00 00 00 00 00 00 00 00 E4 00 00 00 00 00
+0050 15 AE 5A AF 7F 00 00 00 7F 00 00 00 C0 00 E4 00
+0060 00 00 00 00 50 78 E4 00 83 4B 0A 77 01 00 00 00
+0070 00 00 00 00 50 78 E4 00 7F 00 00 00 E9 4C 0A 77
+0080 7C 76 E4 00 7F 00 00 00 F1 9A F5 D8 50 78 E4 00
+0090 00 00 00 00 00 F4 B8 00 38 79 E4 00 48 04 00 00
+00A0 00 00 00 00 00 00 00 00 C0 00 E4 00 00 00 E4 00
+00B0 02 00 2C 00 01 00 00 00 50 01 00 01 54 09 00 00
+00C0 F8 80 E4 00 D5 AE 5A AF 7F 00 00 00 F8 80 E4 00
+00D0 00 81 E4 00 90 F4 B8 00 00 00 00 00 FA 49 0A 77
+00E0 FC 01 00 00 00 00 00 00 50 78 E4 00 00 00 01 00
+00F0 70 02 E4 00 00 00 00 00 0D 00 00 0D 00 00 00 00  OK
+ OK
+Create MyBuf 12 Allot  \ Create a buffer containing 12 bytes  OK
+SeeLatest       \ dump CPU6 code for latest word
+1E3C 79 12 0F 05 41 6C 6C 6F 74 20 20 00 00 00 00  OK
+MyBuf 12 dump  \ dump memory starting at MyBuf for 12 bytes
+1E3F 05 41 6C 6C 6F 74 20 20 00 00 00 00  OK
+$1234 MyBuf 2+ !  \ store $1234 into memory word at MyBuf+2  OK
+MyBuf 12 dump  \ dump memory again - see the word we changed
+1E3F 05 41 12 34 6F 74 20 20 00 00 00 00  OK
+MyBuf 2+ @ ex4    \ fetch memory word at MyBuf+2, display as 4 hex digits 1234 OK
+ OK
+\ Poke a small CPU6 routine into memory:  OK
+$01 MyBuf 10 + c!   \ store a NOP  OK
+$09 MyBuf 11 + c!   \ store a RSR  OK
+MyBuf 12 Dump   \ dump memory starting at MyBuf for 12 bytes
+1E3F 05 41 12 34 6F 74 20 20 00 00 01 09  OK
+MyBuf 10 + Execute   \ call it  OK
+ OK
+\ Define a word to increment a memory word using CPU6 code  OK
+: Test2 ( -- )   \ start compiling a new word (subroutine) called Test2
+  [                    \ go to interpret state, to compile our own bytes  OK
+  $91 c, MyBuf 4 + ,   \ compile LDA MyBuf+4  OK
+  $38 c,               \ compile INA  OK
+  $B1 c, MyBuf 4 + ,   \ compile STA MyBuf+4  OK
+                  \ someday the assembler will get done, so we get mnemonics  OK
+  ]               \ back to compile state
+  ;               \ finish the word, return, end compilation  OK
+SeeLatest         \ dump the CPU6 code in the last word
+1E54 91 1E 43 38 B1 1E 43 09  OK
+$12ff MyBuf 4 + ! \ store $12ff into memory at MyBuf+4  OK
+MyBuf 12 Dump     \ dump memory at MyBuf before
+1E3F 05 41 12 34 12 FF 20 20 00 00 01 09  OK
+Test2             \ run our word  OK
+MyBuf 12 Dump     \ dump memory at MyBuf after
+1E3F 05 41 12 34 13 00 20 20 00 00 01 09  OK
+MyBuf 4 + 1+!     \ increment using the built-in word  OK
+MyBuf 12 Dump     \ dump memory at MyBuf again
+1E3F 05 41 12 34 13 01 20 20 00 00 01 09  OK
+\ Define a word that does the same thing, using machine-independant words  OK
+: Test2F ( -- )   \ start compiling a word called Test2F
+  MyBuf 4 + @     \ fetch the memory word to the param stack
+  1+              \ increment it
+  MyBuf 4 + !     \ store it back
+  ;               \ return, finish the word, end compilation  OK
+SeeLatest        \ dump the CPU6 code of the latest word
+1E66 79 1E 3C 90 00 04 B5 82 95 81 DC 58 FC 95 84 BC
+1E76 9C 38 BC 79 1E 3C 90 00 04 B5 82 95 81 DC 58 FC
+1E86 D5 81 95 81 B9 09  OK
+Test2F          \ run it  OK
+MyBuf 12 Dump    \ dump memory at MyBuf again
+1E3F 05 41 12 34 13 02 20 20 00 00 01 09  OK
+Test2F          \ run it again  OK
+MyBuf 12 Dump    \ dump memory at MyBuf again
+1E3F 05 41 12 34 13 03 20 20 00 00 01 09  OK
+\ Define a word like Test2F, but do address expressions at compile time  OK
+: Test2G ( -- )   \ start compiling a word called Test2G
+  [ MyBuf 4 + ] literal @     \ fetch the memory word to the param stack
+  1+                          \ increment it
+  [ MyBuf 4 + ] literal !     \ store it back
+  ;               \ return, finish the word, end compilation  OK
+SeeLatest        \ dump the CPU6 code of the latest word
+1E96 90 1E 43 B5 82 95 84 BC 9C 38 BC 90 1E 43 B5 82
+1EA6 D5 81 95 81 B9 09  OK
+Test2G          \ run it  OK
+MyBuf 12 Dump    \ dump memory at MyBuf again
+1E3F 05 41 12 34 13 04 20 20 00 00 01 09  OK
+ OK
+\ Define a word to continuously display a memory location: OK
+: Watch1       \ start compiling a new word (subroutine) called Watch1
+  ( adr -- )   \ comment, says we expect 1 value on parameter stack coming in,
+               \               we return nothing
+  cr                  \ start a new terminal line
+  Begin               \ begin of loop
+    13 Emit           \ go the the left of the terminal line (send Return)
+    Dup @ EX4         \ copy address, fetch value, emit as 4 hex digits
+    ?Terminal Until   \ loop until a terminal key is available
+  Drop                \ drop the address off the param stack
+  ;                   \ return, finish the word, end compilation  OK
+SeeLatest           \ dump the CPU6 code in latest word
+1EB6 79 0C 76 90 00 0D B5 82 79 0C 57 9C B5 82 95 84
+1EC6 BC 79 1C 5C 79 0C 48 D5 81 14 E8 30 81 09  OK
+$f100 watch1     \ run it
+0000 OK
+ OK
+ OK
+\ The required example... OK
+: Hellord ( n -- )  \ start compiling a new word called Hollord
+  0 Do              \ start Do loop, from 0 to n-1
+    CR              \ start new terminal line
+    I 2* Spaces     \ type Do index *2 spaces
+    ." Hellord! "   \ type "Hellord!"
+   Loop             \ end of Do loop
+  ;                 \ return, finish the word, end compilation OK
+SeeLatest    \ dump the CPU6 code of the latest word
+1EDF 3A B5 82 79 11 88 79 0C 76 79 11 9C 9C 3D BC 79
+1EEF 0C 98 79 13 8B 09 48 65 6C 6C 6F 72 64 21 20 79
+1EFF 11 C2 16 E2 09  OK
+10 Hellord    \ run it with a parameter of 10
+Hellord!
+  Hellord!
+    Hellord!
+      Hellord!
+        Hellord!
+          Hellord!
+            Hellord!
+              Hellord!
+                Hellord!
+                  Hellord!  OK
+ OK
+ OK
+: Test1  \ start compiling a new word (subroutine) called Test1
+  1               \ push 1 onto param stack
+  15 1 Do         \ Do loop, from 1 until >=15
+    CR            \ start a new terminal line
+    I .           \ Get Do loop index, print it
+    9 Emit        \ Emit a tab character
+    i *           \ multiply top of param stack by Do loop index
+    Dup .         \ copy & print it
+   2 +Loop        \ end of Do loop, add 2 to index
+  ;               \ return, finish the word, end compilation  OK
+SeeLatest      \ dump the CPU6 code in the latest word
+1F0D 32 01 B5 82 90 00 0F B5 82 32 01 B5 82 79 11 88
+1F1D 79 0C 76 79 11 9C 79 0D EC 90 00 09 B5 82 79 0C
+1F2D 57 79 11 9C 79 07 20 9C B5 82 79 0D EC 32 02 B5
+1F3D 82 79 11 E5 16 DA 09  OK
+Test1          \ run it, note the overflowed product on the 13 line
+1       1
+3       3
+5       15
+7       105
+9       945
+11      10395
+13      4063  OK
+ OK
+ OK
+\ Define a word to print a multiplication table OK
+: TimesTable     \ start compiling a new word (subroutine) called TimesTable
+  ( n -- )       \ comment, says we expect 1 parameter & return nothing
+  1+             \ Do loops don't include the limit, so increment n
+  Dup 1 Do       \ start a Do loop, 1 is the start, a copy of n is the limit
+    cr           \ start a new line on the terminal
+    Dup 1 Do     \ start a Do loop, 1 is the start, a copy of n is the limit
+      I J *      \ multiply the 2 Do loop indexes
+      4 .R       \ print the product using 4 characters
+     Loop        \ end of the inner loop
+   Loop          \ end of the outer loop
+  Drop           \ drop n to clean up the parameter stack
+  ;              \ return, finish the word, end compilation  OK
+SeeLatest        \ dump the CPU6 code in the word
+1F52 9C 38 BC 9C B5 82 32 01 B5 82 79 11 88 79 0C 76
+1F62 9C B5 82 32 01 B5 82 79 11 88 79 11 9C 79 11 A4
+1F72 79 07 20 90 00 04 B5 82 79 0D C3 79 11 C2 16 EA
+1F82 79 11 C2 16 D8 30 81 09  OK
+12 TimesTable  \ run it
+   1   2   3   4   5   6   7   8   9  10  11  12
+   2   4   6   8  10  12  14  16  18  20  22  24
+   3   6   9  12  15  18  21  24  27  30  33  36
+   4   8  12  16  20  24  28  32  36  40  44  48
+   5  10  15  20  25  30  35  40  45  50  55  60
+   6  12  18  24  30  36  42  48  54  60  66  72
+   7  14  21  28  35  42  49  56  63  70  77  84
+   8  16  24  32  40  48  56  64  72  80  88  96
+   9  18  27  36  45  54  63  72  81  90  99 108
+  10  20  30  40  50  60  70  80  90 100 110 120
+  11  22  33  44  55  66  77  88  99 110 121 132
+  12  24  36  48  60  72  84  96 108 120 132 144 OK
+ OK
+Hex     \ change current I/O base to hexadecimal OK
+0C TimesTable   \ run it
+   1   2   3   4   5   6   7   8   9   A   B   C
+   2   4   6   8   A   C   E  10  12  14  16  18
+   3   6   9   C   F  12  15  18  1B  1E  21  24
+   4   8   C  10  14  18  1C  20  24  28  2C  30
+   5   A   F  14  19  1E  23  28  2D  32  37  3C
+   6   C  12  18  1E  24  2A  30  36  3C  42  48
+   7   E  15  1C  23  2A  31  38  3F  46  4D  54
+   8  10  18  20  28  30  38  40  48  50  58  60
+   9  12  1B  24  2D  36  3F  48  51  5A  63  6C
+   A  14  1E  28  32  3C  46  50  5A  64  6E  78
+   B  16  21  2C  37  42  4D  58  63  6E  79  84
+   C  18  24  30  3C  48  54  60  6C  78  84  90 OK
+Decimal  \ change current I/O base to decimal  eof
+ OK

@@ -1,0 +1,135 @@
+\ Quick FORTH demo
+
+\ Case of names of words is ignored. 
+\ Words are separated by spaces. 
+\ Backlash makes the rest of the line a comment. 
+\ Single precision integers are signed 16 bit. 
+\ Detailed documentation of built-in words is in Forth.lst . 
+
+33           \ push a number 
+.S           \ print the param stack contents, don't change them 
+77           \ push another number 
+.S           \ print the param stack contents, don't change them 
+*            \ multiply top 2 params, push results 
+.S           \ print the param stack contents, don't change them 
+.            \ print 
+.S           \ print the param stack contents, don't change them 
+
+31 72 * .    \ push 2 numbers, multiply, & print 
+$1234 .    \ hex numbers can be prefixed with $ to override current base 
+$e13 3 / .  \ print $e13/3 in current base 
+
+$f100 c@ ex2   \ fetch memory byte at $f100, display as 2 hex digits 
+$f100 @ ex4    \ fetch memory word at $f100, display as 4 hex digits 
+0 $100 dump   \ dump memory starting at 0 for $100 bytes 
+
+Create MyBuf 12 Allot  \ Create a buffer containing 12 bytes 
+SeeLatest       \ dump CPU6 code for latest word 
+MyBuf 12 dump  \ dump memory starting at MyBuf for 12 bytes 
+$1234 MyBuf 2+ !  \ store $1234 into memory word at MyBuf+2 
+MyBuf 12 dump  \ dump memory again - see the word we changed 
+MyBuf 2+ @ ex4    \ fetch memory word at MyBuf+2, display as 4 hex digits 
+
+\ Poke a small CPU6 routine into memory: 
+$01 MyBuf 10 + c!   \ store a NOP 
+$09 MyBuf 11 + c!   \ store a RSR 
+MyBuf 12 Dump   \ dump memory starting at MyBuf for 12 bytes 
+MyBuf 10 + Execute   \ call it 
+
+\ Define a word to increment a memory word using CPU6 code 
+: Test2 ( -- )   \ start compiling a new word (subroutine) called Test2 
+  [                    \ go to interpret state, to compile our own bytes 
+  $91 c, MyBuf 4 + ,   \ compile LDA MyBuf+4 
+  $38 c,               \ compile INA 
+  $B1 c, MyBuf 4 + ,   \ compile STA MyBuf+4 
+                  \ someday the assembler will get done, so we get mnemonics 
+  ]               \ back to compile state 
+  ;               \ finish the word, return, end compilation 
+SeeLatest         \ dump the CPU6 code in the last word 
+$12ff MyBuf 4 + ! \ store $12ff into memory at MyBuf+4 
+MyBuf 12 Dump     \ dump memory at MyBuf before 
+Test2             \ run our word 
+MyBuf 12 Dump     \ dump memory at MyBuf after 
+MyBuf 4 + 1+!     \ increment using the built-in word 
+MyBuf 12 Dump     \ dump memory at MyBuf again 
+\ Define a word that does the same thing, using machine-independant words 
+: Test2F ( -- )   \ start compiling a word called Test2F 
+  MyBuf 4 + @     \ fetch the memory word to the param stack
+  1+              \ increment it
+  MyBuf 4 + !     \ store it back
+  ;               \ return, finish the word, end compilation 
+SeeLatest        \ dump the CPU6 code of the latest word 
+Test2F          \ run it 
+MyBuf 12 Dump    \ dump memory at MyBuf again 
+Test2F          \ run it again 
+MyBuf 12 Dump    \ dump memory at MyBuf again 
+\ Define a word like Test2F, but do address expressions at compile time 
+: Test2G ( -- )   \ start compiling a word called Test2G 
+  [ MyBuf 4 + ] literal @     \ fetch the memory word to the param stack
+  1+                          \ increment it
+  [ MyBuf 4 + ] literal !     \ store it back
+  ;               \ return, finish the word, end compilation 
+SeeLatest        \ dump the CPU6 code of the latest word 
+Test2G          \ run it 
+MyBuf 12 Dump    \ dump memory at MyBuf again 
+
+\ Define a word to continuously display a memory location:
+: Watch1       \ start compiling a new word (subroutine) called Watch1
+  ( adr -- )   \ comment, says we expect 1 value on parameter stack coming in,
+               \               we return nothing
+  cr                  \ start a new terminal line
+  Begin               \ begin of loop
+    13 Emit           \ go the the left of the terminal line (send Return)
+    Dup @ EX4         \ copy address, fetch value, emit as 4 hex digits
+    ?Terminal Until   \ loop until a terminal key is available
+  Drop                \ drop the address off the param stack
+  ;                   \ return, finish the word, end compilation 
+SeeLatest           \ dump the CPU6 code in latest word 
+$f100 watch1     \ run it 
+
+
+\ The required example...
+: Hellord ( n -- )  \ start compiling a new word called Hollord
+  0 Do              \ start Do loop, from 0 to n-1
+    CR              \ start new terminal line
+    I 2* Spaces     \ type Do index *2 spaces
+    ." Hellord! "   \ type "Hellord!"
+   Loop             \ end of Do loop
+  ;                 \ return, finish the word, end compilation
+SeeLatest    \ dump the CPU6 code of the latest word  
+10 Hellord    \ run it with a parameter of 10
+
+
+: Test1  \ start compiling a new word (subroutine) called Test1
+  1               \ push 1 onto param stack
+  15 1 Do         \ Do loop, from 1 until >=15
+    CR            \ start a new terminal line
+    I .           \ Get Do loop index, print it
+    9 Emit        \ Emit a tab character
+    i *           \ multiply top of param stack by Do loop index 
+    Dup .         \ copy & print it
+   2 +Loop        \ end of Do loop, add 2 to index
+  ;               \ return, finish the word, end compilation 
+SeeLatest      \ dump the CPU6 code in the latest word 
+Test1          \ run it, note the overflowed product on the 13 line 
+
+
+\ Define a word to print a multiplication table
+: TimesTable     \ start compiling a new word (subroutine) called TimesTable
+  ( n -- )       \ comment, says we expect 1 parameter & return nothing
+  1+             \ Do loops don't include the limit, so increment n
+  Dup 1 Do       \ start a Do loop, 1 is the start, a copy of n is the limit
+    cr           \ start a new line on the terminal
+    Dup 1 Do     \ start a Do loop, 1 is the start, a copy of n is the limit
+      I J *      \ multiply the 2 Do loop indexes
+      4 .R       \ print the product using 4 characters
+     Loop        \ end of the inner loop
+   Loop          \ end of the outer loop
+  Drop           \ drop n to clean up the parameter stack
+  ;              \ return, finish the word, end compilation 
+SeeLatest        \ dump the CPU6 code in the word 
+12 TimesTable  \ run it 
+
+Hex     \ change current I/O base to hexadecimal
+0C TimesTable   \ run it
+Decimal  \ change current I/O base to decimal 
