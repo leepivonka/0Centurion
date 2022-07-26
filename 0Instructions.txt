@@ -1,5 +1,23 @@
+; CA65 macro package for Centurion CPU6 (& EE 200) code.
 ; https://github.com/Nakazoto/CenturionComputer/wiki/Instructions
 
+; There are a few gotchas with this setup:
+;
+; * 6502 opcodes cannot be disabled in CA65.  If a 6502 opcode is used in a CPU6 program,
+;       it'll compile fine, but have strange & bad runtime behavior.
+;	Fortunately there are only a few collisions between 6502 & CPU6 opcodes:
+;		NOP  INX
+;	The CPU6 macro name has an appended C (for Centurion) in these cases.
+;
+; * Relative addresses aren't checked for out-of-range.  i havent' figured out how to
+;	explain this nicely to CA65.  There must be a way, 6502 branches do it nicely.
+;     Currently there are to versions of BRel:
+;     * The 1st one checks the range but generates a bad listing.
+;     * The 2nd one generates a correct listing but doesn't check range.
+;     It is useful to compile with the range check version enabled to check range,
+;	then compile with the other to generate a correct listing.
+;     I assume the object code file is correct in either case, but I'm currently
+;	report scraping the listing file to load it in my simulator.
 
 ; Instructions
 ; This is a list of the available registers, OpCodes / Instructions, and what they mean.
@@ -101,6 +119,10 @@ PW = $e ; P	Program Counter Base	Contains initial program counter value to be us
 ; Op (6-F)	5	Register	Modifier	Displace	Displace	Indexed Addressing (Modifier Table Below)
 ; Op (6-F)	8-F					Implicit Indexing (8 - F => A - P Reg.)
 
+; These strange names aren't so strange if you think of the 1st letter of each part
+; of the expression:
+;  ModBRPB is Mod Bracket Register Plus Bracket
+;
 ; Modifier	Note
 ModBRB    =  0 ; (r)	Index
 ModBRPB   =  1 ; (r+)	Index; Index returned, incremented by ^
@@ -179,7 +201,7 @@ ModANBMRB = $E ; @n(-r)	Decrement and index with displacement indirect
 ;	.byte $0F
 ;	.endmacro
 
-  .macro BRel op,adr ; Build branch offset byte
+  .macro BRel op,adr ; Build branch offset byte (correct listing, no range check)
 ;	.local @L1
 ;@L1	= adr-*		; PC+N
 ;	.if L1<-$82 || L1>=$82  ; this chokes on fwd refs, so we can't check the range
@@ -187,7 +209,7 @@ ModANBMRB = $E ; @n(-r)	Decrement and index with displacement indirect
 ;	 .endif
 	.byte op,.lobyte(adr-*-1)
 	.endmacro
-  .macro BRel3 op,adr ; Build branch offset byte
+  .macro BRel3 op,adr ; Build branch offset byte (bad listing, does range check)
 	bne adr
 	.org *-2  ; this doesn't show up right in the listing (that we load!)
 	.byte op
