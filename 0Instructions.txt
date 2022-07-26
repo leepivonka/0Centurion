@@ -1,0 +1,792 @@
+; https://github.com/Nakazoto/CenturionComputer/wiki/Instructions
+
+
+; Instructions
+; This is a list of the available registers, OpCodes / Instructions, and what they mean.
+; These were all reverse engineered by just looking at existing code and recognizing patterns.
+; As such, this list may be incomplete or full of errors.
+; Any resemblance to the mnemonics or syntax used by other processors, such as the 8086, is simply because we borrowed existing syntax where it seemed fit.
+; The processor itself shares no design or architecture with any other documented existing processors we're aware of.
+; It is based upon the CPU4 and CPU5 earlier Warrex designs, and apparently the CD 200 before that, but we have no documentation for those either.
+; See ee 200.
+
+; Registers
+; There are eight registers available.
+;	 Name	Usage			Notes
+AW = $0 ; A	Primary Accumulator	Primary register, commonly used in implicit operations
+AH = $0
+AL = $1
+BW = $2 ; B	Secondary Accumulator	Primary register, commonly used in implicit operations
+BH = $2
+BL = $3
+XW = $4 ; X	Primary Index		Can only do word operations (Not true for CPU6?)
+YW = $6 ; Y	Index or Working	Index registers or working storage registers
+YH = $6
+YL = $7
+ZW = $8 ; Z	Index or Working	Index registers or working storage registers
+ZH = $8
+ZL = $9
+SW = $a ; S	Stack pointer		Global among all interrupt levels
+SH = $a
+SL = $b
+CW = $c ; C	Context			Contains the status condition indicators (fault, link, minus, and value) and preceding interrupt level
+PW = $e ; P	Program Counter Base	Contains initial program counter value to be used when starting up or returning from interrupt
+
+; Contexts
+; Each register and the flags appears to exist in 16 contexts and these contexts are mapped between 0x0000 and 0x00FF
+; 16 bytes per context starting with context 0 and working upwards.
+; The registers are stored in the memory in the order given above. Writing to the memory of another context updates the registers for that context.
+; Writing to the memory for your own context appears to change the register value except for PC and the unknown extra register.
+; Possibly PC is cached/reloaded on a context switch.
+
+; The processor starts in context 0.
+; Context 15 is used by what appears to be a syscall instruction.
+; context 6 is used by the MUX interrupt test.
+; context 1 is used programatically during MMU testing.
+
+; Interrupts are processed by a hardware triggered context switch, the execution of code in the new context,
+; and then an RI or RIM instruction.
+
+; Instruction Organization
+; Instructions are constructed a nibble at a time, like a Build a Bear. The high nibble of the high byte determines what kind of operation is being executed. It should be noted that the lowest bit of the high nibble determines whether we are doing a byte operation or a word operation (excluding Control, Branch, X register and Jump operations). For example, 0x8 is 1000 in binary and is a byte operation. 0x9 is 1001 in binary and is a word operation. Both operation load the A register, but the low bit being either "0" or "1" is what determines whether we are loading a byte or word.
+
+; High nibble	Operation type
+; 0x0	Control instructions
+; 0x1	Conditional branch instructions
+; 0x2	Single Register byte operations
+; 0x3	Single register word operations
+; 0x4	Double register byte operations
+; 0x5	Double register word operations
+; 0x6	X register memory reference operations
+; 0x7	Jump operations
+; 0x8	A register load byte operations
+; 0x9	A register load word operations
+; 0xA	A register store byte operations
+; 0xB	A register store word operations
+; 0xC	B register load byte operations
+; 0xD	B register load word operations
+; 0xE	B register store byte operations
+; 0xF	B register store word operations
+
+; Addressing Modes
+; Instructions can be either 1-byte, 2-byte or 3-byte depending on the type of instruction.
+; The second or third byte (if present) are related to addressing, or directing the instruction as to which location in memory to act upon.
+; Addressing can be either implicit or explicit.
+; Implicit means that no addressing is specified, and that specific instruction operates on only one specific location.
+; Explicit means the programmer must state which location they will perform the operation on.
+
+; In the chart below, the addressing mode and what is expected at each nibble of each operation is shown.
+
+; HB = High Byte; MB = Mid Byte; LB = Low Byte
+
+; HN = High Nibble; LN = Low Nibble
+
+; HB_HN      	HB_LN      	MB_HN  	MB_LN  	LB_HN  	LB_LN  	Note
+; 0	Op (0-F)					Control Operations
+; 1	Op (0-F)	Displace	Displace			Branch Operations
+; 2	Op (0-7)	Source Reg.				Single Register Explicit Byte Operation
+; 2	Op (8-F)					Single Register Implicit Byte Operation
+; 3	Op (0-7)	Source Reg.				Single Register Explicit Word Operation
+; 3	Op (8-F)					Single Register Implicit Word Operation
+; 4	Op (0-7)	Source Reg.	Dest. Reg.			Double Register Explicit Byte Operation
+; 4	Op (8-F)					Double Register Implicit Byte Operation
+; 5	Op (0-7)	Source Reg.	Dest. Reg.			Double Register Explicit Word Operation
+; 5	Op (8-F)					Double Register Implicit Word Operation
+; Op (6-F)	0	Literal	Literal			Literal Memory Address Byte Operation
+; Op (6-F)	0	Literal	Literal	Literal	Literal	Literal Memory Address Word Operation
+; Op (6-F)	1	Direct	Direct	Direct	Direct	Direct Memory Address Operation
+; Op (6-F)	2	Indirect	Indirect	Indirect	Indirect	Indirect Memory Address Operation
+; Op (6-F)	3	Displace	Displace			Relative to Current Location Memory Address Operation
+; Op (6-F)	4	Displace	Displace			Indirect Relative to Current Location Memory Address Operation
+; Op (6-F)	5	Register	Modifier	Displace	Displace	Indexed Addressing (Modifier Table Below)
+; Op (6-F)	8-F					Implicit Indexing (8 - F => A - P Reg.)
+
+; Modifier	Note
+ModBRB    =  0 ; (r)	Index
+ModBRPB   =  1 ; (r+)	Index; Index returned, incremented by ^
+ModBMRB   =  2 ; (-r)	Decrement and Index
+ModABRB   =  4 ; @(r)	Index indirect
+ModABRPB  =  5 ; @(r+)	Index indirect; Index returned, incremented by ^
+ModABMRB  =  6 ; @(-r)	Decrement and index indirect
+ModNBRB   =  8 ; n(r)	Index with displacement
+ModNBRPB  =  9 ; n(r+)	Index with displacement; Index returned, incremented by ^
+ModNBMRB  = $A ; n(-r)	Decrement and index with displacement
+ModANBRB  = $C ; @n(r)	Index with displacement indirect
+ModANBRPB = $D ; @n(r+)	Index with displacement indirect, Index returned, incremented by ^
+ModANBMRB = $E ; @n(-r)	Decrement and index with displacement indirect
+
+  .macro ModBytes WReg,Mod,Offset
+	.if (WReg&$fff1)<>0
+	  .error "WReg must be a word register"
+	 .endif
+	.if (Mod=ModBRB) | (Mod=ModBRPB) | (Mod=ModBMRB) | (Mod=ModABRB) | (Mod=ModABRPB) | (Mod=ModABMRB)
+	  .byte (WReg<<4)|Mod
+	 .else
+	  .if (Mod=ModNBRB) | (Mod=ModNBRPB) | (Mod=ModNBMRB) | (Mod=ModANBRB) | (Mod=ModANBRPB) | (Mod=ModANBMRB)
+	    .byte (WReg<<4)|Mod,Offset ; is offset signed or unsigned???
+           .else
+	    .error "Unknown Mod"
+	   .endif
+	 .endif
+	.endmacro
+
+  .macro HLT ; Wait for Interrupt (Halt)
+	.byte $00
+	.endmacro
+  .macro NOPC ; No Operation
+	.byte $01
+	.endmacro
+  .macro SF ; Set Fault flag
+	.byte $02
+	.endmacro
+  .macro RF ; Reset Fault flag
+	.byte $03
+	.endmacro
+  .macro EI ; Enable the Interrupt System (allow interrupts)
+	.byte $04
+	.endmacro
+  .macro DI ; Disable the Interrupt System (disable interrupts)
+	.byte $05
+	.endmacro
+  .macro SL ; Set the Link (carry) Flag
+	.byte $06
+	.endmacro
+  .macro RL ; Reset the Link (carry) Flag
+	.byte $07
+	.endmacro
+  .macro CL ; Complement Link flag
+	.byte $08
+	.endmacro
+  .macro RSR ; Return from subroutine
+	.byte $09
+	.endmacro
+  .macro RI ; Return from interrupt
+	.byte $0A
+	.endmacro
+  .macro RIM ; Return from Interrupt Modified
+	.byte $0B
+	.endmacro
+  .macro ELO ; Enable Link Out - teletype_tx=Link
+	.byte $0C
+	.endmacro
+  .macro PCX ; Transfer PC to X - X=address of next instruction
+	.byte $0D
+	.endmacro
+  .macro DLY ; Delay 4.55 ms - for TTY bit timing
+	.byte $0E
+	.endmacro
+;  .macro ?? ; Return from Syscall or similar (pops a byte, then the new value of rt, then a byte, then the new ipl)
+;	.byte $0F
+;	.endmacro
+
+  .macro BRel op,adr ; Build branch offset byte
+;	.local @L1
+;@L1	= adr-*		; PC+N
+;	.if L1<-$82 || L1>=$82  ; this chokes on fwd refs, so we can't check the range
+;	  .error "Branch out of range"
+;	 .endif
+	.byte op,.lobyte(adr-*-1)
+	.endmacro
+  .macro BRel3 op,adr ; Build branch offset byte
+	bne adr
+	.org *-2  ; this doesn't show up right in the listing (that we load!)
+	.byte op
+	.org *+1
+	.endmacro
+  .macro BL adr ; Branch if Link (Carry) Set
+	BRel $10,adr
+	.endmacro
+  .macro BNL adr ; Branch if Link (Carry) not Set
+	BRel $11,adr
+	.endmacro
+  .macro BF adr ; Branch if Fault Set
+	BRel $12,adr
+	.endmacro
+  .macro BNF adr ; Branch if Fault not Set
+	BRel $13,adr
+	.endmacro
+  .macro BZ adr ; Branch if V (Z) flag set
+	BRel $14,adr
+	.endmacro
+  .macro BNZ adr ; Branch if V (Z) flag clear
+	BRel $15,adr
+	.endmacro
+  .macro BM adr ; Branch if Minus flag set
+	BRel $16,adr
+	.endmacro
+  .macro BP adr ; Branch on Positive (Minus flag clear)
+	BRel $17,adr
+	.endmacro
+  .macro BGZ adr ; Branch if Greater Than 0 (!V && !Minus)
+	BRel $18,adr
+	.endmacro
+  .macro BLE adr ; Branch if Less Than or Equal to 0 (V | Minus)
+	BRel $19,adr
+	.endmacro
+  .macro BS1 adr ; Branch if Sense Switch 1 Set
+	BRel $1a,adr
+	.endmacro
+  .macro BS2 adr ; Branch if Sense Switch 2 Set
+	BRel $1b,adr
+	.endmacro
+  .macro BS3 adr ; Branch if Sense Switch 3 Set
+	BRel $1c,adr
+	.endmacro
+  .macro BS4 adr ; Branch if Sense Switch 4 Set
+	BRel $1d,adr
+	.endmacro
+  .macro BTM Rel ; Branch on TTY Mark (Changed for CPU6?)
+	BRel $1e,Rel
+	.endmacro
+  .macro BEP Rel ; Branch on Even Parity (Changed for CPU6?)
+	BRel $1f,adr
+	.endmacro
+
+  .macro RegW OpWord,Reg,Const
+;	.if (Reg&$fff0)=$40  ; word register?
+	  .byte OpWord,((Reg&$f)<<4)+(Const&$f)
+;	 .else
+;	  .error "Strange register"
+;	 .endif
+	.endmacro
+  .macro RegB OpByte,Reg
+;	.if (Reg&$fff0)=$60  ; byte register?
+	  .byte OpByte,(Reg&$f)<<4
+;	 .else
+;	  .error "Strange register"
+;	 .endif
+	.endmacro
+  .macro INR WReg,Const	; increment register word
+	RegW $30,WReg,Const-1
+	.endmacro
+  .macro INRB BReg	; increment register upper byte or lower byte
+	RegB $20,BReg
+	.endmacro
+  .macro INAB		; Increment AL register
+	.byte $28
+	.endmacro
+  .macro INA		; Increment AW register
+	.byte $38
+	.endmacro
+  .macro DCR WReg,Const	; decrement register word
+	RegW $31,WReg,Const-1
+	.endmacro
+  .macro DCRB BReg	; decrement register upper byte or lower byte
+	RegB $21,BReg
+	.endmacro
+  .macro DCAB		; Decrement AL register
+	.byte $29
+	.endmacro
+  .macro DCA		; Decrement AW register
+	.byte $39
+	.endmacro
+  .macro CLR WReg,Const	; clear register word
+	RegW $32,WReg,Const
+	.endmacro
+  .macro CLRB BReg	; clear register upper byte or lower byte
+	RegB $22,BReg
+	.endmacro
+  .macro CLAB		; Clear AL register
+	.byte $2A
+	.endmacro
+  .macro CLA		; Clear AW register
+	.byte $3A
+	.endmacro
+  .macro IVR WReg,Const	; invert register word
+	RegW $33,WReg,Const
+	.endmacro
+  .macro IVRB BReg	; invert register byte
+	RegB $23,BReg
+	.endmacro
+  .macro IVAB		; Invert AL register
+	.byte $2B
+	.endmacro
+  .macro IVA		; Invert AW register
+	.byte $3B
+	.endmacro
+  .macro SRR WReg,Const	; shift register right (sign extend)
+	RegW $34,WReg,Const-1
+	.endmacro
+  .macro SRRB BReg	; shift register byte right (sign extend)
+	RegB $24,BReg
+	.endmacro
+  .macro SRAB		; Shift AL register right (sign extend)
+	.byte $2C
+	.endmacro
+  .macro SRA		; Shift AW register right (sign extend)
+	.byte $3C
+	.endmacro
+  .macro SLR WReg,Const	; shift register left (0 shifted in)
+	RegW $35,WReg,Const-1
+	.endmacro
+  .macro SLRB BReg	; shift register byte left (0 shifted in)
+	RegBW $25,BReg
+	.endmacro
+  .macro SLAB		; Shift AL register left (0 shifted in)
+	.byte $2D
+	.endmacro
+  .macro SLA		; Shift AW register left (0 shifted in)
+	.byte $3D
+	.endmacro
+  .macro RRR WReg,Const	; rotate register right (thru link flag)
+	RegW $36,WReg,Const-1
+	.endmacro
+  .macro RRRB BReg	; rotate register byte right (thru link flag)
+	RegB $26,BReg
+	.endmacro
+  .macro RLR WReg,Const	; rotate register left (thru link flag)
+	RegW $37,WReg,Const-1
+	.endmacro
+  .macro RLRB BReg
+	RegBW $27,BReg
+	.endmacro
+
+;  .macro ?? ; Memory mapping?
+;	.byte $2E
+;	.endmacro
+;  .macro ?? ; DMA?
+;	.byte $2F
+;	.endmacro
+
+  .macro INXC		; Increment XW register
+	.byte $3E
+	.endmacro
+  .macro DCX		; Decrement XW register
+	.byte $3F
+	.endmacro
+
+  .macro ADD DestReg,SrcReg ; Add word Src to Dest
+	.byte $50,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro ADDB DestReg,SrcReg ; Add byte Src to Dest
+	.byte $40,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro AABB		; BL+=AL
+	.byte $48
+	.endmacro
+  .macro AAB		; BW+=AW
+	.byte $58
+	.endmacro
+
+  .macro SUB DestReg,SrcReg ; Subtract byte Src to Dest
+	.byte $51,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro SUBB DestReg,SrcReg ; Subtract byte Src to Dest
+	.byte $41,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro SABB		; BL=AL-BL
+	.byte $49
+	.endmacro
+  .macro SAB		; BW=AW-BW
+	.byte $59
+	.endmacro
+
+  .macro ANDC DestReg,SrcReg ; AND word Src to Dest
+	.byte $52,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro ANDB DestReg,SrcReg ; AND byte Src to Dest
+	.byte $42,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro NABB		; BL&=AL
+	.byte $4A
+	.endmacro
+  .macro NAB		; BW&=AW
+	.byte $5A
+	.endmacro
+
+  .macro ORI DestReg,SrcReg ; OR word Src to Dest
+	.byte $53,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro ORIB DestReg,SrcReg ; OR byte Src to Dest
+	.byte $43,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+
+  .macro ORE DestReg,SrcReg ; XOR word Src to Dest
+	.byte $54,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro OREB DestReg,SrcReg ; XOR byte Src to Dest
+	.byte $44,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+
+  .macro XFR DestReg,SrcReg ; Copy Src register into Dest register
+	.byte $55,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+  .macro XFRB DestReg,SrcReg ; Copy byte of Src register into byte of Dest register
+	.byte $45,((SrcReg&$f)<<4)+(DestReg&$f)
+	.endmacro
+
+;  .macro ??
+;	.byte $46
+;	.endmacro
+
+;  .macro ?? ; Execute micro code?
+;	.byte $47
+;	.endmacro
+
+
+  .macro XAXB	; XL=AL  ???
+	.byte $4B
+	.endmacro
+  .macro XAX	; XW=AW
+	.byte $5B
+	.endmacro
+  .macro XAYB	; YL=AL
+	.byte $4C
+	.endmacro
+  .macro XAY	; YW=AW
+	.byte $5C
+	.endmacro
+  .macro XABB	; BL=AL
+	.byte $4D
+	.endmacro
+  .macro XAB	; BW=AW
+	.byte $5D
+	.endmacro
+  .macro XAZB	; ZL=AL
+	.byte $4E
+	.endmacro
+  .macro XAZ	; ZW=AW
+	.byte $5E
+	.endmacro
+  .macro XASB	; SL=AL
+	.byte $4F
+	.endmacro
+  .macro XAS	; SW=AW
+	.byte $5F
+	.endmacro
+
+  .macro PUSH BeginReg,RegCount
+	.byte $7e,(BeginReg<<4)+((RegCount-1)&$f)
+	.endmacro
+  .macro POP BeginReg,RegCount
+	.byte $7f,(BeginReg<<4)+((RegCount-1)&$f)
+	.endmacro
+
+;  .macro ??	; 56	0101 0110	??			
+
+;  .macro ??	; 57	0101 0111	??			Execute micro code?
+
+
+  .macro LDABL Lit ; Load literal address into AL register
+	.byte $80,Lit
+	.endmacro
+  .macro LDAL Lit ; Load literal address into full word of AW register
+	.byte $90
+	.dbyt Lit
+	.endmacro
+  .macro LDABD Direct ; Load direct address into AL register
+	.byte $81
+	.dbyt Direct
+	.endmacro
+  .macro LDAD Direct ; Load direct address into full word of AW register
+	.byte $91
+	.dbyt Direct
+	.endmacro
+  .macro LDABI Indirect ; Load indirect address into AL register
+	.byte $82
+	.dbyt Indirect
+	.endmacro
+  .macro LDAI Indirect ; Load indirect address into full word of AW register
+	.byte $92
+	.dbyt Indirect
+	.endmacro
+  .macro LDABR Rel ; Load direct Program Counter offset by N address into AL register
+	BRel $83,Rel
+	.endmacro
+  .macro LDAR Rel ; Load direct Program Counter offset by N address into full word of AW register
+	BRel $93,Rel
+	.endmacro
+  .macro LDABRI Rel ; Load indirect Program Counter offset by N address into byte of AL register
+	BRel $84,Rel
+	.endmacro
+  .macro LDARI Rel ; Load indirect Program Counter offset by N address into full word of AW register
+	BRel $94,Rel
+	.endmacro
+  .macro LDABX WReg,Mod,Offset ; Load indexed register into byte of AL register
+	.byte $85
+	ModBytes WReg,Mod,Offset
+	.endmacro
+  .macro LDAX WReg,Mod,Offset ; Load indexed register into full word of AW register
+	.byte $95
+	ModBytes WReg,Mod,Offset
+	.endmacro
+;  .macro ?? ; 86	1000 0110	??
+;  .macro ?? ; 87	1000 0111	??
+  .macro LDABA WReg ; Load byte from memory address stored in WReg into AL register
+	.byte $88+((WReg/2)&7)
+	.endmacro
+  .macro LDAA WReg ; Load byte from memory address stored in WReg into AL register
+	.byte $98+((WReg/2)&7)
+	.endmacro
+
+;  .macro ?? ; 96	1001 0110	??			
+;  .macro ?? ; 97	1001 0111	??
+			
+  .macro STABL Lit ; Store byte of AL register into literal address (Not possible?)
+	.byte $A0
+	.byte Lit
+	.endmacro
+  .macro STAL Lit ; Store word of AW register into literal address (Not possible?)
+	.byte $B0
+	.dbyt Lit
+	.endmacro	
+  .macro STABD Direct ; Store byte of AL register into direct address
+	.byte $A1
+	.dbyt Direct
+	.endmacro
+  .macro STAD Direct ; Store word of AW register into direct address
+	.byte $B1
+	.dbyt Direct
+	.endmacro	
+  .macro STABI Indirect ; Store byte of AL register into indirect address
+	.byte $A2
+	.dbyt Indirect
+	.endmacro
+  .macro STAI Indirect ; Store word of AW register into indirect address
+	.byte $B2
+	.dbyt Indirect
+	.endmacro	
+  .macro STABR Rel ; Store byte of AL register into direct Program Counter offset by N address
+	BRel $a3,Rel
+	.endmacro
+  .macro STAR Rel ; Store word of AW register into direct Program Counter offset by N address
+	BRel $b3,Rel
+	.endmacro
+  .macro STABRI Rel ; Store byte of AL register into indirect Program Counter offset by N address
+	BRel $a4,Rel
+	.endmacro
+  .macro STARI Rel ; Store word of AW register into indirect Program Counter offset by N address
+	BRel $b4,Rel
+	.endmacro
+  .macro STABX WReg,Mod,Offset ; Store byte of AL register into indexed register
+	.byte $A5
+	ModBytes WReg,Mod,Offset
+	.endmacro
+  .macro STAX WReg,Mod,Offset ; Store word of AW register into indexed register
+	.byte $B5
+	ModBytes WReg,Mod,Offset
+	.endmacro
+;  .macro ?? ; A6	1010 0110	??
+;  .macro ?? ; A7	1010 0111	??
+  .macro STABA WReg ; Store AL register to memory address stored in WReg
+	.byte $A8+((WReg/2)&7)
+	.endmacro
+  .macro STAA WReg ; Store AW register to memory address stored in WReg
+	.byte $B8+((WReg/2)&7)
+	.endmacro
+
+; .macro ?? ; B6	1011 0110	??
+; .macro ?? ; B7	1011 0111	??
+
+
+  .macro LDBBL Lit ; Load literal address into BL register
+	.byte $C0
+	.byte Lit
+	.endmacro
+  .macro LDBL Lit ; Load literal address into BW register
+	.byte $D0
+	.dbyt Lit
+	.endmacro
+  .macro LDBBD Direct ; Load direct address into BL register
+	.byte $C1
+	.dbyt Direct
+	.endmacro
+  .macro LDBD Direct ; Load direct address into BW register
+	.byte $D1
+	.dbyt Direct
+	.endmacro
+  .macro LDBBI Indirect ; Load indirect address into BL register
+	.byte $C2
+	.dbyt Indirect
+	.endmacro
+  .macro LDBI Indirect ; Load indirect address into BW register
+	.byte $D2
+	.dbyt Indirect
+	.endmacro
+  .macro LDBBR Rel ; Load direct Program Counter offset by N address into BL register
+	BRel $c3,Rel
+	.endmacro
+  .macro LDBR Rel ; Load direct Program Counter offset by N address into BW register
+	BRel $d3,Rel
+	.endmacro
+  .macro LDBBRI Rel ; Load indirect Program Counter offset by N address into BL register
+	BRel $c4,Rel
+	.endmacro
+  .macro LDBRI Rel ; Load indirect Program Counter offset by N address into BW register
+	BRel $d4,Rel
+	.endmacro
+  .macro LDBBX WReg,Mod,Offset ; Load indexed register into BL register
+	.byte $C5
+	ModBytes WReg,Mod,Offset
+	.endmacro
+  .macro LDBX WReg,Mod,Offset ; Load indexed register into BW register
+	.byte $D5
+	ModBytes WReg,Mod,Offset
+	.endmacro
+;  .macro ?? ; C6	1100 0110	??
+;  .macro ?? ; C7	1100 0111	??
+
+  .macro LDBBA WReg ; Load byte from memory address stored in WReg into BL register
+	.byte $C8+((WReg/2)&7)
+	.endmacro
+  .macro LDBA WReg ; Load word from memory address stored in WReg into BW register
+	.byte $D8+((WReg/2)&7)
+	.endmacro
+
+;  .macro ?? ; D6	1101 0110	??			
+;  .macro ?? ; D7	1101 0111	??			
+
+  .macro STBBL Lit ; Store byte of BL register into literal address (Not possible?)
+	.byte $E0
+	.byte Lit
+	.endmacro
+  .macro STBL Lit ; Store BW into literal address (Not possible?)
+	.byte $F0
+	.dbyt Lit
+	.endmacro
+  .macro STBBD Direct ; Store BL into direct address
+	.byte $E1
+	.dbyt Direct
+	.endmacro
+  .macro STBD Direct ; Store BW into direct address
+	.byte $F1
+	.dbyt Direct
+	.endmacro
+  .macro STBBI Indirect ; Store BL into indirect address
+	.byte $E2
+	.dbyt Indirect
+	.endmacro
+  .macro STBI Indirect ; Store BW into indirect address
+	.byte $F2
+	.dbyt Indirect
+	.endmacro
+  .macro STBBR Rel ; Store BL into direct Program Counter offset by N address
+	BRel $e3,Rel
+	.endmacro
+  .macro STBR Rel ; Store BW into direct Program Counter offset by N address
+	BRel $f3,Rel
+	.endmacro
+  .macro STBBRI Rel ; Store BL into indirect Program Counter offset by N address
+	BRel $e4,Rel
+	.endmacro
+  .macro STBRI Rel ; Store BW into indirect Program Counter offset by N address
+	BRel $f4,Rel
+	.endmacro
+  .macro STBBX WReg,Mod,Offset ; Store BL into indexed register
+	.byte $E5
+	ModBytes WReg,Mod,Offset
+	.endmacro
+  .macro STBX WReg,Mod,Offset ; Store BW into indexed register
+	.byte $F5
+	ModBytes WReg,Mod,Offset
+	.endmacro
+;  .macro ?? ; E6	1110 0110	??
+;  .macro ?? ; E7	1110 0111	??
+  .macro STBBA WReg ; Store byte from BL register to memory address stored in WReg
+	.byte $E8+((WReg/2)&7)
+	.endmacro
+  .macro STBA WReg ; Store BW to memory address stored in WReg
+	.byte $F8+((WReg/2)&7)
+	.endmacro
+
+;  .macro ?? ; F6	1111 0110	??
+;  .macro ?? ; F7	1111 0111	??
+
+
+  .macro LDXL Lit ; Load immediate into XW
+	.byte $60
+	.dbyt Lit
+	.endmacro
+  .macro LDXD Direct ;	Load direct address into XW
+	.byte $61
+	.dbyt Direct
+	.endmacro
+  .macro LDXI Indirect ; Load indirect address into XW
+	.byte $62
+	.dbyt Indirect
+	.endmacro
+  .macro LDXR Rel ; Load direct Program Counter offset by N address into XW
+	BRel $63,Rel
+	.endmacro
+  .macro LDXRI Rel ; Load indirect Program Counter offset by N address into XW
+	BRel $64,Rel
+	.endmacro
+  .macro LDXX WReg,Mod,Offset ; Load indexed mode register into XW
+	.byte $65
+	ModBytes WReg,Mod,Offset
+	.endmacro
+;  .macro ??	; 66	0110 0110	??
+;  .macro ??	; 67	0110 0111	??
+  .macro STXL Lit ; Store XW into literal address (Not possible?)
+	.byte $68
+	.dbyt Lit
+	.endmacro
+  .macro STXD Direct ; Store XW into direct address
+	.byte $69
+	.dbyt Direct
+	.endmacro
+  .macro STXI Indirect ; Store XW into indirect address
+	.byte $6A
+	.dbyt Indirect
+	.endmacro
+  .macro STXR Rel ; Store XW into direct Program Counter offset by N address
+	BRel $6b,Rel
+	.endmacro
+  .macro STXRI Rel ; Store XW into indirect Program Counter offset by N address
+	BRel $6c,Rel
+	.endmacro
+  .macro STXX WReg,Mod,Offset ; Store XW into indexed register
+	.byte $6D
+	ModBytes WReg,Mod,Offset
+	.endmacro
+;  .macro ??	; 6E	0110 1110	??
+;  .macro ??	; 6F	0110 1111	??
+
+;  .macro ??	; $70
+  .macro JMPD Direct ; Jump to direct address
+	.byte $71
+	.dbyt Direct
+	.endmacro
+  .macro JMPI Indirect ; Jump to indirect address
+	.byte $72
+	.dbyt Indirect
+	.endmacro
+  .macro JMPR Rel ; Jump to direct Program Counter offset by N address
+	BRel $73,Rel
+	.endmacro
+  .macro JMPRI Rel ; Jump to indirect Program Counter offset by N address
+	BRel $74,Rel
+	.endmacro
+  .macro JMPX WReg,Mod,Offset ;Jump to indexed mode register
+	.byte $75
+	ModBytes WReg,Mod,Offset
+	.endmacro
+  .macro SYSCALL	; Call interrupt level 15
+	.byte $76
+	.endmacro
+;  .macro ?? ; 77	0111 0111	??
+
+;  .macro ?? ; 78 ??
+  .macro JSRD Direct ; Jump to subroutine at direct address
+	.byte $79
+	.dbyt Direct
+	.endmacro
+  .macro JSRI Indirect ; Jump to subroutine at indirect address
+	.byte $7A
+	.dbyt Indirect
+	.endmacro
+  .macro JSRR Rel ; Jump to subroutine at Program Counter offset by N address
+	BRel $7b,Rel
+	.endmacro
+  .macro JSRRI Rel ; Jump to subroutine at indirect Program Counter offset by N address
+	BRel $7c,Rel
+	.endmacro
+  .macro JSRX WReg,Mod,Offset ; Jump to subroutine at indexed mode register
+	.byte $7D
+	ModBytes WReg,Mod,Offset
+	.endmacro
+
+  .macro MEMCPY
+	.byte $f7
+	.endmacro
+
