@@ -182,6 +182,7 @@ VRNum:	.res 2	;+2E:	may contain the location of an editing cursor, or other file
 VHld:	.res 2	;+30:	holds the address of the latest char of text during numeric output conversion.
 VLineComment: .res 1	; ignore remainder of line
 
+
 VFPtr:	.res 2	;	Floating-point stack ptr
 VFpLo:	.res 2	;	"                " lo limit
 VFpHi:	.res 2	;	"                " hi limit
@@ -368,7 +369,7 @@ Rot:	LDAX ZW,ModNBRB,4	; Y=n1
 	RSR			; return
 
 
-	.if 0
+	.if 1
  FHdr '-Rot',0 ; ( n1 n2 n3 -- n3 n1 n2 )  rotate the other way
 MRot:	; small but slow
 	JSRR Rot
@@ -471,10 +472,17 @@ QDup:	LDAA ZW			; n1<>0?
 	.endif
 
 
-	.if 0
+	.if 1
  FHdr 'Pick',0 ; ( xu...x1 x0 u -- xu...x1 x0 xu )  Remove u. Copy the xu to the top of the stack.
    ; An ambiguous condition exists if there are less than u+2 items on the stack before PICK is executed.
    ; https://forth-standard.org/standard/core/PICK
+	LDAA ZW			; get u
+	INA
+	SLA
+	ADD AW,ZW
+	LDAA AW
+	STAA ZW
+	RSR
 	.endif
 
 
@@ -493,7 +501,7 @@ TwoNip:	LDBX ZW,ModBRPB,0	; pop d2.hi
 	RSR
 
 
-	.if 0
+	.if 1
  FHdr 'Tuck',0 ; ( x1 x2 -- x2 x1 x2 )
    ; Copy the first (top) stack item below the second stack item.
    ; https://forth-standard.org/standard/core/TUCK
@@ -779,7 +787,7 @@ UDiv2:	LDAA ZW
 	.dbyt INL_End
 
 
-	.if 0
+	.if 1
 
  FHdr 'LShift',0 ; ( x1 u -- x2 )  Perform a logical left shift of u bit-places on x1, giving x2.
    ; Put zeroes into the least significant bits vacated by the shift.
@@ -999,19 +1007,19 @@ True:	CLR AW,1
 	.endif
 
 
- FHdr '0>',0 ; ( n -- f )  Leave a bool n>0
-ZGt:	LDAA ZW			; test n
-	BM False0
-	BZ False0
-	JMPR True0
-
-
  FHdr '0<',0 ; ( n -- f )  Leave a bool n<0
    ; https://forth-standard.org/standard/core/Zeroless
 ZLessThan:
 	LDABA ZW		; test n
 	BM True0
-	JMPR False0
+	JMPD False0
+
+
+ FHdr '0>',0 ; ( n -- f )  Leave a bool n>0
+ZGt:	LDAA ZW			; test n
+	BM False0
+	BZ False0
+	JMPR True0
 
 
  FHdr 'D0<',0 ; ( d -- f ) f=(d<0)
@@ -1027,6 +1035,14 @@ DZLessThan:
 ZEqual:	LDAA ZW			; test n
 	BZ True0
 	JMPR False0
+
+
+ FHdr '0<>',0 ; ( n -- f )  Leave a bool n!=0
+   ; https://forth-standard.org/standard/core/Zerone
+ZNEqual:
+	LDAA ZW			; test n
+	BNZ True0
+	RSR
 
 
  FHdr 'D0=',0 ; ( d -- f ) Leave a bool d==0
@@ -1051,6 +1067,12 @@ DEqual:	LDAX ZW,ModBRPB,0	; pop d2.hi
 	SAB			; compare lo words
 	BNZ False0
 	JMPR True0
+
+
+ FHdr 'D<>',0 ; ( d1 d2 -- f )  f=(d1!=d2)  double not equal
+DNEqual:
+	JSRR DEqual
+	JMPD ZEqual
 
 
  FHdr '<>',0 ; ( x1 x2 -- flag)  https://forth-standard.org/standard/core/ne
@@ -1447,10 +1469,49 @@ SMSlashRem:
 
 	.if 0
  FHdr 'FM/Mod',0 ; ( d n1 — n2 n3 )
-   ;Divide d1 by n1, giving the floored quotient n3 and the remainder n2.
+   ; Divide d1 by n1, giving the floored quotient n3 and the remainder n2.
    ; Input and output stack arguments are signed.
    ; An ambiguous condition exists if n1 is zero or if the quotient lies outside the range of a single-cell signed integer.
    ; https://forth-standard.org/standard/core/FMDivMOD
+FMSMod:	LDAX ZW,ModBRPB,0	;pop divsior
+FMSModA: STAX SW,ModBMRB,0	;save divisor
+	LDAA ZW			; get dividend hi word
+	STAX SW,ModBMRB ,0	; save dividend sign
+	BP @3			; make dividend positive
+	JSRD DNegate
+@3:
+	LDAX SW,ModNBRB,2	; get abs(divisor)
+	BP @4
+	IVR AW,1
+@4:
+	STAX SW,ModBMRB,0
+	JSRD UMSlashMod		;unsigned divide
+
+	LDAXB SW,ModNBRB,2	;correct remainder
+	BP @6
+	LDAX ZW,ModNBRB,2
+	IVR AW,1
+	STAX ZW,ModNBRB,2
+@6:
+	LDAX SW,ModBRPB,0	;correct quotient
+	LDBA SW
+	ORE AW,BW
+	BP @5
+	sec
+	lda 2,x
+	beq @7
+	lda 1,s
+	sec
+	sbc 2,x
+	sta 2,x
+	clc
+@7:
+	lda #0
+	sbc 0,x
+	sta 0,x
+@5:
+	INR SW,2		; drop divisor
+	RSR
 	.endif
 
 
@@ -2194,7 +2255,7 @@ POrig:	LDAL ORIG
    ; When cccc is later executed, it places the sum of its offset and the user area
    ; base address on the stack as the storage address of that particular variable.
 User:	JSRD HeaderComma	; compile word header
-	JSRD LdaComma		; compile "ldal n"
+	JSRD LdaImmedComma	; compile "ldal n"
 	LDAL DoUser		; compile "jmp DoUser" & return
 	JMPD JmpCommaA
 
@@ -3072,6 +3133,12 @@ AllotCheck:
 	RSR			; return
 
 
+ FHdr 'DictTop',0 ; ( -- u )  Return top of dictionary space
+	LDAL DictTop
+	STAX ZW,ModBMRB,0
+	RSR
+
+
  FHdr 'Unused',0 ; ( -- u )  Return the space remaining in the region addressed by HERE, in address units.
    ; https://forth-standard.org/standard/core/UNUSED
 Unused:	LDAL DictTop-PadSize
@@ -3282,8 +3349,8 @@ Is:	JSRD Tick		; look up the name
 	.endif
 
 
-	.if 0
- FHdr 'Postpone',0
+	.if 1
+ FHdr 'Postpone',ha_immediate ; ( "name" -- )
    ; Interpretation:
    ;   Interpretation semantics for this word are undefined.
    ; Compilation:
@@ -3292,7 +3359,19 @@ Is:	JSRD Tick		; look up the name
    ;   Append the compilation semantics of name to the current definition.
    ;   An ambiguous condition exists if name is not found.
    ; https://forth-standard.org/standard/core/POSTPONE
-	JSRD Abort ;???
+Postpone:
+	JSRD TickNew		;find the word
+	LDAA ZW			;get xt (aka nt)
+	LDABX AW,ModNBRB,$fd	;get flags
+	.assert ha_immediate=$40, error, "code assumption"
+	SLAB
+	BM CompileComma		; imemdiate, so do normal compile
+
+				; not immediate, so do deferred compilation
+	JSRD LdaImmedComma	; ' "name"
+	LDAL CompileCommaA	; COMPILE,
+	JMPD JsrCommaA
+
 	.endif
 
 
@@ -3331,6 +3410,7 @@ CompileComma:
 	LDAX ZW,ModBRPB,0	; pop addr from param stack
 CompileCommaA: ; nfa (name field addr, also code addr) in A
 	LDBBX AW,ModNBRB,$fd	; get flag & length byte
+	.assert ha_inline=$80, error, "ha_inline assumption"
 	BP JsrCommaA		; not ha_inline, do JSR
 	XAY			; copy inline bytes until marker
 @11:	LDAA YW
@@ -3394,11 +3474,11 @@ CCommaA: LDBD VDP		; store
 LdbaComma: ; ( d -- )  compile ldb # & lda #
 	LDABL $d0		; LDBL n	do hi word
 	JSRR LdComma
-	JMPR LdaComma		;		do lo word
+	JMPR LdaImmedComma	;		do lo word
 
-LdaCommaA: ; compile lda #
+LdaImmedCommaA: ; compile lda #
 	STAX ZW,ModBMRB,0
-LdaComma: ; compile lda #
+LdaImmedComma: ; compile lda #
 	LDABL $90		; LDAL n
 LdComma: JSRR CCommaA
 	JMPR Comma
@@ -3997,7 +4077,7 @@ Create:	JSRD HeaderComma	; compile word header
 	RSR
 
 
-; FHdr 'Header,',0 ( "name" -- )  compile a word header
+ FHdr 'Header,',0 ; ( "name" -- )  compile a word header
    ; name is next word in input buffer.
 HeaderComma:
 	JSRD DFind		; check for name redefinition
@@ -4069,17 +4149,6 @@ XorFlags:
 	OREB AL,YL
 	STABX BW,ModNBRB,$fd
 	RSR
-
-
-	.if 0
- FHdr 'Postpone',0 ; ( "xxx" — ) ???
-   ; Used in the definition of a compiling word. When the compiling word, in turn, is used in a
-   ; source definition, the execution token of xxx will be compiled into the dictionary entry so
-   ; that when the new definition is executed, xxx will be executed.
-   ;Used in a colon definition, causes the immediate word xxx to be compiled as though it were
-   ; not immediate; xxx will be executed when the definition is executed.
-	JSRD Abort ;???
-	.endif
 
 
  FHdr 'Variable',0 ; ( "name" n -- )
@@ -4598,12 +4667,16 @@ DFind:	JSRD Bl			; get next word
    ; literal.  If the word is not found after a search of CONTEXT and CURRENT,
    ; an appropriate error message is given.  Pronounced "tick". 
    ; https://forth-standard.org/standard/core/Tick
-Tick:	JSRD DFind		; get name string, search active dictionarys
+Tick:	JSRR TickNew
+	JMPD Literal		; handle addr as literal
+
+TickNew: ; ANSI style
+	JSRD DFind		; get name string, search active dictionarys
 	JSRD ZEqual		; throw exception if not found
 	CLR BW,Err_0
 	JSRD QErrY
 	INR ZW,2		; drop word flags
-	JMPD Literal		; handle addr as literal
+	RSR
 
 
  FHdr 'LFA',0 ; ( pfa -- lfa )
@@ -4726,7 +4799,7 @@ Literal:
 	RSR
 
 LitComma:
-	JSRD LdaComma		; compile "LDAL n"
+	JSRD LdaImmedComma	; compile "LDAL n"
 PushAComma:			; compile "sta (-z)" 
 	LDAL $B582
 	JMPD CommaA
@@ -5810,6 +5883,11 @@ EX4A:	STAX ZW,ModBMRB,0
 	JMPR EX4
 
 
+ FHdr 'EX8',0 ; ( d -- ) type 8 hex digits
+EX8:	JSRR EX4		; type hi word
+	JMPR EX4		; type lo word, & return
+
+
  FHdr 'Dump',0 ; ( adr len -- )  Dump memory range
    ; https://forth-standard.org/standard/tools/DUMP
 Dump:
@@ -6805,874 +6883,641 @@ Disasm1:
 
 ;---------------------------------------
 
-RegNames: .byte "AABBXXYYZZSSCCPP"
-; AW = $0
-; AH = $0
-; AL = $1
- FHdr 'AW',0 ; ( -- n )  word register
-	LDABL 0
-	JMPR PushA4
- FHdr 'AH',0 ; ( -- n )  byte register
-	LDABL 0
-	JMPR PushA4
- FHdr 'AL',0 ; ( -- n )  byte register
-	LDABL 1
-	JMPR PushA4
+;????????????????????????????????????????????????????????????
 
- FHdr 'BW',0 ; ( -- n )  word register
-	LDABL 2
-	JMPR PushA4
- FHdr 'BH',0 ; ( -- n )  byte register
-	LDABL 2
-	JMPR PushA4
- FHdr 'BL',0 ; ( -- n )  byte register
-	LDABL 3
-	JMPR PushA4
-
- FHdr 'XW',0 ; ( -- n )  word register
-	LDABL 4
-	JMPR PushA4
- FHdr 'XH',0 ; ( -- n )  byte register
-	LDABL 4
-	JMPR PushA4
- FHdr 'XL',0 ; ( -- n )  byte register
-	LDABL 5
-;	JMPR PushA4
-
-PushA4:	LDBBL 0
-	XFR AH,BL
-	STAX ZW,ModBMRB,0
-	RSR
-
- FHdr 'YW',0 ; ( -- n )  word register
-	LDABL 6
-	JMPR PushA4
- FHdr 'YH',0 ; ( -- n )  byte register
-	LDABL 6
-	JMPR PushA4
- FHdr 'YL',0 ; ( -- n )  byte register
-	LDABL 7
-	JMPR PushA4
-
- FHdr 'ZW',0 ; ( -- n )  word register
-	LDABL 8
-	JMPR PushA4
- FHdr 'ZH',0 ; ( -- n )  byte register
-	LDABL 8
-	JMPR PushA4
- FHdr 'ZL',0 ; ( -- n )  byte register
-	LDABL 9
-	JMPR PushA4
-
- FHdr 'SW',0 ; ( -- n )  word register
-	LDABL 10
-	JMPR PushA4
-
- FHdr 'CW',0 ; ( -- n )  word register
-	LDABL 12
-	JMPR PushA4
-
- FHdr 'PW',0 ; ( -- n )  word register
-	LDABL 14
-	JMPR PushA4
-
-
-; Addressing Modes
-; Instructions can be either 1-byte, 2-byte or 3-byte depending on the type of instruction.
-; The second or third byte (if present) are related to addressing, or directing the instruction as to which location in memory to act upon.
-; Addressing can be either implicit or explicit.
-; Implicit means that no addressing is specified, and that specific instruction operates on only one specific location.
-; Explicit means the programmer must state which location they will perform the operation on.
-
-; In the chart below, the addressing mode and what is expected at each nibble of each operation is shown.
-
-; HB = High Byte; MB = Mid Byte; LB = Low Byte
-
-; HN = High Nibble; LN = Low Nibble
-
-; HB_HN      	HB_LN      	MB_HN  	MB_LN  	LB_HN  	LB_LN  	Note
-; 0	Op (0-F)					Control Operations
-; 1	Op (0-F)	Displace	Displace			Branch Operations
-; 2	Op (0-7)	Source Reg.				Single Register Explicit Byte Operation
-; 2	Op (8-F)					Single Register Implicit Byte Operation
-; 3	Op (0-7)	Source Reg.				Single Register Explicit Word Operation
-; 3	Op (8-F)					Single Register Implicit Word Operation
-; 4	Op (0-7)	Source Reg.	Dest. Reg.			Double Register Explicit Byte Operation
-; 4	Op (8-F)					Double Register Implicit Byte Operation
-; 5	Op (0-7)	Source Reg.	Dest. Reg.			Double Register Explicit Word Operation
-; 5	Op (8-F)					Double Register Implicit Word Operation
-; Op (6-F)	0	Literal	Literal			Literal Memory Address Byte Operation
-; Op (6-F)	0	Literal	Literal	Literal	Literal	Literal Memory Address Word Operation
-; Op (6-F)	1	Direct	Direct	Direct	Direct	Direct Memory Address Operation
-; Op (6-F)	2	Indirect	Indirect	Indirect	Indirect	Indirect Memory Address Operation
-; Op (6-F)	3	Displace	Displace			Relative to Current Location Memory Address Operation
-; Op (6-F)	4	Displace	Displace			Indirect Relative to Current Location Memory Address Operation
-; Op (6-F)	5	Register	Modifier	Displace	Displace	Indexed Addressing (Modifier Table Below)
-; Op (6-F)	8-F					Implicit Indexing (8 - F => A - P Reg.)
-
-AMode:	.res 1
-
-AModeSet: ; remember indexed addr mode for next instruction
-	; AL=mode
-	LDBBD AMode
-	BP @AlreadySet
-	STABD AMode
-	RSB
-
-@AlreadySet:
-	JSRD PDotQuote
-	.byte 16,"Mode already set"
-	JMPD Abort
-
- FHdr "(r)",0 ; Index
-	LDABL 0
-	JMPR AModeSet
-
- FHdr "(r+)",0 ; Index returned, incremented by ^
-	LDABL 1
-	JMPR AModeSet
-
- FHdr "(-r)",0 ; Decrement and Index
-	LDABL 2
-	JMPR AModeSet
-
- FHdr "@(r)",0 ; indirect
-	LDABL 4
-	JMPR AModeSet
-
- FHdr "@(r+)",0 ; Index returned, incremented by ^
-	LDABL 5
-	JMPR AModeSet
-
- FHdr "@(-r)",0 ; Decrement and index indirect
-	LDABL 6
-	JMPR AModeSet
-
- FHdr "n(r)",0 ; Index with displacement
-	LDABL 8
-	JMPR AModeSet
-
- FHdr "n(r+)",0 ; Index with displacement; Index returned, incremented by ^
-	LDABL 9
-	JMPR AModeSet
-
- FHdr "n(-r)",0 ; Decrement and index with displacement
-	LDABL $a
-	JMPR AModeSet
-
- FHdr "@n(r)",0 ; Index with displacement indirect
-	LDABL $c
-	JMPR AModeSet
-
- FHdr "@n(r+)",0 ; Index with displacement indirect, Index returned, incremented by ^
-	LDABL $d
-	JMPR AModeSet
-
- FHdr "@n(-r)",0 ; Decrement and index with displacement indirect
-	LDABL $e
-	JMPR AModeSet
-
-  .macro ModBytes WReg,Mod,Offset
-	.if (WReg&$fff1)<>0
-	  .error "WReg must be a word register"
-	 .endif
-	.if (Mod=ModBRB) | (Mod=ModBRPB) | (Mod=ModBMRB) | (Mod=ModABRB) | (Mod=ModABRPB) | (Mod=ModABMRB)
-	  .byte (WReg<<4)|Mod
-	 .else
-	  .if (Mod=ModNBRB) | (Mod=ModNBRPB) | (Mod=ModNBMRB) | (Mod=ModANBRB) | (Mod=ModANBRPB) | (Mod=ModANBMRB)
-	    .byte (WReg<<4)|Mod,Offset ; is offset signed or unsigned???
-           .else
-	    .error "Unknown Mod"
-	   .endif
-	 .endif
+  .macro AWordR name,rtn,opcode
+	FHdr name,0
+	JSRR rtn
+	.byte opcode
+	.endmacro
+  .macro AWordD name,rtn,opcode
+	FHdr name,0
+	JSRD rtn
+	.byte opcode
 	.endmacro
 
+ FHdr 'IfL,',0 ; ( -- )  if Link (Carry) Set
+	LDABL $11
+If3:	JSRD CCommaA
+	CLA
+	JSRD CommaA
+	JMPD Here
 
-	.dbyt D_Inherent ; disassembly routine
-A_Inherent:
-	LDABA XW		; get opcode
-	JSRD CCommaA
-	LDXX SW,ModBRPB,0	; pop X
-	RSB
+ FHdr 'IfNL,',0 ; ( -- )  if Link (Carry) clear
+	LDABL $10
+	JMPR If3
 
+ FHdr 'IfF,',0 ; ( -- )  if Fault Set
+	LDABL $13
+	JMPR If3
 
- FHdr "HLT,",0 ; Wait for Interrupt (Halt)
-	JSRD A_Inherent
-	.byte $00
+ FHdr 'IfNF,',0 ; ( -- )  if Fault not Set
+	LDABL $12
+	JMPR If3
 
- FHdr "NOP,",0 ; No Operation
-	JSRD A_Inherent
-	.byte $01
+ FHdr 'IfZ,',0 ; ( -- )  if V (Z) flag clear
+	LDABL $15
+	JMPR If3
 
- FHdr "SF,",0 ; Set Fault flag
-	JSRD A_Inherent
-	.byte $02
+ FHdr 'IfNZ,',0 ; ( -- )  if V (Z) flag set
+	LDABL $14
+	JMPR If3
 
- FHdr "RF,",0 ; Reset Fault flag
-	JSRD A_Inherent
-	.byte $03
+ FHdr 'IfM,',0 ; ( -- )  if Minus flag set
+	LDABL $17
+	JMPR If3
 
- FHdr "EI,",0 ; Enable the Interrupt System (allow interrupts)
-	JSRD A_Inherent
-	.byte $04
+ FHdr 'IfP,',0 ; ( --- )  if Minus flag clear
+	LDABL $16
+	JMPR If3
 
- FHdr "DI,",0 ; Disable the Interrupt System (disable interrupts)
-	JSRD A_Inherent
-	.byte $05
+ FHdr 'IfLE,',0 ; ( -- )  if <=0
+	LDABL $18
+	JMPR If3
 
- FHdr "SL,",0 ; Set the Link (carry) Flag
-	JSRD A_Inherent
-	.byte $06
+ FHdr 'IfGT,',0 ; ( -- ) if >0
+	LDABL $19
+	JMPR If3
 
- FHdr "RL,",0 ; Reset the Link (carry) Flag
-	JSRD A_Inherent
-	.byte $07
+ FHdr 'IfNS1,',0 ; ( -- )  if Sense Switch 1 clear
+	LDABL $1a
+	JMPR If3
 
- FHdr "CL,",0 ; Complement Link flag
-	JSRD A_Inherent
-	.byte $08
+ FHdr 'IfNS2,',0 ; ( -- )  if Sense Switch 2 clear
+	LDABL $1b
+	JMPR If3
 
- FHdr "RSR,",0 ; Return from subroutine
-	JSRD A_Inherent
-	.byte $09
+ FHdr 'IfNS3,',0 ; ( -- )  if Sense Switch 3 clear
+	LDABL $1c
+	JMPR If3
 
- FHdr "RI,",0 ; Return from interrupt
-	JSRD A_Inherent
-	.byte $0A
+ FHdr 'IfNS4,',0 ; ( -- )  if Sense Switch 4 clear
+	LDABL $1d
+	JMPR If3
 
- FHdr "RIM,",0 ; Return from Interrupt Modified
-	JSRD A_Inherent
-	.byte $0B
-
- FHdr "ELO,",0 ; Enable Link Out - teletype_tx=Link
-	JSRD A_Inherent
-	.byte $0C
-
- FHdr "PCX,",0 ; Transfer PC to X - X=address of next instruction
-	JSRD A_Inherent
-	.byte $0D
-
- FHdr "DLY,",0 ; Delay 4.55 ms - for TTY bit timing
-	JSRD A_Inherent
-	.byte $0E
-
- FHdr 'RSYS,',0 ; Return from Syscall
-	JSRD A_Inherent
-	.byte $0F
-
-	.dbyt D_Relative ; disassembly routine
-A_Relative: ; ( adr -- ) do instruction with relative addressing
-	LDABA XW		; get opcode
-	JSRD CCommaA		; store opcode
-	INR BW
-	LDAAX ZW,ModBRPB,0	; pop adr
-	SUB AW,BW		; calc displacement
-	LDBL $80		; < $80
-	SAB
-	BL @OK
-	LDBL $FF80		; > $FF80
-	SAB
+ FHdr 'Then,',0
+ThenC:	LDAX ZW,ModBRPB,0	; pop addr
+	XAY
+	LDBD VDP
+	SUB AW,BW
+	LDBL $80
 	BNL @Err
-@OK:	JMPD CCommAA
+	STABX YW,ModNBRB,$ff
+	RSR
+@Err:	JSRD PDotQuote
+	.byte 12,"out of range"
+	JMPD Abort
 
-@Err:	LDBL ERR_OutOfRange	; error
-	JSRD ErrorY	
-
-
- FHdr "BL,",0  ; ( adr -- ) Branch if Link (Carry) Set
-	JSRD A_Relative
-	.byte $10
-
- FHdr "BNL,",0 ; ( adr -- ) Branch if Link (Carry) not Set
-	JSRD A_Relative
-	.byte $11
-
- FHdr "BF,",0 ; ( adr -- ) Branch if Fault Set
-	JSRD A_Relative
-	.byte $12
-
- FHdr "BNF,",0 ; ( adr -- ) Branch if Fault not Set
-	JSRD A_Relative
-	.byte $13
-
- FHdr "BZ,",0 ; ( adr -- ) Branch if V (Z) flag set
-	JSRD A_Relative
-	.byte $14
-
- FHdr "BNZ,",0 ; ( adr -- ) Branch if V (Z) flag clear
-	JSRD A_Relative
-	.byte $15
-
- FHdr "BM,",0 ; ( adr -- ) Branch if Minus flag set
-	JSRD A_Relative
-	.byte $16
-
- FHdr "BP,",0 ; ( adr -- ) Branch on Positive (Minus flag clear)
-	JSRD A_Relative
-	.byte $17
-
- FHdr "BGZ,",0 ; ( adr -- ) Branch if Greater Than 0 (!V && !Minus)
-	JSRD A_Relative
-	.byte $18
-
- FHdr "BLE,",0 ; ( adr -- ) Branch if Less Than or Equal to 0 (V | Minus)
-	JSRD A_Relative
-	.byte $19
-
- FHdr "BS1,",0 ; ( adr -- ) Branch if Sense Switch 1 Set
-	JSRD A_Relative
-	.byte $1a
-
- FHdr "BS2,",0 ; ( adr -- ) Branch if Sense Switch 2 Set
-	JSRD A_Relative
-	.byte $1b
-
- FHdr "BS3,",0 ; ( adr -- ) Branch if Sense Switch 3 Set
-	JSRD A_Relative
-	.byte $1c
-
- FHdr "BS4,",0 ; ( adr -- ) Branch if Sense Switch 4 Set
-	JSRD A_Relative
-	.byte $1d
-
-; FHdr "BTM",0 ; ( adr -- ) Branch on TTY Mark (Changed for CPU6?)
-;	JSRD A_Relative
-;	.byte $1e
-
- FHdr "RSYS,",0 ; ( adr -- ) Branch on Even Parity (Changed for CPU6?)
-	JSRD A_Relative
-	.byte $1f
-
-
-	.dbyt Abort ;???  ; disassembly routine
-A_RegW: ; ( Reg -- )
-	LDABA XW		; get opcode
+ FHdr 'Else,',0
+	JSRR ThenC
+	LDABL $73	; JMPR n
 	JSRD CCommaA
-	LDAX ZW,ModBRPB,0	; get Reg
-	; test for valid word register?
-	SLA
-	SLA
-	SLA
-	SLA
-	JMPD CCommaA
-
-	.dbyt Abort ;???  ; disassembly routine
-A_RegB:	JMPR A_RegW
-
- FHdr "INR,",0 ; ( n WReg -- ) increment register word
-	JSRD RegWV
-	.byte $30
-
- FHdr "INRB,",0 ; ( BReg -- ) increment byte register
-	JSRD RegB
-	.byte $20
-
- FHdr "INAB,",0 ; ( -- ) Increment AL register
-	JSR M_Inherent
-	.byte $28
-
- FHdr "INA,",0 ; ( -- ) Increment AW register
-	JSR M_Inherent
-	.byte $38
-
- FHdr "DCR,",0 ; ( n WReg -- ) decrement register word
-	JSR RegWV
-	.byte $31
-
- FHdr "DCRB,",0 ; ( BReg -- ) decrement byte register
-	JSRD RegB
-	.byte $21
-
- FHdr "DCAB,",0 ; ( -- ) Decrement AL register
-	JSRD A_Inherent
-	.byte $29
-
- FHdr "DCA,",0 ; ( -- ) Decrement AW register
-	JSRD A_Inherent
-	.byte $39
-
- FHdr "CLR,",0 ; ( n WReg -- ) clear register word
-	JSRD RegWV
-	.byte $32
-
- FHdr "CLRB,",0 ; ( BReg -- ) clear byte register
-	JSRD RegB
-	.byte $22
-
- FHdr "CLAB,",0 ; ( -- ) Clear AL register
-	JSRD A_Inherent
-	.byte $2A
-
- FHdr "CLA,",0 ; ( -- ) Clear AW register
-	JSRD A_Inherent
-	.byte $3A
-
- FHdr "IVR,",0 ( n WReg -- ) invert register word
-	JSRD RegWV
-	.byte $33
-
- FHdr "IVRB,",0 ( BReg -- ) invert register byte
-	JSRD RegB
-	.byte $23
-
- FHdr "IVAB,",0 ; ( -- ) Invert AL register
-	JSRD A_Inherent
-	.byte $2B
-
- FHdr "IVA,",0 ; ( -- ) Invert AW register
-	JSRD A_Inherent
-	.byte $3B
-
- FHdr "SRR,",0 ; ( n WReg -- ) shift register right (sign extend)
-	JSRD RegWVp1
-	.byte $34
-
- FHdr "SRRB,",0 ; ( BReg -- ) shift register byte right (sign extend)
-	JSRD RegB
-	.byte $24
-
- FHdr "SRAB,",0 ; ( -- ) Shift AL register right (sign extend)
-	JSRD A_Inherent
-	.byte $2C
-
- FHdr "SRA,",0 ; ( -- ) Shift AW register right (sign extend)
-	JSRD A_Inherent
-	.byte $3C
-
- FHdr "SLR,",0 ; ( n WReg -- ) shift register left (0 shifted in)
-	JSRD RegWVp1
-	.byte $35
-
- FHdr "SLRB,",0 ; ( BReg -- ) shift register byte left (0 shifted in)
-	JSRD RegBW
-	.byte $25
-
- FHdr "SLAB,",0 ; ( -- ) Shift AL register left (0 shifted in)
-	JSRD A_Inherent
-	.byte $2D
-
- FHdr "SLA,",0 ; ( -- ) Shift AW register left (0 shifted in)
-	JSRD A_Inherent
-	.byte $3D
-
- FHdr "RRR,",0 ; ( n WReg -- ) rotate register right (thru link flag)
-	JSRD RegWVp1
-	.byte $36
-
- FHdr "RRRB,",0 ; ( BReg -- ) rotate register byte right (thru link flag)
-	JSRD RegB
-	.byte $26
-
- FHdr "RLR,",0 ; ( n WReg -- ) rotate register left (thru link flag)
-	JSRD RegWVp1
-	.byte $37
-
- FHdr "RLRB,",0 ; ( BReg -- )
-	JSRD RegBW
-	.byte $27
-
-;  .macro ?? 
-;	.byte $2E ; Memory mapping?
-;	.endmacro
-;  .macro ?? 
-;	.byte $2F ; DMA?
-;	.endmacro
-
- FHdr "INX,",0 ; ( -- ) Increment XW register
-	JSRD A_Inherent
-	.byte $3E
-
- FHdr "DCX,",0 ; ( -- ) Decrement XW register
-	JSRD A_Inherent
-	.byte $3F
+	CLA
+	JSRD CommaA
+	JMPD Here
 
 
-A_RegReg: ; ( DestReg SrcReg -- ) 2 registers
-	LDAX ZW,ModBRPB,0	; pop SrcReg
-	SLA
-	SLA
-	SLA
-	SLA
-	LDBX ZW,ModBRPB,0	; pop DestReg
-	ORI BL,AL
-	JMPD CCommaA	; ((SrcReg&$f)<<4)+(DestReg&$f)
-
- FHdr "ADD,",0 ; ( DestReg SrcReg -- ) Add word Src to Dest
-	JSRD A_RegReg
-	.byte $50
- FHdr "ADDB,",0 ; ( DestReg SrcReg -- ) Add byte Src to Dest
-	JSRD A_RegReg
-	.byte $40
- FHdr "AABB,",0 ; ( -- ) BL+=AL
-	JSRD A__Inherent
-	.byte $48
- FHdr "AAB",,0 ; ( -- ) BW+=AW
-	JSRD A__Inherent
-	.byte $58
-
- FHdr "SUB,",0 ; ( DestReg SrcReg -- ) Subtract byte Src to Dest
-	JSRD A_RegReg
-	.byte $51
- FHdr "SUBB,",0 ; ( DestReg SrcReg -- ) Subtract byte Src to Dest
-	JSRD A_RegReg
-	.byte $41
- FHdr "SABB,",0 ; ( -- ) BL=AL-BL
-	JSRD A_Inherent
-	.byte $49
- FHdr "SAB,",0 ; ( -- ) BW=AW-BW
-	JSRD A_Inherent
-	.byte $59
-
- FHdr "ANDW,",0 ; ( DestReg SrcReg -- ) AND word Src to Dest
-	JSRD A_RegReg
-	.byte $52
- FHdr "ANDB,",0 ; ( DestReg SrcReg -- ) AND byte Src to Dest
-	JSRD A_egReg
-	.byte $42
- FHdr "NABB,",0 ; ( -- ) BL&=AL
-	JSRD A_Inherent
-	.byte $4A
- FHdr "NAB,",0 ; ( -- ) BW&=AW
-	JSRD A_Inherent
-	.byte $5A
-
- FHdr "ORI,",0 ; ( DestReg SrcReg -- ) OR word Src to Dest
-	JSRD A_RegReg
-	.byte $53
- FHdr "ORIB,",0 ; ( DestReg SrcReg -- ) OR byte Src to Dest
-	JSRD A_RegReg
-	.byte $43
-
- FHdr "ORE,",0 ; ( DestReg SrcReg -- ) XOR word Src to Dest
-	JSRD A_RegReg
-	.byte $54
- FHdr "OREB,",0 ; ( DestReg SrcReg -- ) XOR byte Src to Dest
-	JSRD A_RegReg
-	.byte $44  ;,((SrcReg&$f)<<4)+(DestReg&$f)
-
- FHdr "XFR,",0 ; ( DestReg SrcReg -- ) Copy Src register into Dest register
-	JSRD A_RegReg
-	.byte $55 ;,((SrcReg&$f)<<4)+(DestReg&$f)
- FHdr "XFRB,",0 ; ( DestReg SrcReg -- ) Copy byte of Src register into byte of Dest register
-	JSRD A_RegReg
-	.byte $45 ;,((SrcReg&$f)<<4)+(DestReg&$f)
-
-;  .macro ??
-;	.byte $46	; memory block ops
-
-;  .macro ?? ; string ops
-;	.byte $47
+ FHdr 'Begin,',0
+	JMPD Here
+;UntilC: ???
+; AWordR 'UntilL,'  ,UntilC,$11 ; Link (Carry) Set
+; AWordR 'UntilNL,' ,UntilC,$10 ; Link (Carry) clear
+; AWordR 'UntilF,'  ,UntilC,$13 ; Fault Set
+: AWordR 'UntilNF,' ,UntilC,$12 ; Fault not Set
+: AWodRR 'UntilZ,'  ,UntilC,$15 ; V (Z) flag clear
+: AWordR 'UntilNZ,' ,UntilC,$14 ; V (Z) flag set
+: AWordR 'UntilM,'  ,UntilC,$15 ; Minus flag set
+: AWordR 'UntilP,'  ,UntilC,$16 ; Minus flag clear
+: AWordR 'UntilLE,' ,UntilC,$18 ; <=0
+: AWordR 'UntilGT,' ,UntilC,$19 ; >0
+: AWordR 'UntilNS1,',UntilC,$1a ; Sense Switch 1 clear
+: AWordR 'UntilNS2,',UntilC,$1b ; if Sense Switch 2 clear
+: AWordR 'UntilNS3,',UntilC,$1c ; if Sense Switch 3 clear
+: AWordR 'UntilNS4,',UntilC,$1d ; if Sense Switch 4 clear
+; While??,
 
 
- FHdr "XAXB,",0 ; ( -- ) XL=AL  ???
-	JSRD A_Inherent
-	.byte $4B
- FHdr "XAX,",0 ; ( -- ) XW=AW
-	JSRD A_Inherent
-	.byte $5B
- FHdr "XAYB,",0 ; ( -- ) YL=AL
-	JSRD A_Inherent
-	.byte $4C
- FHdr "XAY,",0 ; ( -- ) YW=AW
-	JSRD A_Inherent
-	.byte $5C
- FHdr "XABB,",0 ; ( -- ) BL=AL
-	JSRD A_Inherent
-	.byte $4D
- FHdr "XAB,",0 ; ( -- ) BW=AW
-	JSRD A_Inherent
-	.byte $5D
- FHdr "XAZB,",0 ; ( -- ) ZL=AL
-	JSRD A_Inherent
-	.byte $4E
- FHdr "XAZ,",0 ; ( -- ) ZW=AW
-	JSRD A_Inherent
-	.byte $5E
- FHdr "XASB,",0 ; ( -- ) SL=AL
-	JSRD A_Inherent
-	.byte $4F
- FHdr "XAS,",0 ; ( -- ) SW=AW
-	JSRD A_Inherent
-	.byte $5F
-;  .macro ??	; 56	0101 0110	??			
-;  .macro ??	; 57	0101 0111	??			Execute micro code?
+AIsClear:
+	LDABR AMode
+	BP @EMode
+	LDABR AReg1
+	BP @EReg
+	JMPD QStack
+@EMode:	JSRD PDotQuote
+	.byte 10,"extra mode"
+	JMPD Abort
+@EReg:	JSRD PDotQuote
+	.byte 10,"extra regs"
+	JMPD Abort
 
- FHdr "LDABL,",0 ; ( n -- ) Load literal address into AL register
-	JSRD A_LitB
-	.byte $80
- FHdr "LDAL,",0 ; ( n -- ) Load literal address into full word of AW register
-	JSRD A_LitW
-	.byte $90
- FHdr "LDABD,",0 ; ( adr -- ) Load direct address into AL register
-	JSRD A_Direct
-	.byte $81
- FHdr "LDAD,",0 ; ( adr -- ) Load direct address into full word of AW register
-	JSRD A_Direct
-	.byte $91
- FHdr "LDABI,",0 ; ( adr -- ) Load indirect address into AL register
-	JSRD A_Indirect
-	.byte $82
- FHdr "LDAI,",0 ; ( adr -- ) Load indirect address into full word of AW register
-	JSRD A_Indirect
-	.byte $92
- FHdr "LDABR,",0 ; ( adr -- ) Load direct Program Counter offset by N address into AL register
-	JSRD A_Relative
-	.byte $83
- FHdr "LDAR,",0 ; ( adr -- ) Load direct Program Counter offset by N address into full word of AW register
-	JSRD A_Relative
-	.byte $93
- FHdr "LDABRI,",0 ; ( adr -- ) Load indirect Program Counter offset by N address into byte of AL register
-	JSRD A_RelativeIndirect
-	.byte $84
- FHdr "LDARI,",0 ; ( adr -- ) Load indirect Program Counter offset by N address into full word of AW register
-	JSRD A_RelativeIndirect
-	.byte $94
- FHdr "LDABX,",0 ; ( WReg Mod Offset -- ) Load indexed register into byte of AL register
-	JSRD A_IndexB
-	.byte $85
- FHdr "LDAX,",0 ; ( WReg Mod Offset -- ) Load indexed register into full word of AW register
-	JSRD A_IndexW
-	.byte $95
-;  .macro ?? ; 86	1000 0110	??
-;  .macro ?? ; 87	1000 0111	??
- FHdr "LDABA,",0 ; ( WReg -- ) Load byte from memory address stored in WReg into AL register
-	JSRD A_RegIndirect
-	.byte $88 ;+((WReg/2)&7)
- FHdr "LDAA,",0 ; ( WReg -- ) Load byte from memory address stored in WReg into AL register
-	JSRD A_RegIndirect
-	.byte $98 ;+((WReg/2)&7)
-;  .macro ?? ; 96	1001 0110	??			
-;  .macro ?? ; 97	1001 0111	??
+AClear:
+	LDABL $ff
+	STABR AMode
+	STABR AReg1
+	STABR AReg2
+	RSR
 
- FHdr "STABL,",0 ; ( n -- ) Store byte of AL register into literal address (Not possible?)
-	JSRD A_LitB
-	.byte $A0
- FHdr "STAL,",0 ; ( n -- ) Store word of AW register into literal address (Not possible?)
-	JSRD A_LitW
-	.byte $B0
- FHdr "STABD,",0 ; ( adr -- ) Store byte of AL register into direct address
-	JSRD A_Direct
-	.byte $A1
- FHdr "STAD,",0 ; ( adr -- ) Store word of AW register into direct address
-	JSRD A_Direct
-	.byte $B1
- FHdr "STABI,",0 ; ( adr -- ) Store byte of AL register into indirect address
-	JSRD A_Indirect
-	.byte $A2
- FHdr "STAI,",0 ; ( adr -- ) Store word of AW register into indirect address
-	JSRD A_Indirect
-	.byte $B2
- FHdr "STABR,",0 ; ( adr -- ) Store byte of AL register into direct Program Counter offset by N address
-	JSRD A_Relative
-	.byte $a3
- FHdr "STAR,",0 ; ( adr -- ) Store word of AW register into direct Program Counter offset by N address
-	JSRD A_Relative
-	.byte $b3
- FHdr "STABRI,",0 ; ( adr -- ) Store byte of AL register into indirect Program Counter offset by N address
-	JSRD A_RelativeIndirect
-	.byte $a4
- FHdr "STARI,",0 ; ( adr -- ) Store word of AW register into indirect Program Counter offset by N address
-	JSRD A_RelativeIndirect
-	.byte $b4
- FHdr "STABX,",0 ; ( WReg Mod Offset -- ) Store byte of AL register into indexed register
-	JSRD A_Index
-	.byte $A5
- FHdr "STAX,",0 ; ( WReg Mod Offset -- ) Store word of AW register into indexed register
-	JSRD A_Index
-	.byte $B5
-;  .macro ?? ; A6	1010 0110	??
-;  .macro ?? ; A7	1010 0111	??
- FHdr "STABA,",0 ; ( WReg -- ) Store AL register to memory address stored in WReg
-	JSRD A_RegA
-	.byte $A8 ;+((WReg/2)&7)
- FHdr "STAA,",0 ; ( WReg -- ) Store AW register to memory address stored in WReg
-	JSRD A_RegA
-	.byte $B8 ;+((WReg/2)&7)
-; .macro ?? ; B6	1011 0110	??
-; .macro ?? ; B7	1011 0111	??
+AMode:	.byte $ff	; indexed addressing mode
 
- FHdr "LDBBL,",0 ; ( n -- ) Load literal address into BL register
-	JSRD A_LitB
-	.byte $C0
- FHdr "LDBL,",0 ; ( n -- ) Load literal address into BW register
-	JSRD A_LitW
-	.byte $D0
- FHdr "LDBBD,",0 ; ( adr -- ) Load direct address into BL register
-	JSRD A_Direct
-	.byte $C1
- FHdr "LDBD,",0 ; ( adr -- ) Load direct address into BW register
-	JSRD A_Direct
-	.byte $D1
- FHdr "LDBBI,",0 ; ( adr -- ) Load indirect address into BL register
-	JSRD A_Indirect
-	.byte $C2
- FHdr "LDBI,",0 ; ( adr -- ) Load indirect address into BW register
-	JSRD A_Indirect
-	.byte $D2
- FHdr "LDBBR,",0 ; ( adr -- ) Load direct Program Counter offset by N address into BL register
-	JSRD A_Relative
-	.byte $c3
- FHdr "LDBR,",0 ; ( adr -- ) Load direct Program Counter offset by N address into BW register
-	JSRD A_Relative
-	.byte $d3
- FHdr "LDBBRI,",0 ; ( adr -- ) Load indirect Program Counter offset by N address into BL register
-	JSRD A_RelativeIndirect
-	.byte $c4
- FHdr "LDBRI,",0 ; ( adr -- ) Load indirect Program Counter offset by N address into BW register
-	JSRD A_RelativeIndirect
-	.byte $d4
- FHdr "LDBBX,",0 ; ( WReg Mod Offset -- ) Load indexed register into BL register
-	JSRD A_IndexB
-	.byte $C5
- FHdr "LDBX,",0 ( WReg Mod Offset ) Load indexed register into BW register
-	JSRD A_IndexW
-	.byte $D5
-;  .macro ?? ; C6	1100 0110	??
-;  .macro ?? ; C7	1100 0111	??
+AModeSet: ; remember indexed addr mode for next instruction
+	LDABR AMode	;empty?
+	BP @20
+	LDABA XW
+	LDXX SW,ModBRPB,0
+	STABR AMode
+	RSR
 
- FHdr "LDBBA,",0 ; ( WReg -- ) Load byte from memory address stored in WReg into BL register
-	JSRD A_RegA
-	.byte $C8 ;+((WReg/2)&7)
- FHdr "LDBA,",0 ; ( WReg -- ) Load word from memory address stored in WReg into BW register
-	JSRD A_RegA
-	.byte $D8 ;+((WReg/2)&7)
-;  .macro ?? ; D6	1101 0110	??			
-;  .macro ?? ; D7	1101 0111	??			
+@20:	JSRD PDotQuote
+	.byte 10,"extra mode"
+	JMPD Abort
 
- FHdr "STBBL,",0 ; ( n -- ) Store byte of BL register into literal address (Not possible?)
-	JSRD A_LitB
-	.byte $E0
- FHdr "STBL,",0 ; ( n -- ) Store BW into literal address (Not possible?)
-	JSRD A_LitW
-	.byte $F0
- FHdr "STBBD,",0 ; ( adr -- ) Store BL into direct address
-	JSRD A_Direct
-	.byte $E1
- FHdr "STBD,",0 ; ( adr -- ) Store BW into direct address
-	JSRD A_Direct
-	.byte $F1
- FHdr "STBBI,",0 ; ( adr -- ) Store BL into indirect address
-	JSRD A_Indirect
-	.byte $E2
- FHdr "STBI,",0 ; ( adr -- ) Store BW into indirect address
-	JSRD A_Indirect
-	.byte $F2
- FHdr "STBBR,",0 ; ( adr -- ) Store BL into direct Program Counter offset by N address
-	JSRD A_Relative
-	.byte $e3
- FHdr "STBR,",0 ; ( adr -- ) Store BW into direct Program Counter offset by N address
-	JSRD A_Relative
-	.byte $f3
- FHdr "STBBRI,",0 ; ( adr -- ) Store BL into indirect Program Counter offset by N address
-	JSRD A_RelativeIndirect
-	.byte $e4
- FHdr "STBRI,",0 ; ( adr -- ) Store BW into indirect Program Counter offset by N address
-	JSRD A_RelativeIndirect
-	.byte $f4
- FHdr "STBBX,",0 ; ( WReg Mod Offset -- ) Store BL into indexed register
-	JSRD A_Index
-	.byte $E5
-;	ModBytes WReg,Mod,Offset
- FHdr "STBX,",0 ; ( WReg Mod Offset -- ) ; Store BW into indexed register
-	JSRD A_Index
-	.byte $F5
-;  .macro ?? ; E6	1110 0110	??
-;  .macro ?? ; E7	1110 0111	??
- FHdr "STBBA,",0 ; ( WReg -- ) Store byte from BL register to memory address stored in WReg
+ AWordR '(r)'   ,AModeSet,$0
+ AWordR '(r+)'  ,AModeSet,$1
+ AWordR '(-r)'  ,AModeSet,$2
+ AWordR '@(r)'  ,AModeSet,$4
+ AWordR '@(r+)' ,AModeSet,$5
+ AWordR '@(-r)' ,AModeSet,$6
+ AWordR 'n(r)'  ,AModeSet,$8
+ AWordR 'n(r+)' ,AModeSet,$9
+ AWordR 'n(-r)' ,AModeSet,$A
+ AWordR '@n(r)' ,AModeSet,$C
+ AWordR '@n(r+)',AModeSet,$D
+ AWordR '@n(-r)',AModeSet,$E
+
+AReg1:	.byte $ff	; latest reg
+AReg2:	.byte $ff	; 2nd reg
+
+ARegPop:
+	LDABR AReg1
+	BM @Err
+	LDBBR AReg2
+	STBBR AReg1
+	LDBBL $ff
+	STBBR AReg2
+	RSR
+@Err:	JSRD PDotQuote
+	.byte $11,"missing reg"
+	JMPD Abort
+ARegSet:
+	LDBBR AReg2
+	BP @Err
+	LDBBR AReg1
+	STBBR AReg2
+	LDABA XW
+	STABR AReg1
+	LDXX SW,ModBRPB,0
+	RSR
+@Err:	JSRD PDotQuote
+	.byte 13,"too many regs"
+	JMPD Abort
+
+; Register names
+ AWordR 'AW',ARegSet,$30
+ AWordR 'AH',ARegSet,$20
+ AWordR 'AL',ARegSet,$21
+ AWordR 'BW',ARegSet,$32
+ AWordR 'BH',ARegSet,$22
+ AWordR 'BL',ARegSet,$23
+ AWordR 'XW',ARegSet,$34
+ AWordR 'XH',ARegSet,$24
+ AWordR 'XL',ARegSet,$25
+ AWordR 'YW',ARegSet,$36
+ AWordR 'YH',ARegSet,$26
+ AWordR 'YL',ARegSet,$27
+ AWordR 'ZW',ARegSet,$38
+ AWordR 'ZH',ARegSet,$28
+ AWordR 'ZL',ARegSet,$29
+ AWordR 'SW',ARegSet,$3a
+ AWordR 'CW',ARegSet,$3c
+ AWordR 'PW',ARegSet,$3e
+
+
+A_Inherent: ; do instruction with no operands
+;	LDAL 0		; disassembly routine
+	LDABA XW	; compile opcode
+	JSRD CCommaA
+	LDXX SW,ModBRPB,0
+	JMPD AIsClear
+
+ AWordR 'HLT,',A_Inherent,$00
+ AWordR 'NOP,',A_Inherent,$01
+ AWordR 'SF,',A_Inherent,$02
+ AWordR 'RF,',A_Inherent,$03
+ AWordR 'EI,',A_Inherent,$04
+ AWordR 'DI,',A_Inherent,$05
+ AWordR 'SL,',A_Inherent,$06
+ AWordR 'RL,',A_Inherent,$07
+ AWordR 'CL,',A_Inherent,$08
+ AWordR 'RSR,',A_Inherent,$09
+ AWordR 'RI,',A_Inherent,$0A
+ AWordR 'RIM,',A_Inherent,$0B
+; AWordR 'ELO,',A_Inherent,$0C
+ AWordR 'PCX,',A_Inherent,$0D
+ AWordR 'DLY,',A_Inherent,$0E
+ AWordR 'RSYS,',A_Inherent,$0F
+
+ AWordR 'INAB,',A_Inherent,$28
+ AWordR 'DCAB,',A_Inherent,$29
+ AWordR 'CLAB,',A_Inherent,$2a
+ AWordR 'IVAB,',A_Inherent,$2b
+ AWordR 'SRAB,',A_Inherent,$2c
+ AWordR 'SLAB,',A_Inherent,$2d
+ AWordR 'INA,',A_Inherent,$38
+ AWordR 'DCA,',A_Inherent,$39
+ AWordR 'CLA,',A_Inherent,$3a
+ AWordR 'IVA,',A_Inherent,$3b
+ AWordR 'SRA,',A_Inherent,$3c
+ AWordR 'SLA,',A_Inherent,$3d
+ AWordR 'INX,',A_Inherent,$3e
+ AWordR 'DCX,',A_Inherent,$3f
+
+ AWordR 'AABB,',A_Inherent,$48
+ AWordR 'SABB,',A_Inherent,$49
+ AWordR 'NABB,',A_Inherent,$4a
+ AWordR 'XAXB,',A_Inherent,$4b
+ AWordR 'XAYB,',A_Inherent,$4c
+ AWordR 'XABB,',A_Inherent,$4d
+ AWordR 'XAZB,',A_Inherent,$4e
+ AWordR 'XASB,',A_Inherent,$4f
+
+ AWordR 'AAB,',A_Inherent,$58
+ AWordR 'SAB,',A_Inherent,$59
+ AWordR 'NAB,',A_Inherent,$5a
+ AWordR 'XAX,',A_Inherent,$5b
+ AWordR 'XAY,',A_Inherent,$5c
+ AWordR 'XAB,',A_Inherent,$5d
+ AWordR 'XAZ,',A_Inherent,$5e
+ AWordR 'XAS,',A_Inherent,$5f
+
+ AWordD 'SYSCALL,',A_Inherent,$76
+
+A_Rel: ; ( adr -- ) \ do instruction with relative addressing
+  ;	LDAL 0		; disassembly routine
+	LDAA XW		;compile opcode
+	JSRD CCommaA
+	LDXX SW,ModBRPB,0
+	LDAX ZW,ModBRPB,0	; pop addr
+	LDBD VDP		; calc displacement
+	INR BW,1
+	SAB
+	XFR AW,BW		; check range
+	SLA BW,8
+	SRA BW,8
+	SAB
+	BNZ @Err
+	JSRD CCommaA		; compile displacement
+	JMPD AIsClear
+
+@Err:	JSRD AClear
+	LDBL ERR_OutOfRange
+	JMPD ErrorY	
+
+ AWordR 'BL,' ,A_Rel,$10	; Branch if Link (Carry) Set
+ AWordR 'BNL,',A_Rel,$11	; Branch if Link (Carry) not Set
+ AWordR 'BF,' ,A_Rel,$12	; Branch if Fault Set
+ AWordR 'BNF,',A_Rel,$13	; Branch if Fault not Set
+ AWordR 'BZ ,',A_Rel,$14	; Branch if V (Z) flag set
+ AWordR 'BNZ,',A_Rel,$15	; Branch if V (Z) flag clear
+ AWordR 'BM,' ,A_Rel,$16	; Branch if Minus flag set
+ AWordR 'BP,' ,A_Rel,$17	; Branch on Positive (Minus flag clear)
+ AWordR 'BGZ,',A_Rel,$18	; Branch if > 0 (!V && !Minus)
+ AWordR 'BLE,',A_Rel,$19	; Branch if <= to 0 (V | Minus)
+ AWordR 'BS1,',A_Rel,$1a	; Branch if Sense Switch 1 Set
+ AWordR 'BS2,',A_Rel,$1b	; Branch if Sense Switch 2 Set
+ AWordR 'BS3,',A_Rel,$1c	; Branch if Sense Switch 3 Set
+ AWordR 'BS4,',A_Rel,$1d	; Branch if Sense Switch 4 Set
+; : BTM,  ( adr -- ) A_Rel [ $1e c, ] ;  \ Branch on TTY Mark (CPU6?)
+ AWordR 'RSYS,',A_Rel,$1f
+ AWodR 'LDABR,',A_Rel,$83
+ AWodR 'LDAR,',A_Rel,$93
+ AWordR 'STABR,',A_Rel,$a3
+ AWordR 'STAR,',A_Rel,$b3
+ AWordR 'LDBBR,',  A_Rel,$c3
+ AWordR 'LDBR,',   A_Rel,$d3
+ AWordR 'STBBR,',A_Rel,$e3
+ AWordR 'STBR,',A_Rel,$f3
+ AWordR 'LDXR,',A_Rel,$63
+ AWordR 'STXR,',A_Rel,$6b
+ AWordD 'JMPR,',A_Rel,$73
+ AWordD 'JSRR,',A_Rel,$7b
+
+
+A_RelInd: ; ( adr -- )
+  ;	LDAL 0		; disassembly routine
+	JMPR A_Rel	; compiles like A_Rel
+
+ AWordR 'LDABRI,',A_RelInd,$84
+ AWordR 'LDARI,' ,A_RelInd,$94
+ AWordR 'STABRI,',A_RelInd,$a4
+ AWordR 'STARI,' ,A_RelInd,$b4
+ AWordR 'LDBBRI,',A_RelInd,$c4
+ AWordR 'LDBRI,', A_RelInd,$d4
+ AWordR 'STBBRI,',A_RelInd,$e4
+ AWordR 'STBRI,' ,A_RelInd,$f4
+ AWordR 'LDXRI,' ,A_RelInd,$64
+ AWordR 'STXRI,' ,A_RelInd,$6c
+ AWordD 'JMPRI,' ,A_RelInd,$74
+ AWordD 'JSRRI,' ,A_RelInd,$7c
+
+
+A_RegB: ; ( -- n ) \ convert BReg to n
+	JSRD ARegPop
+	LDBL $e0
+	ADDB AL,BL
+	LDBL $10
+	SABB
+	BL @Err
+	RSR
+
+@Err:	JSRD PDotQuote
+	.byte 8,"Bad BReg"
+	JMPD Abort
+
+A_RegW: ; ( -- n ) \ convert WReg to n
+	JSRD ARegPop
+	LDBL $d0
+	ADDB AL,BL
+	LDBL $10
+	SABB
+	BL @Err
+	JMPD AIsClear
+
+@Err:	JSRD PDotQuote
+	.byte 8,"Bad WReg"
+	JMPD Abort
+
+A_RegV: ; ( n  -- )
+	SLAB			; shift reg to hi nibble
+	SLAB
+	SLAB
+	SLAB
+	STABX SW,ModBMRB,0	; save reg
+	LDAA XW			; compile opcode
+	JSRD CCommaA
+	LDAA ZW
+	LDBL $fff0		; check range
+	NAB
+	BNZ @Err
+	LDBBX SW,ModBRPB,0
+	ORIB AL,BL
+	JSRD CCommaA
+	LDXX SW,ModBRPB,0
+	JMPD AIsClear
+
+A_RegBV: ;  ( n -- )
+   ;	LDAL 0
+	JSRR A_RegB
+	JMPR A_RegV
+A_RegBVp1: ; ( n -- )
+   ;	LDAL 0
+	LDAA ZW
+	DCA
+	STAA ZW
+	JSRR A_RegB
+	JMPR A_RegV
+A_RegWV: ;   ( n -- )
+  ;	LDAL 0
+	JSRR A_RegW
+	JMPR A_RegV
+A_RegWVp1L ; ( n -- )
+  ;	LDAL 0
+	LDAA ZW
+	DCA
+	STAA ZW
+	JSRR A_RegW
+	JMPR A_RegV
+
+ AWordR 'INRB,',A_RegBV,$20
+ AWordR 'DCRB,',A_RegBV,$21
+ AWordR 'CLRB,',A_RegBV,$22
+ AWordR 'IVRB,',A_RegBV,$23
+ AWordR 'SRRB,',A_RegBVp1,$24
+ AWordR 'SLRB,',A_RegBVp1,$25
+ AWordR 'RRRB,',A_RegBVp1,$26
+ AWordR 'RLRB,',A_RegBVp1,$27
+ AWordR 'INR,',A_RegWV,$30
+ AWordR 'DCR,',A_RegWV,$31
+ AWordR 'CLR,',A_RegWV,$32
+ AWordR 'IVR,',A_RegWV,$33
+ AWordR 'SRR,',A_RegWVp1,$34
+ AWordR 'SLR,',A_RegWVp1,$35
+ AWordR 'RRR,',A_RegWVp1,$36
+ AWordR 'RLR,',A_RegWVp1,$37
+
+ AWordD 'PUSH,',A_RegBVp1,$7e
+ AWordD 'POP,',A_RegBVp1,$7f
+
+
+A_BRegReg: ; ( DestReg SrcReg -- ) \ 2 registers
+	LDAA XW		; compile opcode
+	JSRR CCommaA
+	LDXX SW,ModBRPB,0
 	JSRD A_RegB
-	.byte $E8 ;+((WReg/2)&7)
- FHdr "STBA,",0 ; ( WReg -- ) Store BW to memory address stored in WReg
+	SLAB
+	SLAB
+	SLAB
+	SLAB
+	STABX SW,ModBMRB,0
+	JSRD A_RegB
+	LDBBX SW,ModBRPB,0
+	ORIB AL,BL
+	JSRD CCommaA
+	JMPD AIsClear
+
+ AWordR 'ADDB,',A_BRegReg,$40
+ AWordR 'SUBB,',A_BRegReg,$41
+ AWordR 'ANDB,',A_BRegReg,$42
+ AWordR 'ORIB,',A_BRegReg,$43
+ AWordR 'OREB,',A_BRegReg,$44
+ AWordR 'XFRB,',A_BRegReg,$45
+
+
+A_WRegReg: ;  ( DestReg SrcReg -- ) \ 2 registers
+  ;	LDAL 0
+	LDAA XW		; copmile opcode
+	JSRD CCommaA
+	LDXX SW,ModBRPB,0
 	JSRD A_RegW
-	.byte $F8 ;+((WReg/2)&7)
-;  .macro ?? ; F6	1111 0110	??
-;  .macro ?? ; F7	1111 0111	??
+	SLAB
+	SLAB
+	SLAB
+	SLAB
+	STABX SW,ModBMRB,0
+	JSRD A_RegW
+	LDBBX SW,ModBRPB,0
+	ORI AL,BL
+	JSRD CCommaA
+	JMPD AIsClear
+
+ AWordR 'ADD,',A_WRegReg,$50
+ AWordR 'SUB,',A_WRegReg,$51
+ AWordR 'AND,',A_WRegReg,$52
+ AWordR 'ORI,',A_WRegReg,$53
+ AWordR 'ORE,',A_WRegReg,$54
+ AWordR 'XFR,',A_WRegReg,$55
 
 
- FHdr "LDXL,",0 ; ( n -- ) Load immediate into XW
-	JSRD A_LitW
-	.byte $60
- FHdr "LDXD,",0 ; ( adr -- ) Load direct address into XW
-	JSRD A_Direct
-	.byte $61
- FHdr "LDXI,",0 ; ( adr -- ) Load indirect address into XW
-	JSRD A_Indirect
-	.byte $62
- FHdr "LDXR,",0 ; ( adr -- ) Load direct Program Counter offset by N address into XW
-	JSRD A_Relative
-	.byte $63
- FHdr "LDXRI,",0 ; ( adr -- ) Load indirect Program Counter offset by N address into XW
-	JSRD A_RelativeIndirect
-	.byte $64
- FHdr "LDXX,",0 ; ( WReg Mod Offset -- ) Load indexed mode register into XW
-	JSRD A_Index
-	.byte $65
-;  .macro ??	; 66	0110 0110	??
-;  .macro ??	; 67	0110 0111	??
- FHdr "STXL,",0 ; ( n -- ) Store XW into literal address (Not possible?)
-	JSRD A_LitW
-	.byte $68
- FHdr "STXD,",0 ; ( adr -- ) Store XW into direct address
-	JSRD A_Direct
-	.byte $69
- FHdr "STXI,",0 ; ( adr -- ) Store XW into indirect address
-	JSRD A_Indirect
-	.byte $6A
- FHdr "STXR,",0 ; ( adr -- ) Store XW into direct Program Counter offset by N address
-	JSRD A_Relative
-	.byte $6b
- FHdr "STXRI,",0 ; ( adr -- ) Store XW into indirect Program Counter offset by N address
-	JSRD A_RelativeIndirect
-	.byte $6c
- FHdr "STXX,",0 ; ( WReg Mod Offset -- ) Store XW into indexed register
-	JSRD A_Index
-	.byte $6D
-;  .macro ??	; 6E	0110 1110	??
-;  .macro ??	; 6F	0110 1111	??
+A_LitB: ; ( n -- ) \ byte literal
+  ;	LDAL 0
+	LDABA XW		; compile opcode
+	JSRD CCommaA
+	LDXX SW,ModBRPB,0
+	LDABA ZW		; check operand
+	BNZ @Err
+	JSRD CComma		; compile operand
+	JMPD AIsClear
+@Err:	JSRD PDotQuote
+	.byte 25,"Byte literal out of range"
+	JMPD Abort
 
-;  .macro ??	; $70
- FHdr "JMPD,",0 ; ( adr -- ) Jump to direct address
-	JSRD A_Direct
-	.byte $71
- FHdr "JMPI,",0 ; ( adr -- ) Jump to indirect address
-	JSRD A_Indirect
-	.byte $72
- FHdr "JMPR,",0 ; ( adr -- ) Jump to direct Program Counter offset by N address
-	JSRD A_Relative
-	.byte $73
- FHdr "JMPRI,",0 ; ( adr -- ) Jump to indirect Program Counter offset by N address
-	JSRD A_RelativeIndirect
-	.byte $74
- FHdr "JMPX,",0 ; ( WReg Mod Offset -- ) Jump to indexed mode register
-	JSRD A_Index
-	.byte $75
- FHdr "SYSCALL,",0 ( -- ) Call interrupt level 15
-	JSRD A_Inherent
-	.byte $76
-;  .macro ?? ; 77	??
+ AWordR 'LDABL,',A_LitB,$80
+ AWordR 'STABL,',A_LitB,$a0
+ AWordR 'LDBBL,',  A_LitB,$c0
+ AWordR 'STBBL,',A_LitB,$E0
 
-;  .macro ?? ; 78 ??
- FHdr "JSRD,",0 ; ( adr -- ) Jump to subroutine at direct address
-	JSRD A_Direct
-	.byte $79
- FHdr "JSRI,",0 ; ( adr -- ) Jump to subroutine at indirect address
-	JSRD A_Indirect
-	.byte $7A
- FHdr "JSRR,",0 ; ( adr -- ) Jump to subroutine at Program Counter offset by N address
-	JSRD A_Relative
-	.byte $7b
- FHdr "JSRRI,",0 ; ( adr -- ) Jump to subroutine at indirect Program Counter offset by N address
-	JSRD A_RelativeIndirect
-	.byte $7c
- FHdr "JSRX,",0 ; ( WReg Mod Offset -- ) Jump to subroutine at indexed mode register
-	JSRD A_IndexB
-	.byte $7D
+A_LitW: ; ( n -- )  \ word literal
+  ;	LDAL 0
+	LDABA XW		; compile opcode
+	JSRD CCommaA
+	LDXX SW,ModBRPB,0
+	JSRD Comma		; compile operand
+	JMPD AIsClear
+ AWordR 'LDAL,',A_LitW,$90
+ AWordR 'STAL,',A_LitW,$b0
+ AWordR 'LDBL,',A_LitW,$d0
+ AWordR 'STBL,',A_LitW,$F0
+ AWordR 'LDXL,',A_LitW,$60
+ AWordR 'STXL,',A_LitW,$68
 
- FHdr "PUSH,",0 ; ( BReg n -- )  push registers
-	JSRD A_ ;???
-	.byte $7e
- FHdr "POP,",0 ; ( BReg n -- )  pop registers
-	JSRD A_ ;???
-	.byte $7f
+A_Dir: ; ( n -- )  \ direct adr
+  ;	LDAL 0
+	JMPR A_LitW
+ AWordR 'LDABD,',A_Dir,$81
+ AWordR 'LDAD,',A_Dir,$91
+ AWordR 'STABD,',A_Dir,$a1
+ AWordR 'STAD,',A_Dir,$b1
+ AWordR 'LDBBD,',  A_Dir,$c1
+ AWordR 'LDBD,',   A_Dir,$d1
+ AWordR 'STBBD,',A_Dir,$e1
+ AWordR 'STBD,', A_Dir,$f1
+ AWordR 'LDXD,',A_Dir,$61
+ AWordR 'STXD,',A_Dir,$69
+ AWordD 'JMPD,',A_Dir,$71
+ AWordD 'JSRD,',A_Dir,$79
+
+A_DirInd: ; ( n -- ) \ direct indirect
+  ;	LDAL 0
+	JMPR A_Dir
+ AWordR 'LDABI,',A_DirInd,$82
+ AWordR 'LDAI,',A_DirInd,$92
+ AWordR 'STABI,',A_DirInd,$a2
+ AWordR 'STAI,',A_DirInd,$b2
+ AWordR 'LDBBI,',  A_DirInd,$c2
+ AWordR 'LDBI,',   A_DirInd,$d2
+ AWordR 'STBBI,',A_DirInd,$e2
+ AWordR 'STBI,', A_DirInd,$f2
+ AWordR 'LDXI,',A_DirInd,$62
+ AWordR 'STXI,',A_DirInd,$6a
+ AWordD 'JMPI,',A_DirInd,$72
+ AWordD 'JSRI,',A_DirInd,$7a
+ 
+A_Index: ; ( ?? -- )
+  ;	LDAL 0
+	LDABA XW		; compile opcode
+	JSRD CCommaA
+	LDXX SW,ModBRPB,0
+	JSRD A_RegW		; get reg
+	SLAB
+	SLAB
+	SLAB
+	SLAB
+	LDBBD AMode
+	BM @Err
+	ORI AL,BL
+	LDBBL $ff
+	STBBD AMode
+	STABX SW,ModBMRB,0
+	JSRD CCommaA		; compile reg & mode
+	LDABX SW,ModBRPB,0
+	LDBBL 8			; offset byte?
+	NABB
+	BZ @18
+	JSRD CComma		;   compile offset byte
+@18:	JMPD AIsClear
+
+@Err:	JSRD PDotQuote
+	.byte "no mode"
+	JMPD Abort
+
+ AWordR 'LDABX,',A_Index,$85
+ AWordR 'LDAX,',A_Index,$95
+ AWordR 'STABX,',A_Index,$a5
+ AWordR 'STAX,',A_Index,$b5
+ AWordR 'LDBBX,',A_Index,$c5
+ AWordR 'LDBX,', A_Index,$d5
+ AWordR 'STBBX,',A_Index,$e5
+ AWordR 'STBX,',A_Index,$f5
+ AWordR 'LDXX,',A_Index,$65
+ AWordR 'STXX,',A_Index,$6d
+ AWordD 'JMPX,',A_Index,$75
+ AWordD 'JSRX,',A_Index,$7d
+
+A_RegInd: ; ( WReg -- ) \ register indirect
+  ;	LDAL 0
+	JSRD A_RegW
+	SRAB
+	LDBBA XW
+	LDXX SW,ModBRPB,0
+	ORIB AL,BL
+	JSRD CComma		; compile opcode
+	JMPD AIsClear
+
+ AWordR 'LDABA,',A_RegInd,$88
+ AWordR 'LDAA,',A_RegInd,$98
+ AWordR 'STABA,',A_RegInd,$a8
+ AWordR 'STAA,',A_RegInd,$b8
+ AWordR 'LDBBA,',A_RegInd,$c8
+ AWordR 'LDBA,',A_RegInd,$d8
+ AWordR 'STBBA,',A_RegInd,$e8
+ AWordR 'STBA,',A_RegInd,$f8
+
+
+;  $2E ; Memory mapping?
+;  $2F ; DMA?
+
+;  .macro 66
+;  .macro 67
+
+; .byte $46	; memory block ops
+; .byte $47 ; string ops
+
+;  .macro 56			
+;  .macro 57
+
+;  .macro 77
+;  .macro $70
+;  .macro 78?
+
+;  .macro 86
+;  .macro 87
+;  .macro 96			
+;  .macro 97
+;  .macro A6
+;  .macro A7
+; .macro B6
+; .macro  B7
+;  .macro C6
+;  .macro C7
+;  .macro E6
+;  .macro E7
+
+;  .macro F6
+;  .macro F7
+
+;  .macro D6			
+;  .macro D7			
+;  .macro 6E
+;  .macro 6F
 
 
  .endif ; assembler & disassembler
