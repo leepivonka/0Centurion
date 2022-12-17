@@ -1,0 +1,547 @@
+\ CPU6 assembler & disassembler
+\ https://github.com/Nakazoto/CenturionComputer/wiki/Instructions
+
+Here EX4 
+
+: A;  [ ' ; Jsr, ] SeeLatest ; immediate  \ see compiled code
+
+: AWord ( "name" "routine" "value" -- )
+  Header,  \ create word header
+  [ ' ' Jsr, ] JSr,  \ compile "jsr routine"
+  Bl Word  Here Number d>s c,  \ compile the byte
+  SeeLatest  \ show code
+  A;
+
+Variable AMode  SeeLatest \ current indexed addressing mode
+Variable AReg1 SeeLatest
+Variable AReg2 SeeLatest
+
+: AClear ( -- )
+  [ $90 c, -1 ,  \ LDAL -1
+  $b1 c, AMode ,  \ STAD AMode
+  $b1 c, AReg1 ,  \ STAD AReg1
+  $b1 c, AReg2 ,  \ STAD AReg2
+  ] A;
+AClear
+
+: AErr  
+  AClear
+  0 [ ' Error Jmp, ] A;
+: AErrRange
+  ." out of range" AErr ;
+
+: AIsClear ( -- )
+  AMode @  -1 AMode !  1+ If  ." extra mode " AErr  Then
+  AReg1 @  -1 AReg1 !  -1 AReg2 !  1+ If  ." extra reg " AErr  Then
+  ?Stack  \ check stack depth
+  A;
+
+: AModeSet ( -- ) \ remember indexed addr mode for next instruction
+  AMode @ 1+ If  ." Mode already set" Abort  Then
+  R> C@ AMode ! A;
+AWord (r)    AModeSet $0  \ return r
+AWord (r+)   AModeSet $1  \ return r, increment r
+AWord (-r)   AModeSet $2  \ decrement r, return r
+AWord @(r)   AModeSet $4  \ return (r)
+AWord @(r+)  AModeSet $5  \ return (r), increment r
+AWord @(-r)  AModeSet $6  \ decrement r, return (r)
+AWord n(r)   AModeSet $8  \ return n+r
+AWord n(r+)  AModeSet $9  \ return n+r, increment r
+AWord n(-r)  AModeSet $a  \ decrement r, return n+r
+AWord @n(r)  AModeSet $c  \ return (n+r)
+AWord @n(r+) AModeSet $d  \ return (n+r), increment r
+AWord @n(-r) AModeSet $e  \ decrement r, return (n+r)
+
+: ARegPop ( -- n ) AReg1 @  Dup 0< If ." missing reg " AErr Then
+      AReg2 @ AReg1 !  -1 AReg2 ! A;
+: ARegSet ( -- )
+  AReg2 @ 1+ If  ." too many regs " AErr Then
+  AReg1 @ AReg2 !  R> C@ AReg1 !  A;
+\ Register names
+AWord AW ARegSet $30  \ word register
+AWord AH ARegSet $20  \ byte register
+AWord AL ARegSet $21  \ byte register
+AWord BW ARegSet $32  \ word register
+AWord BH ARegSet $22  \ byte register
+AWord BL ARegSet $23  \ byte register  name collides with FORTH
+AWord XW ARegSet $34  \ word register
+AWord XH ARegSet $24  \ byte register
+AWord XL ARegSet $25  \ byte register
+AWord YW ARegSet $36  \ word register
+AWord YH ARegSet $26  \ byte register
+AWord YL ARegSet $27  \ byte register
+AWord ZW ARegSet $38  \ word register
+AWord ZH ARegSet $28  \ byte register
+AWord ZL ARegSet $29  \ byte register
+AWord SW ARegSet $3a  \ word register
+AWord CW ARegSet $3c  \ word register
+AWord PW ARegSet $3e  \ word register
+
+: AD_RegB ( n -- )  \ type byte register name
+  $F And 2*  S" AHALBHBLXHXLYHYLZHZLSHSLCHCLPHPL" Drop + 2 Type A;
+: AD_RegW ( n -- )  \ type word register name
+  $E And S" AWBWXWYWZWSWCWPW" Drop + 2 Type A;
+
+: If3    R> C@ C,  0 C,  Here A; \ common
+AWord IfL,   If3 $11  \ if Link (Carry) Set
+AWord IfNL,  If3 $10  \ if Link (Carry) clear
+AWord IfF,   If3 $13  \ if Fault Set
+AWord IfNF,  If3 $12  \ if Fault not Set
+AWord IfZ,   If3 $15  \ if V (Z) flag clear
+AWord IfNZ,  If3 $14  \ if V (Z) flag set
+AWord IfM,   If3 $17  \ if Minus flag set
+AWord IfP,   If3 $16  \ if Minus flag clear
+AWord IfLE,  If3 $18  \ if <=0
+AWord IfGT,  If3 $19  \ if >0
+AWord IfNS1, If3 $1a  \ if Sense Switch 1 clear
+AWord IfNS2, If3 $1b  \ if Sense Switch 2 clear
+AWord IfNS3, If3 $1c  \ if Sense Switch 3 clear
+AWord IfNS4, If3 $1d  \ if Sense Switch 4 clear
+: Then,
+  Here Over -  \ calc displacement 
+  Dup $80 u< 0= If  AErrRange  Then  \ check
+  Swap 1- C!  A; \ store
+: Else,
+  Then,
+  $73 c, 0 c,  Here A;  \ JMPR n
+
+: Begin,  Here A;
+: Again3
+  Here 1+ -  \ calc displacement
+    Dup $ff80 U< IF  AErrRange Then
+  C, A;
+: Again,  $73 C,  Again3 A;
+: Until3
+  R> C@ C,  \ compile opcode
+  Again3 A;
+AWord UntilL,   Until3 $11  \ Link (Carry) Set
+AWord UntilNL,  Until3 $10  \ Link (Carry) clear
+AWord UntilF,   Until3 $13  \ Fault Set
+AWord UntilNF,  Until3 $12  \ Fault not Set
+AWord UntilZ,   Until3 $15  \ V (Z) flag clear
+AWord UntilNZ,  Until3 $14  \ V (Z) flag set
+AWord UntilM,   Until3 $15  \ Minus flag set
+AWord UntilP,   Until3 $16  \ Minus flag clear
+AWord UntilLE,  Until3 $18  \ <=0
+AWord UntilGT,  Until3 $19  \ >0
+AWord UntilNS1, Until3 $1a  \ Sense Switch 1 clear
+AWord UntilNS2, Until3 $1b  \ if Sense Switch 2 clear
+AWord UntilNS3, Until3 $1c  \ if Sense Switch 3 clear
+AWord UntilNS4, Until3 $1d  \ if Sense Switch 4 clear
+\ While??,
+
+Variable APC2 SeeLatest
+: AFetch1 ( -- n )  \ unsigned
+  APC2 @ C@  APC2 1+! A;
+: AFetch1S ( -- n )  \ signed
+  AFetch1 $80 Over U< If $ff00 Or Then A;
+: AFetch2 ( -- n )
+  APC2 @ @  2 APC2 +! A;
+: AEX4 ( n -- )
+  ." $" Dup EX4  Sym A;
+
+: AD_Inherent ( -- ) \ disassemble
+  A;
+: A_Inherent ( -- ) \ do instruction with no operands
+  [ $91 c, ' AD_Inherent , ]  \ disassembly routine ptr
+  R> C@  C,  \ compile opcode
+  AIsClear  A;
+AWord ???,  A_Inherent $00  \ default for disassember
+AWord HLT,  A_Inherent $00  \ Wait for Interrupt (Halt)
+AWord NOP,  A_Inherent $01  \ No Operation
+AWord SF,   A_Inherent $02  \ Set Fault flag
+AWord RF,   A_Inherent $03  \ Reset Fault flag
+AWord EI,   A_Inherent $04  \ allow interrupts
+AWord DI,   A_Inherent $05  \ disabled interrupts
+AWord SL,   A_Inherent $06  \ Set the Link (carry) Flag
+AWord RL,   A_Inherent $07  \ Reset the Link (carry) Flag
+AWord CL,   A_Inherent $08  \ Complement Link flag
+AWord RSR,  A_Inherent $09  \ Return from subroutine
+AWord RI,   A_Inherent $0A  \ Return from interrupt
+AWord RIM,  A_Inherent $0B  \ Return from Interrupt Modified
+AWord ELO,  A_Inherent $0C  \ teletype_tx=Link
+AWord PCX,  A_Inherent $0D  \ X=address of next instr
+AWord DLY,  A_Inherent $0E  \ Delay 4.55 ms
+AWord RSYS, A_Inherent $0F  \ Return from Syscall
+AWord INAB, A_Inherent $28  \ Increment AL
+AWord DCAB, A_Inherent $29  \ Decrement AL
+AWord CLAB, A_Inherent $2a  \ Clear AL
+AWord IVAB, A_Inherent $2b  \ Invert AL
+AWord SRAB, A_Inherent $2c  \
+AWord SLAB, A_Inherent $2d  \
+AWord INA,  A_Inherent $38  \ Increment AW
+AWord DCA,  A_Inherent $39  \ Decrement AW
+AWord CLA,  A_Inherent $3a  \ Clear AW
+AWord IVA,  A_Inherent $3b  \ Invert AW
+AWord SRA,  A_Inherent $3c
+AWord SLA,  A_Inherent $3d
+AWord INX,  A_Inherent $3e  \ Increment XW
+AWord DCX,  A_Inherent $3f  \ Decrement XW
+AWord AABB, A_Inherent $48  \ BL+=AL
+AWord SABB, A_Inherent $49  \ BL=AL-BL
+AWord NABB, A_Inherent $4a  \ BL&=AL
+AWord XAXB, A_Inherent $4b  \ XL=AL
+AWord XAYB, A_Inherent $4c  \ YL=AL
+AWord XABB, A_Inherent $4d  \ BL=AL
+AWord XAZB, A_Inherent $4e  \ ZL=AL
+AWord XASB, A_Inherent $4f  \ SL=AL
+AWord AAB,  A_Inherent $58  \ BW+=AW
+AWord SAB,  A_Inherent $59  \ BW=AW-BW
+AWord NAB,  A_Inherent $5a  \ BW&=AW
+AWord XAX,  A_Inherent $5b  \ XW=AW
+AWord XAY,  A_Inherent $5c  \ YW=AW
+AWord XAB,  A_Inherent $5d  \ BW=AW
+AWord XAZ,  A_Inherent $5e  \ ZW=AW
+AWord XAS,  A_Inherent $5f  \ SW=AW
+AWord SYSCALL, A_Inherent $76  \ Call interrupt level 15
+
+: AD_Rel ( -- )  \ disassemble
+  AFetch1S APC2 @ + AEX4 A;
+: A_Rel ( adr -- ) \ do instruction with relative addressing
+  [ $91 c, ' AD_Rel , ]  \ disassembly routine ptr
+  R> C@  C,  \ compile opcode
+  Here 1+ -  \ calc displacement
+  Dup $80 + $ff00 And If  AErrRange  Then  \ check range
+    \ LDBL ERR_OutOfRange
+    \ JSRD ErrorY	
+  C,  \ compile displacement
+  AIsClear  A;
+AWord BL,    A_Rel $10  \ Branch if Link (Carry) Set
+AWord BNL,   A_Rel $11  \ Branch if Link (Carry) not Set
+AWord BF,    A_Rel $12  \ Branch if Fault Set
+AWord BNF,   A_Rel $13  \ Branch if Fault not Set
+AWord BZ,    A_Rel $14  \ Branch if V (Z) flag set
+AWord BNZ,   A_Rel $15  \ Branch if V (Z) flag clear
+AWord BM,    A_Rel $16  \ Branch if Minus flag set
+AWord BP,    A_Rel $17  \ Branch on Positive (Minus flag clear)
+AWord BGZ,   A_Rel $18  \ Branch if > 0 (!V && !Minus)
+AWord BLE,   A_Rel $19  \ Branch if <= to 0 (V | Minus)
+AWord BS1,   A_Rel $1a  \ Branch if Sense Switch 1 Set
+AWord BS2,   A_Rel $1b  \ Branch if Sense Switch 2 Set
+AWord BS3,   A_Rel $1c  \ Branch if Sense Switch 3 Set
+AWord BS4,   A_Rel $1d  \ Branch if Sense Switch 4 Set
+\ AWord BTM,  A_Rel $1e  \ Branch on TTY Mark (CPU6?)
+\ AWord RSYS, A_Rel $1f  \ Branch on Even Parity (CPU6?)
+AWord LDXR,  A_Rel $63  \ Load XW
+AWord STXR,  A_Rel $6b  \ Store XW
+AWord JMPR,  A_Rel $73  \ Jump
+AWord JSRR,  A_Rel $7b  \ Jump to subroutine
+AWord LDABR, A_Rel $83  \ Load into AL
+AWord LDAR,  A_Rel $93  \ Load into AW
+AWord STABR, A_Rel $a3  \ Store AL
+AWord STAR,  A_Rel $b3  \ Store AW
+AWord LDBBR, A_Rel $c3  \ Load into BL
+AWord LDBR,  A_Rel $d3  \ Load into BW
+AWord STBBR, A_Rel $e3  \ Store BL
+AWord STBR,  A_Rel $f3  \ Store BW
+
+: AD_RelInd ( -- )
+  ." ("  AFetch1S APC2 @ + AEX4 A;
+: A_RelInd ( adr -- )
+  [ $91 c, ' AD_RelInd , ]  \ disassembly routine ptr
+  [ $71 c, ' A_Rel , ] A;  \ compiles like A_Rel
+AWord LDXRI,  A_RelInd $64  \ Load XW
+AWord STXRI,  A_RelInd $6c  \ Store XW
+AWord JMPRI,  A_RelInd $74  \ Jump
+AWord JSRRI,  A_RelInd $7c  \ Jump to subroutine
+AWord LDABRI, A_RelInd $84  \ Load into AL
+AWord LDARI,  A_RelInd $94  \ Load into AW
+AWord STABRI, A_RelInd $a4  \ Store AL
+AWord STARI,  A_RelInd $b4  \ Store AW
+AWord LDBBRI, A_RelInd $c4  \ Load into BL
+AWord LDBRI,  A_RelInd $d4  \ Load into BW
+AWord STBBRI, A_RelInd $e4  \ Store BL
+AWord STBRI,  A_RelInd $f4  \ Store BW
+
+: A_RegB ( -- n ) \ convert BReg to n
+  ARegPop $20 -
+  Dup $10 U< 0= If  ." Bad BReg" AErr  Then  \ check reg
+  A;
+: A_RegW ( -- n ) \ convert WReg to n
+  ARegPop $30 -
+  Dup $10 U< 0= If  ." Bad WReg" AErr  Then  \ check reg
+  A;
+: A_RegV ( n reg -- )
+  R> C@ C,  \ compile opcode
+  \ Dup $10 U< 0= If  AErr  Then  \ check register
+  2* 2* 2* 2*  \ shift register to hi nibble
+  Swap
+  Dup $fff0 And If  ." value out of range" AErr  Then  \ check n range
+  + C,  \ compile 2nd byte
+  ?Stack A;
+
+: AD_RegBV ( -- )
+  AFetch1  Dup   $f And .  2/ 2/ 2/ 2/ AD_RegB A;
+: A_RegBV   ( n -- )
+  [ $91 c, ' AD_RegBV , ]  \ disassembly routine ptr
+  A_RegB  [ $71 c, ' A_RegV , ] A;
+AWord CLRB, A_RegBV   $22  \ clear byte register
+AWord IVRB, A_RegBV   $23  \ invert register byte
+
+: AD_RegBV+1 ( -- )
+  AFetch1  Dup $f And 1+ .  2/ 2/ 2/ 2/ AD_RegB A;
+: A_RegBV+1 ( n -- )
+  [ $91 c, ' AD_RegBV+1 , ]  \ disassembly routine ptr
+  1-  A_RegB  [ $71 c, ' A_RegV , ] A;
+AWord INRB, A_RegBV+1 $20  \ increment byte register
+AWord DCRB, A_RegBV+1 $21  \ decrement byte register
+AWord SRRB, A_RegBV+1 $24  \
+AWord SLRB, A_RegBV+1 $25  \
+AWord RRRB, A_RegBV+1 $26  \
+AWord RLRB, A_RegBV+1 $27  \ 
+AWord PUSH, A_RegBV+1 $7e  \ push registers
+AWord POP,  A_RegBV+1 $7f  \ pop registers
+
+: AD_RegWV ( -- )
+  AFetch1  Dup $f And .  2/ 2/ 2/ 2/ AD_RegW A;
+: A_RegWV   ( n -- )
+  [ $91 c, ' AD_RegWV , ]  \ disassembly routine ptr
+  A_RegW  [ $71 c, ' A_RegV , ] A;
+AWord CLR,  A_RegWV   $32  \ clear wreg
+AWord IVR,  A_RegWV   $33  \ invert wreg
+
+: AD_RegWV+1 ( -- )
+  AFetch1  Dup $f And 1+ .  2/ 2/ 2/ 2/ AD_RegW A;
+: A_RegWV+1 ( n -- )
+  [ $91 c, ' AD_RegWV+1 , ]  \ disassembly routine ptr
+  1-  A_RegW  [ $71 c, ' A_RegV , ] A;
+AWord INR,  A_RegWV+1 $30  \ increment wreg
+AWord DCR,  A_RegWV+1 $31  \ decrement wreg
+AWord SRR,  A_RegWV+1 $34  \
+AWord SLR,  A_RegWV+1 $35  \
+AWord RRR,  A_RegWV+1 $36  \
+AWord RLR,  A_RegWV+1 $37  \
+
+: AD_BRegReg ( -- )
+  AFetch1  Dup 2/ 2/ 2/ 2/ AD_RegB Space AD_RegB A;
+: A_BRegReg ( DestReg SrcReg -- ) \ 2 registers
+  [ $91 c, ' AD_BRegReg , ]  \ disassembly routine ptr
+  R> C@ C,  \ compile opcode
+  A_RegB 2* 2* 2* 2*  A_RegB  Or C,
+  AIsClear  A;
+AWord ADDB, A_BRegReg $40  \ Add byte Src to Dest
+AWord SUBB, A_BRegReg $41  \ Subtract byte Src to Dest
+AWord ANDB, A_BRegReg $42  \ AND byte Src to Dest
+AWord ORIB, A_BRegReg $43  \ OR byte Src to Dest
+AWord OREB, A_BRegReg $44  \ XOR byte Src to Dest
+AWord XFRB, A_BRegReg $45  \ Copy byte Src to Dest
+
+: AD_WRegReg ( -- )
+  AFetch1  Dup 2/ 2/ 2/ 2/ AD_RegW Space AD_RegW A;
+: A_WRegReg ( DestReg SrcReg -- ) \ 2 registers
+  [ $91 c, ' AD_WRegReg , ]  \ disassembly routine ptr
+  R> C@ C,  \ compile opcode
+  A_RegW 2* 2* 2* 2*  A_RegW  Or C,
+  AIsClear  A;
+AWord ADD,  A_WRegReg $50  \ Add word Src to Dest
+AWord SUB,  A_WRegReg $51  \ Subtract byte Src to Dest
+AWord AND,  A_WRegReg $52  \ AND word Src to Dest
+AWord ORI,  A_WRegReg $53  \ OR word Src to Dest
+AWord ORE,  A_WRegReg $54  \ XOR word Src to Dest
+AWord XFR,  A_WRegReg $55  \ Copy word Src to Dest
+
+: AD_LitB ( -- )
+  AFetch1 . A;
+: A_LitB ( n -- ) \ byte literal
+  [ $91 c, ' AD_LitB , ]  \ disassembly routine ptr
+  Dup $ff00 And If  ." Byte literal out of range" AErr  Then
+  R> C@ C,  \ compile opcode
+  C,  AIsClear A;  \ compile operand
+AWord LDABL, A_LitB $80  \ Load into AL
+AWord STABL, A_LitB $a0  \ Store AL
+AWord LDBBL, A_LitB $c0  \ Load into BL
+AWord STBBL, A_LitB $E0  \ Store BL
+
+: AD_LitW ( -- )
+  AFetch2  AEX4 A;
+: A_LitW ( n -- )  \ word literal
+  [ $91 c, ' AD_LitW , ]  \ disassembly routine ptr
+  R> C@ C,  \ compile opcode
+  ,  AIsClear A;  \ compile operand
+AWord LDXL, A_LitW $60  \ Load XW
+AWord STXL, A_LitW $68  \ Store XW
+AWord LDAL, A_LitW $90  \ Load into AW
+AWord STAL, A_LitW $b0  \ Store AW
+AWord LDBL, A_LitW $d0  \ Load into BW
+AWord STBL, A_LitW $F0  \ Store BW
+
+: AD_Dir ( -- )
+  AFetch2 AEX4 A;
+: A_Dir ( n -- )  \ direct adr
+  [ $91 c, ' AD_Dir , ]  \ disassembly routine ptr
+  R> C@ C,  \ compile opcode
+  ,  AIsClear  A;
+AWord LDXD,   A_Dir $61  \ Load XW
+AWord STXD,   A_Dir $69  \ Store XW
+AWord JMPD,   A_Dir $71  \ Jump
+AWord JSRD,   A_Dir $79  \ Jump to subroutine
+AWord LDABD,  A_Dir $81  \ Load into AL
+AWord LDAD,   A_Dir $91  \ Load into AW
+AWord STABD,  A_Dir $a1  \ Store AL
+AWord STAD,   A_Dir $b1  \ Store AW
+AWord LDBBD,  A_Dir $c1  \ Load into BL
+AWord LDBD,   A_Dir $d1  \ Load into BW
+AWord STBBD,  A_Dir $e1  \ Store BL
+AWord STBD,   A_Dir $f1  \ Store BW
+
+: AD_DirInd ( -- )
+  AFetch2 AEX4 A;
+: A_DirInd ( n -- ) \ direct indirect
+  [ $91 c, ' AD_DirInd , ]  \ disassembly routine ptr
+  [ $71 c, ' A_Dir , ] A;
+AWord LDXI,  A_DirInd $62  \ Load XW
+AWord STXI,  A_DirInd $6a  \ Store XW
+AWord JMPI,  A_DirInd $72  \ Jump
+AWord JSRI,  A_DirInd $7a  \ Jump to subroutine
+AWord LDABI, A_DirInd $82  \ Load into AL
+AWord LDAI,  A_DirInd $92  \ Load into AW
+AWord STABI, A_DirInd $a2  \ Store AL
+AWord STAI,  A_DirInd $b2  \ Store AW
+AWord LDBBI, A_DirInd $c2  \ Load into BL
+AWord LDBI,  A_DirInd $d2  \ Load into BW
+AWord STBBI, A_DirInd $e2  \ Store BL
+AWord STBI,  A_DirInd $f2  \ Store BW
+ 
+: AD_RegInd ( -- )
+  APC2 @ 1- C@ $7 And 2* AD_RegW A;
+: A_RegInd ( WReg -- ) \ register indirect
+  [ $91 c, ' AD_RegInd , ]  \ disassembly routine ptr
+  A_RegW 2/ R> C@ + C, A;  \ compile opcode
+AWord LDABA, A_RegInd $88  \ Load into AL
+AWord LDAA,  A_RegInd $98  \ Load into AW
+AWord STABA, A_RegInd $a8  \ Store AL
+AWord STAA,  A_RegInd $b8  \ Store AW
+AWord LDBBA, A_RegInd $c8  \ Load into BL
+AWord LDBA,  A_RegInd $d8  \ Load into BW
+AWord STBBA, A_RegInd $e8  \ Store BL
+AWord STBA,  A_RegInd $f8  \ Store BW
+
+: AD_Index ( -- )
+  AFetch1  \ index mode & reg
+  Dup 8 And If  AFetch1S .  Then  \ do offset
+  Dup u2/ u2/ u2/ u2/ AD_RegW Space  \ do register
+  Dup 4 And If  ." @"  Then
+  3 And 2* 2* S" (r) (r+)(-r)(?r)" Drop + 4 Type
+  A;
+: A_Index ( ?? -- )
+  [ $91 c, ' AD_Index , ]  \ disassembly routine ptr
+  R> C@ C,  \ compile opcode
+  A_RegW 2* 2* 2* 2*
+  AMode @  -1 AMode !
+    Dup 0< If ." no mode " AErr Then
+    Or Dup C,  \ compile mode
+    8 And If  \ offset byte?
+      C,  Then  \ compile offset byte
+  AIsClear
+  A;
+AWord LDABX, A_Index $85  \ Load into AL
+AWord LDAX,  A_Index $95  \ Load into AW
+AWord STABX, A_Index $a5  \ Store AL
+AWord STAX,  A_Index $b5  \ Store AW
+AWord LDBBX, A_Index $c5  \ Load into BL
+AWord LDBX,  A_Index $d5  \ Load into BW
+AWord STBBX, A_Index $e5  \ Store BL
+AWord STBX,  A_Index $f5  \ Store BW
+AWord LDXX,  A_Index $65  \ Load XW
+AWord STXX,  A_Index $6d  \ Store XW
+AWord JMPX,  A_Index $75  \ Jump
+AWord JSRX,  A_Index $7d  \ Jump to subroutine
+
+
+
+\  $2E ; Memory mapping?
+\  $2F ; DMA?
+
+\  .macro 66
+\  .macro 67
+
+\ .byte $46	; memory block ops
+\ .byte $47 ; string ops
+
+\  .macro 56			
+\  .macro 57
+
+\  .macro 77
+\  .macro $70
+\  .macro 78?
+
+\  .macro 86
+\  .macro 87
+\  .macro 96			
+\  .macro 97
+\  .macro A6
+\  .macro A7
+\ .macro B6
+\ .macro  B7
+\  .macro C6
+\  .macro C7
+\  .macro E6
+\  .macro E7
+
+\  .macro F6
+\  .macro F7
+
+\  .macro D6			
+\  .macro D7			
+\  .macro 6E
+\  .macro 6F
+
+
+: DisAsm1 ( adr -- adr )  \ disassemble 1 instruction
+  [ SW (-r) STXX,  \ save X
+  ] CR 9 Emit 9 Emit [  \ skip over hex part of line
+  ZW LDAA, APC2 STAD,  \ set up for fetchs
+  ] AFetch1 [ ZW (r+) LDAX,  \ get opcode
+  $77 LDBBL, BL AL ORIB, 1 BL INRB, IfZ,  \ do mask
+    $f8 LDBBL, AL BL ANDB, Then,
+  XAY,  \ Y=masked opcode
+  Current @ @ LDXL, Begin,  \ search dictionary
+    $fe XW n(r) LDXX,  \ next word
+    ' ???, LDBL, BW XW SUB, Here 17 + BZ,  \ end of list? fwd jmp!
+    3 XW n(r) LDBBX, BL YL SUBB, Dup BNZ,  \ opcode match?
+    $fc XW n(r) LDABX, ',' LDBBL, SABB, Dup BNZ,  \ name has comma?
+   Drop  \ Again,
+  1 XW n(r) LDAX, 1 AW @n(r) JSRX,  \ call operand handler
+  ] Space [ ZW (-r) STXX, ] Id. [  \ type opcode
+
+  ZW (r) LDXX,  \ point at instruction
+  XW (r) LDABX, $79 LDBBL, SABB, IfZ,
+    XW 1 n(r) LDAX,  \ get JSRD addr
+    ' ." $21 + LDBL, SAB, IfZ,
+      4 XW INR,  ZW (-r) STXX, CLA, $ff XW n(r) LDABX, ZW (-r) STAX,
+        ' Type JSRD,  Then,
+    Then,
+
+
+
+  ] 13 Emit Dup EX4 [  \ type addr
+  ZW (r) LDXX, Begin,  \ type bytes
+    ] Space [ XW (r+) LDABX, ZW (-r) STAX, ] EX2 [
+    APC2 LDBD, BW XW SUB, UntilZ, ZW (r) STXX,
+  SW (r+) LDXX,  \ restore X
+  ] A;
+
+: DisAsm ( adr -- )
+  [ 4 SW DCR,  \ alloc work area
+  23 LDABL, Begin, 2 SW n(r) STABX,
+    ZW LDAA, SW STAA,  \ save start addr
+    ] DisAsm1 [
+    SW LDAA, XAY, AW LDABA,  \ pop start addr & get opcode
+    $09 LDBBL, SABB, Here 8 + BZ,  \ stop on RSR; fwd ref!
+    2 SW n(r) LDABX, DCAB, UntilZ,
+  4 SW INR, \ drop work area
+  ] CR A;
+
+: See ( "name" -- )
+  [ ' ' Jsr, ] DisAsm Drop A;
+
+: SeeLatest ( -- ) \ dump latest word's code
+  Latest Begin 
+    DisAsm1
+    Dup Here 1- U> Until
+  Drop CR ;  SeeLatest
+
+\ : ;  [ ' ; Jsr, ] SeeLatest A; immediate  \ see compiled code
+
+Here EX4 
+
