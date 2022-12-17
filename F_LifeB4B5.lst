@@ -1,0 +1,864 @@
+
+G:\0Centurion>ee200s\release\ee200s forth.lst
+CPU6S Jul 24 2022 11:37:56
+A=4B09 B=0000 X=0000 Y=0000 Z=4881 S=0180 C=b5f6 mvfli 01711725 0200 NOP
+.g
+1747
+fig-FORTH CPU6 subroutine
+
+A=0050 B=1715 X=0E0A Y=7075 Z=7111 S=7197 C=b5f6 mVfli 092F6E09 0111 RSR
+.@f_asm.txt
+.g
+\ CPU6 assembler & disassembler OK
+\ https://github.com/Nakazoto/CenturionComputer/wiki/Instructions OK
+...
+OK
+ OK
+ OK
+
+A=0050 B=16B4 X=0E0A Y=3469 Z=7111 S=7197 C=b5f6 mVfli 092F6E09 0111 RSR
+.@f_lifeb4b.txt
+.g
+\ See http://en.wikipedia.org/wiki/Conway's_Game_of_Life OK
+\ https://github.com/Martin-H1/Forth-CS-101/blob/master/life.fth OK
+\ http://forum.6502.org/viewtopic.php?f=9&t=3706&start=75 OK
+ OK
+Decimal  \ set default number base to decimal OK
+ OK
+: Page ( -- )  \ ANSI Clear screen & leave cursor at top left.
+  $1b Emit  ." [2J"  ; OK
+  SeeLatest
+3470 90 00 1B   $001B LDAL,			$1b
+3473 B5 82      Z (-r) STAX,
+3475 79 0C 57   $0C57 { Emit } JSRD,		Emit
+3478 79 13 95   $1395 { ." +0021} JSRD, [2J	." [23"
+347B 03         .byte 3,"[23]"
+347F 09          RSR,
+ OK
+: At-XY ( x y -- )  \ ANSI Position cursor.
+  $1b Emit  ." ["  0 .R  ." ;"  0 .R  ." H"  ;  SeeLatest
+3489 90 00 1B   $001B LDAL,			$1b
+348C B5 82      Z (-r) STAX,
+348E 79 0C 57   $0C57 { Emit } JSRD,		Emit
+3491 79 13 95   $1395 { ." +0021} JSRD, [	." ["
+3494 01 5B      .byte 1,"["
+3496 3A          CLA,				0
+3497 B5 82      Z (-r) STAX,
+3499 79 0D C3   $0DC3 { .R } JSRD,		.R
+349C 79 13 95   $1395 { ." +0021} JSRD, ;	." ;"
+349F 01 3B      .byte 1,";"
+34A1 3A          CLA,				0
+34A2 B5 82      Z (-r) STAX,
+34A4 79 0D C3   $0DC3 { .R } JSRD,		.R
+34A7 79 13 95   $1395 { ." +0021} JSRD, H	." M"
+34AA 01 48      .byte ";"
+34AC 09          RSR,
+ OK
+ OK
+\ constants for board height and width OK
+24 Constant Height  SeeLatest
+34B7 90 00 18   $0018 LDAL,
+34BA B5 82      Z (-r) STAX,
+34BC 09          RSR,
+ OK
+32 Constant Width   SeeLatestWidth Isn't unique
+34C6 90 00 20   $0020 LDAL,
+34C9 B5 82      Z (-r) STAX,
+34CB 09          RSR,
+ OK
+Height Width * Constant Size  SeeLatest
+34D4 90 03 00   $0300 { ?Dup +0006} LDAL,
+34D7 B5 82      Z (-r) STAX,
+34D9 09          RSR,
+ OK
+ OK
+\ allocate two arrays to hold current and next generations OK
+Create gen_curr  Size Allot  ' gen_curr 12 Dump
+34E6 79 12 0F 05 41 6C 6C 6F 74 20 20 00  OK
+Create gen_next  Size Allot  ' gen_next 12 Dump
+37F5 79 12 0F 05 41 6C 6C 6F 74 20 20 00  OK
+ OK
+\ iterators and their associated operators OK
+Variable Row  SeeLatest
+3AFF 79 12 0F   $120F { Create +0009} JSRD,
+3B02 00          HLT,
+3B03 00          HLT,
+ OK
+Variable Col  SeeLatest
+3B0B 79 12 0F   $120F { Create +0009} JSRD,
+3B0E 00          HLT,
+3B0F 00          HLT,
+ OK
+ OK
+: rowFirst ( -- ) \ Sets the row offset to zero
+  row 0! ;  SeeLatest
+3B1C 79 3A FF   $3AFF { Row } JSRD,	row
+3B1F 3A          CLA,			0!
+3B20 B5 85      Z @(r+) STAX,
+3B22 09          RSR,			;
+ OK
+: rowMid ( -- )
+  [ size width / 3 / width * ] literal row ! ;  SeeLatest
+3B2D 90 01 00   $0100 LDAL,		[ size width / 3 / width * ] literal
+3B30 B5 82      Z (-r) STAX,
+3B32 79 3A FF   $3AFF { Row } JSRD,	row
+3B35 D5 81      Z (r+) LDBX,		!
+3B37 95 81      Z (r+) LDAX,
+3B39 B9         B STAA,
+3B3A 09          RSR,			;
+ OK
+: rowNext ( -- ) \ Advances the offset by the width.
+    width row +! ;  SeeLatest
+3B46 79 34 C6   $34C6 { Width } JSRD,	width
+3B49 79 3A FF   $3AFF { Row } JSRD,	row
+3B4C 79 07 72   $0772 { +! } JSRD,	+!
+3B4F 09          RSR,			;
+ OK
+: rowForEach ( xt -- ) \ Iterator used to apply a function to the rows.
+    rowFirst
+    begin
+      Dup Execute
+     rowNext  row @ size = until
+    drop ;  SeeLatest
+3B5E 79 3B 1C   $3B1C { rowFirst } JSRD,	rowFirst
+						begin
+3B61 9C         Z LDAA,				  Dup
+3B62 B5 82      Z (-r) STAX,
+3B64 79 07 E3   $07E3 { Execute } JSRD,		  Execute
+3B67 79 3B 46   $3B46 { rowNext } JSRD,		  rowNext
+3B6A 79 3A FF   $3AFF { Row } JSRD,		  row
+3B6D 95 84      Z @(r)  LDAX,			  @
+3B6F BC         Z STAA,
+3B70 79 34 D4   $34D4 { Size } JSRD,		  size
+3B73 79 05 9A   $059A { = } JSRD,		  =
+3B76 D5 81      Z (r+) LDBX,			 until
+3B78 14 E7      $3B61 { rowForEach +0003} BZ,
+3B7A 30 81      2 Z INR,			drop
+3B7C 09          RSR,				;
+ OK
+ OK
+: row+ ( -- index ) \ Returns row index +1 using wrap around.
+    row @ width +
+    dup size = if 0 nip then ;  SeeLatest
+3B85 79 3A FF   $3AFF { Row } JSRD,		row
+3B88 95 84      Z @(r)  LDAX,			@
+3B8A BC         Z STAA,
+3B8B 79 34 C6   $34C6 { Width } JSRD,		width
+3B8E 95 81      Z (r+) LDAX,			+
+3B90 DC         Z LDBA,
+3B91 58          AAB,
+3B92 FC         Z STBA,
+3B93 9C         Z LDAA,				dup
+3B94 B5 82      Z (-r) STAX,
+3B96 79 34 D4   $34D4 { Size } JSRD,		size
+3B99 79 05 9A   $059A { = } JSRD,		=
+3B9C D5 81      Z (r+) LDBX,			if
+3B9E 15 03      $3BA3 { row+ +001E} BNZ,
+3BA0 71 3B A9   $3BA9 { row+ +0024} JMPD,
+3BA3 3A          CLA,				  0
+3BA4 B5 82      Z (-r) STAX,
+3BA6 95 81      Z (r+) LDAX,			  nip
+3BA8 BC         Z STAA,
+						 then
+3BA9 09          RSR,				;
+ OK
+ OK
+: row+ ( -- index ) \ CPU6 hand optimized versionrow+ Isn't unique
+  [  \ switch the command line interpreter out of compile mode OK
+  $91 c, row ,   \ LDAD row             load the row variable OK
+  $d0 c, width , \ LDBL width           load the width constant OK
+  $50 c, $20 c,  \ ADD AW,BW            + OK
+  $d0 c, size ,  \ LDBL size            load the size constant OK
+  $59 c,         \ SAB                  - OK
+  $15 c, 1 c,    \ BNZ                  if = OK
+  $3a c,         \ CLA                    zero OK
+                 \                       endif OK
+  $B5 c, $82 c,  \ STAX ZW,ModBMRB,0    push A onto the param stack OK
+  ]  \ switch the command line interpreter into compile mode
+  ;  \ end the word definition OK
+  SeeLatest  \ display the word's code
+3BB2 91 3B 02   $3B02 { Row +0003} LDAD,
+3BB5 D0 00 20   $0020 LDBL,
+3BB8 50 20      B,A ADD,
+3BBA D0 03 00   $0300 { ?Dup +0006} LDBL,
+3BBD 59          SAB,
+3BBE 15 01      $3BC1 { row+ +000F} BNZ,
+3BC0 3A          CLA,
+3BC1 B5 82      Z (-r) STAX,
+3BC3 09          RSR,
+ OK
+ OK
+: row- ( -- index ) \ Returns row index -1 using wrap around.
+    row @ width -
+    dup 0< if  size width - nip  then
+    ;  SeeLatest
+3BCC 79 3A FF   $3AFF { Row } JSRD,		row
+3BCF 95 84      Z @(r)  LDAX,			@
+3BD1 BC         Z STAA,
+3BD2 79 34 C6   $34C6 { Width } JSRD,		width
+3BD5 D5 81      Z (r+) LDBX,			-
+3BD7 9C         Z LDAA,
+3BD8 59          SAB,
+3BD9 FC         Z STBA,
+3BDA 9C         Z LDAA,				dup
+3BDB B5 82      Z (-r) STAX,
+3BDD 79 05 49   $0549 { 0< } JSRD,		0<
+3BE0 D5 81      Z (r+) LDBX,			if
+3BE2 15 03      $3BE7 { row- +001B} BNZ,
+3BE4 71 3B F5   $3BF5 { row- +0029} JMPD,
+3BE7 79 34 D4   $34D4 { Size } JSRD,		  size
+3BEA 79 34 C6   $34C6 { Width } JSRD,		  width
+3BED D5 81      Z (r+) LDBX,			  -
+3BEF 9C         Z LDAA,
+3BF0 59          SAB,
+3BF1 FC         Z STBA,
+3BF2 95 81      Z (r+) LDAX,			  nip
+3BF4 BC         Z STAA,
+						 then
+3BF5 09          RSR,				;
+ OK
+ OK
+: row- ( -- index ) \ CPU6 hand optimized versionrow- Isn't unique
+  [ OK
+  $d1 c, row ,     \ LDBD row OK
+  $90 c, width ,   \ LDAL width OK
+  $51 c, $20 c,    \ SUB AW,BW OK
+  $17 c, 3 c,      \ BP OK
+  $90 c, size width - ,  \ LDAL size-width OK
+  $B5 c, $82 c,    \ STAX ZW,ModBMRB,0 OK
+  ] ;  SeeLatest
+3BFE D1 3B 02   $3B02 { Row +0003} LDBD,
+3C01 90 00 20   $0020 LDAL,
+3C04 51 20      B,A SUB,
+3C06 17 03      $3C0B { row- +000D} BP,
+3C08 90 02 E0   $02E0 { Dup +0002} LDAL,
+3C0B B5 82      Z (-r) STAX,
+3C0D 09          RSR,
+ OK
+ OK
+: colFirst ( -- )
+  col 0! ;  SeeLatest
+3C1A 79 3B 0B   $3B0B { Col } JSRD,		col
+3C1D 3A          CLA,				0!
+3C1E B5 85      Z @(r+) STAX,
+3C20 09          RSR,				;
+ OK
+: colMid ( -- )
+  [ width 3 / ] literal col ! ;  SeeLatest
+3C2B 90 00 0A   $000A LDAL,			[ width 3 / ] literal
+3C2E B5 82      Z (-r) STAX,
+3C30 79 3B 0B   $3B0B { Col } JSRD,		col
+3C33 D5 81      Z (r+) LDBX,			!
+3C35 95 81      Z (r+) LDAX,
+3C37 B9         B STAA,
+3C38 09          RSR,				;
+ OK
+: colNext
+    col 1+! ;  SeeLatest
+3C44 79 3B 0B   $3B0B { Col } JSRD,		col
+3C47 D5 81      Z (r+) LDBX,			1+!
+3C49 99         B LDAA,
+3C4A 38          INA,
+3C4B B9         B STAA,
+3C4C 09          RSR,				;
+ OK
+ OK
+: colForEach ( xt -- )
+    colFirst
+    begin
+      Dup Execute
+     colNext  col @ width = until
+    Drop ;  SeeLatest
+3C5B 79 3C 1A   $3C1A { colFirst } JSRD,	colFirst
+						begin
+3C5E 9C         Z LDAA,				  Dup
+3C5F B5 82      Z (-r) STAX,
+3C61 79 07 E3   $07E3 { Execute } JSRD,		  Execute
+3C64 79 3C 44   $3C44 { colNext } JSRD,		  colNext
+3C67 79 3B 0B   $3B0B { Col } JSRD,		  col
+3C6A 95 84      Z @(r)  LDAX,			  @
+3C6C BC         Z STAA,
+3C6D 79 34 C6   $34C6 { Width } JSRD,		  width
+3C70 79 05 9A   $059A { = } JSRD,		  =
+3C73 D5 81      Z (r+) LDBX,			 until
+3C75 14 E7      $3C5E { colForEach +0003} BZ,
+3C77 30 81      2 Z INR,			drop
+3C79 09          RSR,				;
+ OK
+ OK
+: col+ ( -- index ) \ Returns column index +1 using wrap around.
+    col @ 1+
+    dup width = if  0 nip  then ;  SeeLatest
+3C82 79 3B 0B   $3B0B { Col } JSRD,		col
+3C85 95 84      Z @(r)  LDAX,			@
+3C87 BC         Z STAA,
+3C88 9C         Z LDAA,				1+
+3C89 38          INA,
+3C8A BC         Z STAA,
+3C8B 9C         Z LDAA,				dup
+3C8C B5 82      Z (-r) STAX,
+3C8E 79 34 C6   $34C6 { Width } JSRD,		width
+3C91 79 05 9A   $059A { = } JSRD,		=
+3C94 D5 81      Z (r+) LDBX,			if
+3C96 15 03      $3C9B { col+ +0019} BNZ,
+3C98 71 3C A1   $3CA1 { col+ +001F} JMPD,
+3C9B 3A          CLA,				  0
+3C9C B5 82      Z (-r) STAX,
+3C9E 95 81      Z (r+) LDAX,			  nip
+3CA0 BC         Z STAA,
+						 then
+3CA1 09          RSR,				;
+ OK
+ OK
+: col+ ( -- index ) \ CPU6 hand optimized versioncol+ Isn't unique
+  [ OK
+  $91 c, col ,    \ LDAD col OK
+  $38 c,          \ INA OK
+  $d0 c, width ,  \ LDBL width OK
+  $59 c,          \ SAB OK
+  $15 c, 1 c,     \ BNZ OK
+  $3a c,          \ CLA OK
+  $B5 c, $82 c,   \ STAX ZW,ModBMRB,0   push A onto the param stack OK
+  ] ;  SeeLatest
+3CAA 91 3B 0E   $3B0E { Col +0003} LDAD,
+3CAD 38          INA,
+3CAE D0 00 20   $0020 LDBL,
+3CB1 59          SAB,
+3CB2 15 01      $3CB5 { col+ +000B} BNZ,
+3CB4 3A          CLA,
+3CB5 B5 82      Z (-r) STAX,
+3CB7 09          RSR,
+ OK
+ OK
+: col- ( -- index ) \ CPU6 hand optimized version
+    col @  1-
+    dup 0< if  width 1- nip  then
+    ;  SeeLatest
+3CC0 79 3B 0B   $3B0B { Col } JSRD,		col
+3CC3 95 84      Z @(r)  LDAX,			@
+3CC5 BC         Z STAA,
+3CC6 9C         Z LDAA,				1-
+3CC7 39          DCA,
+3CC8 BC         Z STAA,
+3CC9 9C         Z LDAA,				dup
+3CCA B5 82      Z (-r) STAX,
+3CCC 79 05 49   $0549 { 0< } JSRD,		0<
+3CCF D5 81      Z (r+) LDBX,			if
+3CD1 15 03      $3CD6 { col- +0016} BNZ,
+3CD3 71 3C DF   $3CDF { col- +001F} JMPD,
+3CD6 79 34 C6   $34C6 { Width } JSRD,		  width
+3CD9 9C         Z LDAA,				  1-
+3CDA 39          DCA,
+3CDB BC         Z STAA,
+3CDC 95 81      Z (r+) LDAX,			  nip
+3CDE BC         Z STAA,
+						 then
+3CDF 09          RSR,				;
+ OK
+ OK
+: col- ( -- index ) \ Returns column index -1 using wrap around.col- Isn't unique
+  [ OK
+  $91 c, col ,    \ LDAD col OK
+  $39 c,          \ DCA OK
+  $17 c, 3 c,     \ BP OK
+  $90 c, width 1- ,  \ LDAL width-1 OK
+  $B5 c, $82 c,   \ STAX ZW,ModBMRB,0 OK
+  ] ;  SeeLatest
+3CE8 91 3B 0E   $3B0E { Col +0003} LDAD,
+3CEB 39          DCA,
+3CEC 17 03      $3CF1 { col- +0009} BP,
+3CEE 90 00 1F   $001F LDAL,
+3CF1 B5 82      Z (-r) STAX,
+3CF3 09          RSR,
+ OK
+ OK
+: moveCurr ( -- ) \ moves bytes from next gen to current.
+    gen_next gen_curr size move ;  SeeLatest
+3D00 79 37 F5   $37F5 { gen_next } JSRD,	gen_next
+3D03 79 34 E6   $34E6 { gen_curr } JSRD,	gen_curr
+3D06 79 34 D4   $34D4 { Size } JSRD,		size
+3D09 79 0B F5   $0BF5 { Move } JSRD,		move
+3D0C 09          RSR,				;
+ OK
+ OK
+: currErase ( -- ) \ clears curr array to clear out junk in ram
+    gen_curr size erase ;  SeeLatest
+3D1A 79 34 E6   $34E6 { gen_curr } JSRD,	gen_curr
+3D1D 79 34 D4   $34D4 { Size } JSRD,		size
+3D20 79 0C 22   $0C22 { Erase } JSRD,		erawe
+3D23 09          RSR,				;
+ OK
+ OK
+: curr@ ( col row -- n ) \ retrieve a cell value from current generation
+    + gen_curr + c@ ;  SeeLatest
+3D2D 95 81      Z (r+) LDAX,			+
+3D2F DC         Z LDBA,
+3D30 58          AAB,
+3D31 FC         Z STBA,
+3D32 79 34 E6   $34E6 { gen_curr } JSRD,	gen_curr
+3D35 95 81      Z (r+) LDAX,			+
+3D37 DC         Z LDBA,
+3D38 58          AAB,
+3D39 FC         Z STBA,
+3D3A 3A          CLA,				c@
+3D3B 85 84      Z @(r)  LDABX,
+3D3D BC         Z STAA,
+3D3E 09          RSR,				;
+ OK
+ OK
+: curr@ ( col row -- n ) \ CPU6 hand optimized versioncurr@ Isn't unique
+  [ OK
+  $95 c, $81 c,  \ lda (Z+) OK
+  $DC c,         \ ldb (Z) OK
+  $58 c,         \ aab OK
+  $90 c, gen_curr ,  \ lda #gen_curr OK
+  $58 c,         \ aab OK
+  $3A c,         \ cla OK
+  $89 c,         \ ldab (B) OK
+  $BC c,         \ sta (Z) OK
+  ] ;  SeeLatest
+3D48 95 81      Z (r+) LDAX,
+3D4A DC         Z LDBA,
+3D4B 58          AAB,
+3D4C 90 34 E9   $34E9 { gen_curr +0003} LDAL,
+3D4F 58          AAB,
+3D50 3A          CLA,
+3D51 89         B LDABA,
+3D52 BC         Z STAA,
+3D53 09          RSR,
+ OK
+ OK
+: curr! ( n col row -- ) \ stores a value into a cell of current generation
+    + gen_curr + c! ;  SeeLatest
+3D5D 95 81      Z (r+) LDAX,			+
+3D5F DC         Z LDBA,
+3D60 58          AAB,
+3D61 FC         Z STBA,
+3D62 79 34 E6   $34E6 { gen_curr } JSRD,	gen_curr
+3D65 95 81      Z (r+) LDAX,			+
+3D67 DC         Z LDBA,
+3D68 58          AAB,
+3D69 FC         Z STBA,
+3D6A D5 81      Z (r+) LDBX,			c!
+3D6C 95 81      Z (r+) LDAX,
+3D6E A9         B STABA,
+3D6F 09          RSR,				;
+ OK
+ OK
+: >curr ( addr count -- ) \ Parses a pattern string into current board.
+    \ This function is unsafe and will over write memory.
+    currErase
+    rowMid colMid
+    0 Do
+       Dup c@
+       Dup '|' <> if
+          $20 <> 1 And  col @ row @ curr!  colNext
+         Else
+          Drop  rowNext  colMid
+         Then
+       1+
+     Loop
+    Drop ;  SeeLatest
+3D79 79 3D 1A   $3D1A { currErase } JSRD,	currErase
+3D7C 79 3B 2D   $3B2D { rowMid } JSRD,		rowMid
+3D7F 79 3C 2B   $3C2B { colMid } JSRD,		colMid
+3D82 3A          CLA,				0
+3D83 B5 82      Z (-r) STAX,
+3D85 79 11 88   $1188 { Do +000C} JSRD,		Do
+3D88 9C         Z LDAA,				  Dup
+3D89 B5 82      Z (-r) STAX,
+3D8B 3A          CLA,				  c@
+3D8C 85 84      Z @(r)  LDABX,
+3D8E BC         Z STAA,
+3D8F 9C         Z LDAA,				  Dup
+3D90 B5 82      Z (-r) STAX,
+3D92 90 00 7C   $007C LDAL,			  '|'
+3D95 B5 82      Z (-r) STAX,
+3D97 79 05 8E   $058E { <> } JSRD,		  <>
+3D9A D5 81      Z (r+) LDBX,			  if
+3D9C 15 03      $3DA1 { >curr +0028} BNZ,
+3D9E 71 3D C7   $3DC7 { >curr +004E} JMPD,
+3DA1 90 00 20   $0020 LDAL,			    $20
+3DA4 B5 82      Z (-r) STAX,
+3DA6 79 05 8E   $058E { <> } JSRD,		    <>
+3DA9 32 01      1 A CLR,			    1
+3DAB B5 82      Z (-r) STAX,
+3DAD 95 81      Z (r+) LDAX,			    And
+3DAF DC         Z LDBA,
+3DB0 5A          NAB,
+3DB1 FC         Z STBA,
+3DB2 79 3B 0B   $3B0B { Col } JSRD,		    col
+3DB5 95 84      Z @(r)  LDAX,			    @
+3DB7 BC         Z STAA,
+3DB8 79 3A FF   $3AFF { Row } JSRD,		    row
+3DBB 95 84      Z @(r)  LDAX,			    @
+3DBD BC         Z STAA,
+3DBE 79 3D 5D   $3D5D { curr! } JSRD,		    curr!
+3DC1 79 3C 44   $3C44 { colNext } JSRD,		    colNext
+3DC4 71 3D CF   $3DCF { >curr +0056} JMPD,	   Else
+3DC7 30 81      2 Z INR,			    Drop
+3DC9 79 3B 46   $3B46 { rowNext } JSRD,		    rowNext
+3DCC 79 3C 2B   $3C2B { colMid } JSRD,		    colMid
+						   Then
+3DCF 9C         Z LDAA,				  1+
+3DD0 38          INA,
+3DD1 BC         Z STAA,
+3DD2 79 11 C2   $11C2 { Loop +0011} JSRD,	 Loop
+3DD5 16 B1      $3D88 { >curr +000F} BM,
+3DD7 30 81      2 Z INR,			Drop
+3DD9 09          RSR,				;
+ OK
+ OK
+: .cell ( -- )
+    col @ row @ curr@
+    if '*' else '.' then
+    emit ;  SeeLatest
+3DE3 79 3B 0B   $3B0B { Col } JSRD,		col
+3DE6 95 84      Z @(r)  LDAX,			@
+3DE8 BC         Z STAA,
+3DE9 79 3A FF   $3AFF { Row } JSRD,		row
+3DEC 95 84      Z @(r)  LDAX,			@
+3DEE BC         Z STAA,
+3DEF 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3DF2 D5 81      Z (r+) LDBX,			if
+3DF4 15 03      $3DF9 { .cell +0016} BNZ,
+3DF6 71 3E 01   $3E01 { .cell +001E} JMPD,
+3DF9 90 00 2A   $002A LDAL,			  '*'
+3DFC B5 82      Z (-r) STAX,
+3DFE 71 3E 06   $3E06 { .cell +0023} JMPD,	 else
+3E01 90 00 2E   $002E LDAL,			  '.'
+3E04 B5 82      Z (-r) STAX,
+						 then
+3E06 79 0C 57   $0C57 { Emit } JSRD,		emit
+3E09 09          RSR,				;
+ OK
+ OK
+: .currRow ( -- ) \ prints the row from the current generation to output
+    cr ' .cell colForEach ;  SeeLatest
+3E16 79 0C 76   $0C76 { CR } JSRD,		cr
+3E19 90 3D E3   $3DE3 { .cell } LDAL,		' .cell
+3E1C B5 82      Z (-r) STAX,
+3E1E 79 3C 5B   $3C5B { colForEach } JSRD,	colForEach
+3E21 09          RSR,				;
+ OK
+ OK
+: .curr \ Prints the current board generation to standard output
+    ' .currRow rowForEach
+    cr ;  SeeLatest
+3E2B 90 3E 16   $3E16 { .currRow } LDAL,	' .currRow
+3E2E B5 82      Z (-r) STAX,
+3E30 79 3B 5E   $3B5E { rowForEach } JSRD,	rowForEach
+3E33 79 0C 76   $0C76 { CR } JSRD,		cr
+3E36 09          RSR,				;
+ OK
+ OK
+\ : next@ ( col row -- n ) \ retrieve a cell value from the next generation OK
+\     + gen_next + c@ ;  SeeLatest OK
+ OK
+: next! ( n col row -- ) \ stores a cell into the next generation
+    + gen_next + c! ;  SeeLatest
+3E40 95 81      Z (r+) LDAX,			+
+3E42 DC         Z LDBA,
+3E43 58          AAB,
+3E44 FC         Z STBA,
+3E45 79 37 F5   $37F5 { gen_next } JSRD,	gen_next
+3E48 95 81      Z (r+) LDAX,			+
+3E4A DC         Z LDBA,
+3E4B 58          AAB,
+3E4C FC         Z STBA,
+3E4D D5 81      Z (r+) LDBX,			c!
+3E4F 95 81      Z (r+) LDAX,
+3E51 A9         B STABA,
+3E52 09          RSR,				;
+ OK
+ OK
+: calcSum ( -- n ) \ computes the sum of the neigbors of the current cell.
+   col-  row-  curr@
+   col @ row-  curr@ +
+   col+  row-  curr@ +
+   col-  row @ curr@ +
+   col+  row @ curr@ +
+   col-  row+  curr@ +
+   col @ row+  curr@ +
+   col+  row+  curr@ + ;  SeeLatest
+3E5E 79 3C E8   $3CE8 { col- } JSRD,		col-
+3E61 79 3B FE   $3BFE { row- } JSRD,		row-
+3E64 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3E67 79 3B 0B   $3B0B { Col } JSRD,		col
+3E6A 95 84      Z @(r)  LDAX,			@
+3E6C BC         Z STAA,
+3E6D 79 3B FE   $3BFE { row- } JSRD,		row-
+3E70 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3E73 95 81      Z (r+) LDAX,			+
+3E75 DC         Z LDBA,
+3E76 58          AAB,
+3E77 FC         Z STBA,
+3E78 79 3C AA   $3CAA { col+ } JSRD,		col+
+3E7B 79 3B FE   $3BFE { row- } JSRD,		row-
+3E7E 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3E81 95 81      Z (r+) LDAX,			+
+3E83 DC         Z LDBA,
+3E84 58          AAB,
+3E85 FC         Z STBA,
+3E86 79 3C E8   $3CE8 { col- } JSRD,		col-
+3E89 79 3A FF   $3AFF { Row } JSRD,		row
+3E8C 95 84      Z @(r)  LDAX,			@
+3E8E BC         Z STAA,
+3E8F 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3E92 95 81      Z (r+) LDAX,			+
+3E94 DC         Z LDBA,
+3E95 58          AAB,
+3E96 FC         Z STBA,
+3E97 79 3C AA   $3CAA { col+ } JSRD,		col+
+3E9A 79 3A FF   $3AFF { Row } JSRD,		row
+3E9D 95 84      Z @(r)  LDAX,			@
+3E9F BC         Z STAA,
+3EA0 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3EA3 95 81      Z (r+) LDAX,			+
+3EA5 DC         Z LDBA,
+3EA6 58          AAB,
+3EA7 FC         Z STBA,
+3EA8 79 3C E8   $3CE8 { col- } JSRD,		col-
+3EAB 79 3B B2   $3BB2 { row+ } JSRD,		row+
+3EAE 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3EB1 95 81      Z (r+) LDAX,			+
+3EB3 DC         Z LDBA,
+3EB4 58          AAB,
+3EB5 FC         Z STBA,
+3EB6 79 3B 0B   $3B0B { Col } JSRD,		col
+3EB9 95 84      Z @(r)  LDAX,			@
+3EBB BC         Z STAA,
+3EBC 79 3B B2   $3BB2 { row+ } JSRD,		row+
+3EBF 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3EC2 95 81      Z (r+) LDAX,			+
+3EC4 DC         Z LDBA,
+3EC5 58          AAB,
+3EC6 FC         Z STBA,
+3EC7 79 3C AA   $3CAA { col+ } JSRD,		col+
+3ECA 79 3B B2   $3BB2 { row+ } JSRD,		row+
+3ECD 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3ED0 95 81      Z (r+) LDAX,			+
+3ED2 DC         Z LDBA,
+3ED3 58          AAB,
+3ED4 FC         Z STBA,
+3ED5 09          RSR,				;
+ OK
+ OK
+: calcCell ( -- )
+    calcSum
+
+    \ Unless explicitly marked live, all cells die in the next generation.
+    \ There are two rules we'll apply to mark a cell live.
+
+    \ Is the current cell dead?
+    col @ row @ curr@ 0=
+    if
+        \ Any dead cell with three live neighbours becomes a live cell.
+   3 =
+    else
+   \ Any live cell with two or three live neighbours survives.
+        dup 2 >= swap 3 <= and
+    then
+    1 and
+    col @ row @ next! ;  SeeLatest
+3EE2 79 3E 5E   $3E5E { calcSum } JSRD,		calcSum
+3EE5 79 3B 0B   $3B0B { Col } JSRD,		col
+3EE8 95 84      Z @(r)  LDAX,			@
+3EEA BC         Z STAA,
+3EEB 79 3A FF   $3AFF { Row } JSRD,		row
+3EEE 95 84      Z @(r)  LDAX,			@
+3EF0 BC         Z STAA,
+3EF1 79 3D 48   $3D48 { curr@ } JSRD,		curr@
+3EF4 79 05 5F   $055F { 0= } JSRD,		0=
+3EF7 D5 81      Z (r+) LDBX,			if
+3EF9 15 03      $3EFE { calcCell +001C} BNZ,
+3EFB 71 3F 08   $3F08 { calcCell +0026} JMPD,
+3EFE 32 03      3 A CLR,			  3
+3F00 B5 82      Z (-r) STAX,
+3F02 79 05 9A   $059A { = } JSRD,		  =
+3F05 71 3F 21   $3F21 { calcCell +003F} JMPD,	 else
+3F08 9C         Z LDAA,				  dup
+3F09 B5 82      Z (-r) STAX,
+3F0B 32 02      2 A CLR,			  2
+3F0D B5 82      Z (-r) STAX,
+3F0F 79 05 E9   $05E9 { >= } JSRD,		  >=
+3F12 79 02 96   $0296 { Swap } JSRD,		  swap
+3F15 32 03      3 A CLR,			  3
+3F17 B5 82      Z (-r) STAX,
+3F19 79 05 D3   $05D3 { <= } JSRD,		  <=
+3F1C 95 81      Z (r+) LDAX,			  and
+3F1E DC         Z LDBA,
+3F1F 5A          NAB,
+3F20 FC         Z STBA,
+						 then
+3F21 32 01      1 A CLR,			1
+3F23 B5 82      Z (-r) STAX,
+3F25 95 81      Z (r+) LDAX,			and
+3F27 DC         Z LDBA,
+3F28 5A          NAB,
+3F29 FC         Z STBA,
+3F2A 79 3B 0B   $3B0B { Col } JSRD,		col
+3F2D 95 84      Z @(r)  LDAX,			@
+3F2F BC         Z STAA,
+3F30 79 3A FF   $3AFF { Row } JSRD,		row
+3F33 95 84      Z @(r)  LDAX,			@
+3F35 BC         Z STAA,
+3F36 79 3E 40   $3E40 { next! } JSRD,		next!
+3F39 09          RSR,				;
+ OK
+ OK
+: calcRow ( row -- )
+    ' calcCell colForEach ;  SeeLatest
+3F45 90 3E E2   $3EE2 { calcCell } LDAL,	' calcCell
+3F48 B5 82      Z (-r) STAX,
+3F4A 79 3C 5B   $3C5B { colForEach } JSRD,	colForEach
+3F4D 09          RSR,				;
+ OK
+ OK
+: calcGen ( -- )
+    ' calcRow rowForEach
+    moveCurr ;  SeeLatest
+3F59 90 3F 45   $3F45 { calcRow } LDAL,		' calcRow
+3F5C B5 82      Z (-r) STAX,
+3F5E 79 3B 5E   $3B5E { rowForEach } JSRD,	rowForEach
+3F61 79 3D 00   $3D00 { moveCurr } JSRD,	moveCurr
+3F64 09          RSR,				;
+ OK
+ OK
+: life ( -- )
+    Page
+    Begin
+      calcGen
+      0 0 at-xy .curr
+      ?terminal Until
+    ;  SeeLatest
+3F6D 79 34 70   $3470 { Page } JSRD,		page
+						Begin
+3F70 79 3F 59   $3F59 { calcGen } JSRD,		  calcGen
+3F73 3A          CLA,				  0
+3F74 B5 82      Z (-r) STAX,
+3F76 3A          CLA,				  0
+3F77 B5 82      Z (-r) STAX,
+3F79 79 34 89   $3489 { At-XY } JSRD,		  at-xy
+3F7C 79 3E 2B   $3E2B { .curr } JSRD,		  .curr
+3F7F 79 0C 48   $0C48 { ?Terminal } JSRD,	  ?terminal
+3F82 D5 81      Z (r+) LDBX,			 until
+3F84 14 EA      $3F70 { life +0003} BZ,
+3F86 09          RSR,				;
+ OK
+ OK
+\ Test cases taken from Rosetta code's implementation OK
+: blinker s" |***" >curr ;  SeeLatest
+3F92 79 13 D3   $13D3 { S" +002D} JSRD,		s" |***"
+3F95 04 7C 2A 2A 2A 00   .byte 4,"|***",0
+3F9B 79 3D 79   $3D79 { >curr } JSRD,		>curr
+3F9E 09          RSR,				;
+ OK
+: toad s" ***| ***" >curr ;  SeeLatest
+3FA7 79 13 D3   $13D3 { S" +002D} JSRD,		s" ***| ***"
+3FAA 08 2A 2A   .byte 8,"***| ***",0
+3FAD 2A 7C 20
+3FB0 2A 2A 2A
+3FB3 00
+3FB4 79 3D 79   $3D79 { >curr } JSRD,		>curr
+3FB7 09          RSR,				;
+ OK
+: pentomino s" **| **| *" >curr ;  SeeLatest
+3FC5 79 13 D3   $13D3 { S" +002D} JSRD,		s" **| **| *"
+3FC8 09 2A 2A   .byte 9,"**| **| *",0
+3FCB 7C 20 2A
+3FCE 2A 7C 20
+3FD1 2A 00
+3FD3 79 3D 79   $3D79 { >curr } JSRD,		>curr
+3FD6 09          RSR,				;
+ OK
+: pi s" **| **|**" >curr ;  SeeLatest
+3FDD 79 13 D3   $13D3 { S" +002D} JSRD,		s" **| **|**"
+3FE0 09 2A 2A  .byte 9,s"**| **|**",0
+3FE3 7C 20 2A
+3FE6 2A 7C 2A
+3FE9 2A 00
+3FEB 79 3D 79   $3D79 { >curr } JSRD,		>curr
+3FEE 09          RSR,				;
+ OK
+: glider s"  *|  *|***" >curr ;  SeeLatest
+3FF9 79 13 D3   $13D3 { S" +002D} JSRD,		s"  *|  *|***"
+3FFC 0A 20 2A   .byte 10," *|  *|***",0
+3FFF 7C 20 20
+4002 2A 7C 2A
+4005 2A 2A 00
+4008 79 3D 79   $3D79 { >curr } JSRD,		>curr
+400B 09          RSR,				;
+ OK
+: pulsar s" *****|*   *" >curr ;  SeeLatest
+4016 79 13 D3   $13D3 { S" +002D} JSRD,		s" *****|*   *"
+4019 0B 2A 2A   .byte 10,"*****|*   *",0
+401C 2A 2A 2A
+401F 7C 2A 20
+4022 20 20 2A
+4025 00
+4026 79 3D 79   $3D79 { >curr } JSRD,		>curr
+4029 09          RSR,				;
+ OK
+: ship s"  ****|*   *|    *|   *" >curr ;  SeeLatest
+4032 79 13 D3   $13D3 { S" +002D} JSRD,		s"  ****|*   *|    *|   *"
+4035 16 20 2A   .byte $16," ****|*   *|    *|   *",0
+4038 2A 2A 2A
+403B 7C 2A 20
+403E 20 20 2A
+4041 7C 20 20
+4044 20 20 2A
+4047 7C 20 20
+404A 20 2A 00
+404D 79 3D 79   $3D79 { >curr } JSRD,		>curr
+4050 09          RSR,				;
+ OK
+: pentadecathalon s" **********" >curr ;  SeeLatest
+4064 79 13 D3   $13D3 { S" +002D} JSRD,		s" **********"
+4067 0A 2A 2A   .byte 10,"**********",0
+406A 2A 2A 2A
+406D 2A 2A 2A
+4070 2A 2A 00
+4073 79 3D 79   $3D79 { >curr } JSRD,		>curr
+4076 09          RSR,				;
+ OK
+: clock s"  *|  **|**|  *" >curr ;  SeeLatest eof
+4080 79 13 D3   $13D3 { S" +002D} JSRD,		s"  *|  **|**|  *"
+4083 0E 20 2A  .byte $e," *|  **|**|  *",0
+4086 7C 20 20
+4089 2A 2A 7C
+408C 2A 2A 7C
+408F 20 20 2A
+4092 00
+4093 79 3D 79   $3D79 { >curr } JSRD,		>curr
+4096 09          RSR,				;
+ OK
+ OK
+glider OK
+life
+
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+................*...............
+.................**.............
+................**..............
+................................
+................................
+................................
+................................
+................................
+................................
+................................
+ OK
