@@ -2468,8 +2468,9 @@ E_15BB:	; look up word register name in (Z), push to Y
 	DB 0		;15E4 00
 
 E_15E5:	JSR E_16ba	;15E5 79 16 BA ; fixupword
-	CVX? $10,2,	;15E8 46 F1 39 60 60 0E 13 09
-	CVX?	;15F0 47 4A 0D 66 14 03
+	ZAD 16,2,$10(YW),(YW) ;15E8 46 F1 39 60 60 0E
+	B?? ??		;15ee 13 09
+	CVX $4b,??	;15F0 47 4A 0D 66 14 03
 	JSR E_1a48	;15F6 79 1A 48 ; fixupword	syntax error
 	INR YW,14	;15F9 30 6D
 	RSR		;15FB 09
@@ -2663,7 +2664,7 @@ E_172C:	LDAB (ZW+)	;172C 85 81	get next source char
 	SABB		;1748 49
 	BNZ @1757	;1749 15 0C
 	JSR E_176b	;174B 7B 1E
-	S 16,16,160(YW),(YW)	;174D 46 FF 19 60 60 10
+	S 16,16,$10(YW),(YW) ;174D 46 FF 19 60 60 10
 	INR YW,16	;1753 30 6F
 	JMP E_1744	;1755 73 ED
 
@@ -2671,7 +2672,7 @@ E_172C:	LDAB (ZW+)	;172C 85 81	get next source char
 	SABB		;1759 49
 	BNZ @1768	;175A 15 0C
 	JSR E_176b	;175C 7B 0D
-	A 16,16,$10(YW),(YW)	;175E 46 FF 09 60 60 10
+	A 16,16,$10(YW),(YW) ;175E 46 FF 09 60 60 10
 	INR YW,16	;1764 30 6F
 	JMP E_1744	;1766 73 DC
 
@@ -2686,7 +2687,7 @@ L_176D:	LDAB (ZW+)	;176D 85 81	get next source char
 	SABB		;1771 49
 	BNZ @1780	;1772 15 0C
 	JSR E_17b7	;1774 7B 41
-	M 16,16,$10(YW),(YW)	;1776 46 FF 59 60 60 10
+	M 16,16,$10(YW),(YW) ;1776 46 FF 59 60 60 10
 	INR YW,16	;177C 30 6F
 	JMP E_176D	;177E 73 ED
 
@@ -2877,10 +2878,10 @@ L_18CC:	STK ZH,2	;18CC 7E 81
 	LDA (SW)	;18DB 9D
 	SUB AW,ZW	;18DC 51 80
 	LDB (SW+)	;18DE D5 A1
-	???BIG 1,10,?	;18E0 46 0F 8A 26 13 len=1,10 ssss=8 mm=2 nn=2
-	RF?		;18E5 03
+	CTB 1,10,(BW),(YW) ;18E0 46 0F 8A 26 len=1,10 ssss=8 mm=2 nn=2 cvt_to_bin
+	B?F? @18e9	;18E4 13 03
 	JSR E_1a48	;18E6 79 1A 48 ; fixupword	syntax error
-	RSR		;18E9 09
+@18e9:	RSR		;18E9 09
 
 L_18EA:	STK ZH,2	;18EA 7E 81
 @18EC:	LDAB (ZW+)	;18EC 85 81
@@ -2896,10 +2897,10 @@ L_18EA:	STK ZH,2	;18EA 7E 81
 	LDA (SW)	;18FF 9D
 	SUB AW,ZW	;1900 51 80
 	LDB (SW+)	;1902 D5 A1
-	???BIG 0f,10,?	;1904 46 EF 8A 26 13 len=1,10 ssss=8 mm=2 nn=2
-	RF?		;1909 03
+	CTB 15,16,(BW),(YW) ;1904 46 EF 8A 26 len=1,10 ssss=8 mm=2 nn=2  cvt_to_bin
+	B?? @190d	;1908 13 03
 	JSR E_1a48	;190A 79 1A 48 ; fixupword	syntax error
-	RSR		;190D 09
+@190d:	RSR		;190D 09
 
 L_190E:	STK ZH,2	;190E 7E 81
 @1910:	LDAB (ZW+)	;1910 85 81
@@ -2909,7 +2910,7 @@ L_190E:	STK ZH,2	;190E 7E 81
 	LDA (SW)	;1919 9D
 	SUB AW,ZW	;191A 51 80
 	LDB (SW+)	;191C D5 A1
-	??BIG 9,10,?	;191E 46 8F 8A 26  len=9,10 ssss=8 mm=2 nn=2
+	CTB 9,16,(BW),(YW) ;191E 46 8F 8A 26  len=9,10 ssss=8 mm=2 nn=2  cvt_to_bin
 	B?? @1927	;1922 13 03
 	JSR E_1a48	;1924 79 1A 48 ; fixupword	syntax error
 @1927:	RSR		;1927 09
