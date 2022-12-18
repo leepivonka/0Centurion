@@ -1,38 +1,46 @@
-F:\0Centurion>sim\release\ee200s forth.lst
+
+E:\0Centurion>sim\release\ee200s forth.lst
 CPU6S Dec 16 2022 21:05:39
-A=0000 B=0000 X=4881 Y=D800 Z=B5F6 S=0180 C=8700 mvfli 017117C1 0200 NOP
-.g  \ simulator Go command
+A=58FF B=FFFF X=3033 Y=B500 Z=0000 S=0180 C=8700 mvfli 017117C1 0200 NOP
+.g
 17E3
 fig-FORTH CPU6 subroutine
 
 A=0050 B=17B1 X=0E75 Y=7075 Z=7111 S=7197 C=8700 mVfli 092F6E09 0111 RSR
-.@f_asm.txt  \ play the FORTH assembler & disassembler code into the console keyboard
-.g  \ simulator Go command
+.@f_asm.txt
+.g
 \ CPU6 assembler & disassembler OK
 \ https://github.com/Nakazoto/CenturionComputer/wiki/Instructions OK
-...many lines omitted...
+ OK
+Here EX4 1EE3 OK
+... many lines omitted...
+ OK
 Here EX4 3511 OK
  eof
  OK
 
 A=0050 B=1750 X=0E75 Y=3512 Z=7111 S=7197 C=8700 mVfli 092F6E09 0111 RSR
-.@..\65816\f_euler0001.txt   \ play the program text into the console keyboard
-.g  \ simulator Go command
+.@..\65816\f_euler0001.txt
+.g
 \ https://projecteuler.net/problem=1 OK
  OK
-: Euler1 ( n1 -- d2 )
-  \ double-integer d2 is the sum of all of the #s from 1
-  \ to n1 that are multiples of 3 or 5
-  >R  \ get n1 out of the way
-  0.  \ initialize double-integer sum
-  R> 1 Do  \ for i=1 to n1-1
-    i 3 Mod 0= If  \ multiple of 3?
+: Euler1  \ start defining a word (subroutine) called "Euler1"
+   ( n1 -- d2 )  \ a comment showing our parameter stack effects
+        \ we expect 1 integer(16bit) n1
+        \ we will return 1 double-integer(32bit) d2
+      \ d2 is the sum of all of the #s from 1
+      \ to n1 that are multiples of 3 or 5
+  >R  \ move n1 to the return stack
+  0.  \ initialize double-integer (32bit) sum
+  R>  \ get n1 back from return stack
+  1 Do  \ for i=1 to n1-1
+    I 3 Mod 0=   \ multiple of 3?
+    I 5 Mod 0=  \ multiple of 5?
+    Or If  \
       i M+  Then  \ add it
-    i 5 Mod 0= If  \ multiple of 5?
-      i M+  Then  \ add it
-   Loop  \ end of Do , incrementing by 1
+   Loop  \ end of Do, incrementing by 1
   ; OK
-SeeLatest                                    --this column edited in by hand--
+SeeLatest                                     --this column hand edited in--
 351B 79 03 B9   $03B9 { >R } JSRD,		>R
 351E D0 00 00   $0000 LDBL,			0.
 3521 90 00 00   $0000 LDAL,
@@ -42,33 +50,31 @@ SeeLatest                                    --this column edited in by hand--
 352B 32 01      1 AW CLR,			1
 352D B5 82      ZW (-r) STAX,
 352F 79 12 21   $1221 { Do +000C} JSRD,		Do
-3532 79 12 35   $1235 { I } JSRD,		  i
+3532 79 12 35   $1235 { I } JSRD,		  I
 3535 32 03      3 AW CLR,			  3
 3537 B5 82      ZW (-r) STAX,
 3539 79 07 B4   $07B4 { Mod } JSRD,		  Mod
 353C 79 05 B5   $05B5 { 0= } JSRD,		  0=
-353F D5 81      ZW (r+) LDBX,			  If
-3541 15 03      $3546 { Euler1 +002B} BNZ,
-3543 71 35 4C   $354C { Euler1 +0031} JMPD,
-3546 79 12 35   $1235 { I } JSRD,		    i
-3549 79 04 DE   $04DE { M+ } JSRD,		    M+
+353F 79 12 35   $1235 { I } JSRD,		  I
+3542 90 00 05   $0005 LDAL,			  5
+3545 B5 82      ZW (-r) STAX,
+3547 79 07 B4   $07B4 { Mod } JSRD,		  Mod
+354A 79 05 B5   $05B5 { 0= } JSRD,		  0=
+354D 95 81      ZW (r+) LDAX,			  Or
+354F DC         ZW LDBA,
+3550 53 02      AW BW ORI,
+3552 FC         ZW STBA,
+3553 D5 81      ZW (r+) LDBX,			  If
+3555 15 03      $355A { Euler1 +003F} BNZ,
+3557 71 35 60   $3560 { Euler1 +0045} JMPD,
+355A 79 12 35   $1235 { I } JSRD,		    I
+355D 79 04 DE   $04DE { M+ } JSRD,		    M+
 						   Then
-354C 79 12 35   $1235 { I } JSRD,		  i
-354F 90 00 05   $0005 LDAL,			  5
-3552 B5 82      ZW (-r) STAX,
-3554 79 07 B4   $07B4 { Mod } JSRD,		  Mod
-3557 79 05 B5   $05B5 { 0= } JSRD,		  0=
-355A D5 81      ZW (r+) LDBX,			  If
-355C 15 03      $3561 { Euler1 +0046} BNZ,
-355E 71 35 67   $3567 { Euler1 +004C} JMPD,
-3561 79 12 35   $1235 { I } JSRD,		    i
-3564 79 04 DE   $04DE { M+ } JSRD,		    M+
-						   Then
-3567 79 12 5B   $125B { Loop +0011} JSRD,	 Loop
-356A 16 C6      $3532 { Euler1 +0017} BM,
-356C 09          RSR,				;
+3560 79 12 5B   $125B { Loop +0011} JSRD,	 Loop
+3563 16 CD      $3532 { Euler1 +0017} BM,
+3565 09          RSR,				;
  OK
  OK
 10 Euler1 D. 23  OK
-1000 Euler1 D. 266333  OK
- eof
+1000 Euler1 D.  eof
+233168  OK
