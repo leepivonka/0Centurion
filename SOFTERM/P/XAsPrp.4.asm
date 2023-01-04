@@ -28,132 +28,110 @@ RSTop:  ; top of return stack
 	DB 0	;02F3 00
 	DB 0	;02F4 00
 
-FCB81: ; console FCB?  SYSIPT?
-	DB 0	;02F5 00	status?
-	DB $81	;02F6 81	device #?
-	DB 0	;02F7 00
-	DB 0	;02F8 00	func?
-	DB 0	;02F9 00
-	DB 0	;02FA 00
-	DB 0	;02FB 00
-	DB 0	;02FC 00
-	DB 0	;02FD 00
-	DB 0	;02FE 00
-	DB 0	;02FF 00
-	DB 0	;0300 00
-	DB 1	;0301 01
-	DB 2	;0302 02
-	DB 0	;0303 00
-	DB 0	;0304 00
-	DB 0	;0305 00
-	DB 0	;0306 00
-	DB 0	;0307 00
-	DB 0	;0308 00
-	DB 0	;0309 00
-	DB 0	;030A 00
-	DB 0	;030B 00
-	DB 0	;030C 00
-	DB 0	;030D 00
-	DB 0	;030E 00
-	DB 0	;030F 00
-	DB 0	;0310 00
-	DB 0	;0311 00
-	DB 0	;0312 00
+Sys081: ; file control block  SYSIPT?  console?
+	DB 0	;02F5 00	+0 status
+	DB $81	;02F6 81	+1 sys#
+	DB 0	;02F7 00	+2
+	DB 0	;02F8 00	+3 function
+	DW 0	;02F9 00 00	+4 block buffer length?
+	DW 0	;02FB 00 00	+6 block buffer ptr?
+	DB 0	;02FD 00	+8
+	DB 0	;02FE 00	+9
+	DW 0	;02FF 00 00	+10
+	DB 1	;0301 01	+12
+	DB 2	;0302 02	+13
+	DW 0	;0303 00 00	+14 record length?
+	DW 0	;0305 00 00	+16 record ptr
+	DW 0	;0307 00 00	+18
+	DW 0	;0309 00 00	+20
+	DW 0	;030B 00 00	+22
+	DW 0	;030D 00 00	+24
+	DB 0	;030F 00	+26
+	DB 0	;0310 00	+27
+	DW 0	;0311 00 00	+28
 
-FCB0: ; FCB?
-	DB 0	;0313 00
-	DB 0	;0314 00
-	DB 0	;0315 00
-	DB 0	;0316 00
-	DW $190	;0317 01 90
-	DW L_036D	;0319 03 6D ; fixupword
-	DB 0	;031B 00
-	DB 0	;031C 00
-	DB 0	;031D 00
-	DB 1	;031E 01
-	DB 2	;031F 02
-	DB 2	;0320 02
-	DB 0	;0321 00
-	DB 0	;0322 00
-	DB 0	;0323 00
-	DB 0	;0324 00
-	DB 0	;0325 00
-	DB 0	;0326 00
-	DB 0	;0327 00
-	DB 0	;0328 00
-	DB 0	;0329 00
-	DB 0	;032A 00
-	DB 0	;032B 00
-	DB 0	;032C 00
-	DB 0	;032D 00
-	DB 0	;032E 00
-	DB 0	;032F 00
-	DB 0	;0330 00
+Sys000: ; file control block
+	DB 0	;0313 00	+0 status
+	DB 0	;0314 00	+1 sys#
+	DB 0	;0315 00	+2
+	DB 0	;0316 00	+3 function
+	DW 400	;0317 01 90	+4 block buffer length?
+	DW L_036D ;0319 03 6D fixupword  +6 block buffer ptr?
+	DB 0	;031B 00	+8
+	DB 0	;031C 00	+9
+	DW 1	;031D 00 01	+10
+	DB 2	;031F 02	+12
+	DB 2	;0320 02	+13
+	DW 0	;0321 00 00	+14 record length?
+	DW 0	;0323 00 00	+16 record ptr?
+	DW 0	;0325 00 00	+18
+	DW 0	;0327 00 00	+20
+	DW 0	;0329 00 00	+22
+	DW 0	;032B 00 00	+24
+	DB 0	;032D 00	+26
+	DB 0	;032E 00	+27
+	DW 0	;032F 00 00	+28
 
-FCB1: ; FCB?
-	DB 0	;0331 00	status
-	DB 1	;0332 01	device #
-	DB 0	;0333 00
-	DB 0	;0334 00
-	DW 400	;0335 01 90
-	DW L_0500	;0337 05 00 ; fixupword
-	DB 0	;0339 00
-	DB 0	;033A 00
-	DB 0	;033B 00
-	DB 1	;033C 01
-	DB 2	;033D 02
-	DB 2	;033E 02
-	DB 0	;033F 00
-	DB 0	;0340 00
-	DB 0	;0341 00
-	DB 0	;0342 00
-	DB 0	;0343 00
-	DB 0	;0344 00
-	DB 0	;0345 00
-	DB 0	;0346 00
-	DB 0	;0347 00
-	DB 0	;0348 00
-	DB 0	;0349 00
-	DB 0	;034A 00
-	DB 0	;034B 00
-	DB 0	;034C 00
-	DB 0	;034D 00
-	DB 0	;034E 00
+Sys001: ; file control block
+	DB 0	;0331 00	+0 status
+	DB 1	;0332 01	+1 sys#
+	DB 0	;0333 00	+2
+	DB 0	;0334 00	+3 function
+	DW 400	;0335 01 90	+4 block buffer length
+	DW L_0500 ;0337 05 00 fixupword  +6 block buffer ptr
+	DB 0	;0339 00	+8
+	DB 0	;033A 00	+9
+	DW 1	;033B 00 01	+10
+	DB 2	;033D 02	+12
+	DB 2	;033E 02	+13
+	DW 0	;033F 00 00	+14 record length?
+	DW 0	;0341 00 00	+16 record ptr?
+	DW 0	;0343 00 00	+18
+	DW 0	;0345 00 00	+20
+	DW 0	;0347 00 00	+22
+	DW 0	;0349 00 00	+24
+	DB 0	;034B 00	+26
+	DB 0	;034C 00	+27
+	DW 0	;034D 00 00	+28
 
-FCB2: ; FCB?
-	DB 0	;034F 00	status
-	DB 2	;0350 02	device #
-	DB 0	;0351 00
-	DB 0	;0352 00
-	DW 400	;0353 01 90
-	DW L_0693 ;0355 06 93 ; fixupword
-	DB 0	;0357 00
-	DB 0	;0358 00
-	DB 0	;0359 00
-	DB 1	;035A 01
-	DB 2	;035B 02
-	DB 2	;035C 02
-	DB 0	;035D 00
-	DB 0	;035E 00
-	DB 0	;035F 00
-	DB 0	;0360 00
-	DB 0	;0361 00
-	DB 0	;0362 00
-	DB 0	;0363 00
-	DB 0	;0364 00
-	DB 0	;0365 00
-	DB 0	;0366 00
-	DB 0	;0367 00
-	DB 0	;0368 00
-	DB 0	;0369 00
-	DB 0	;036A 00
-	DB 0	;036B 00
-	DB 0	;036C 00
+Sys002: ; file control block
+	DB 0	;034F 00	+0 status
+	DB 2	;0350 02	+1 sys#
+	DB 0	;0351 00	+2
+	DB 0	;0352 00	+3 function
+	DW 400	;0353 01 90	+4 block buffer length
+	DW L_0693 ;0355 06 93 fixupword  +6 block buffer ptr
+	DB 0	;0357 00	+8
+	DB 0	;0358 00	+9
+	DW 1	;0359 00 01	+10
+	DB 2	;035B 02	+12
+	DB 2	;035C 02	+13
+	DW 0	;035D 00 00	+14 record length?
+	DW 0	;035F 00 00	+16 record ptr?
+	DW 0	;0361 00 00	+18
+	DW 0	;0363 00 00	+20
+	DW 0	;0365 00 00	+22
+	DW 0	;0367 00 00	+24
+	DB 0	;0369 00	+26
+	DB 0	;036A 00	+27
+	DW 0	;036B 00 00	+28
+
+L_036D: ; Sys000 file block buffer
+	DS 2	;036D
+	DS 400	;036F
 	DB 0	;04FF 00
-	DB 0	;0692 00
-	DB 0	;0825 00
-L_0826:
 
+L_0500: ; Sys001 file block buffer
+	DS 2	;0500
+	DS 400	;0502
+	DB 0	;0692 00
+
+L_0693: ; Sys002 file block buffer
+	DS 2	;0693
+	DS 400	;0695
+	DB 0	;0825 00
+
+L_0826:
 	DB 0	;08AA 00
 
 	DB 0	;092F 00
@@ -292,6 +270,7 @@ Msg_098e:
 	DB ' '+$80	;09AD A0
 	DB ' '+$80	;09AE A0
 	DB 0		;09AF 00
+
 	DB 0		;09B4 00
 	DB 0		;09B5 00
 	DB 0		;09B6 00
@@ -304,32 +283,32 @@ Msg_098e:
 L_09bc:	DW L_0264	;09BC 02 64 ; fixupword
 
 E_09BE: ; Main entry point
-	XFR SW,SW,$264	;09BE 55 BA 02 64 ; fixupword
-	XFR ZW,ZW,$bf3	;09C2 55 98 0B F3 ; fixupword
+	XFR SW,#L_0264	;09BE 55 BA 02 64 ; fixupword	init return stack
+	XFR ZW,#L_0bf3	;09C2 55 98 0B F3 ; fixupword	???
 	SVC $5d		;09C6 66 5D			something commonly at startup
 	DW 2		;09C8 00 02
 	DB 25		;09cA 19
 	DW L_09bc	;09Cb 09 bc ; fixupword
-???	STA (ZW)	;09CC BC
+	STA (ZW)	;09CC BC			???
 	NOP		;09CD 01
 	SVC $39		;09CE 66 39			open files or terminal?
 	DB 2		;09D0 02
-	DW FCB81	;09D1 02 F5 ; fixupword
+	DW Sys081	;09D1 02 F5 ; fixupword
 	DB 0		;09D3 00
 	NOP		;09D4 01
 	SVC $35		;09D5 66 35
-	DW FCB81	;09D7 02 F5 ; fixupword		console FCB?
+	DW Sys081	;09D7 02 F5 ; fixupword		console FCB?
 	DW L_093F	;09D9 09 3F ; fixupword
 	DW L_0958	;09DB 09 58 ; fixupword		name & version
 	DW 0		;09DD 00 00
 	NOP		;09DF 01
 	SVC $39		;09E0 66 39			open files?
 	DB 1		;09E2 01
-	DW FCB0		;09E3 03 13 ; fixupword
+	DW Sys000	;09E3 03 13 ; fixupword
 	DB 1		;09E5 01
-	DW FCB2		;09E6 03 4F ; fixupword
+	DW Sys002	;09E6 03 4F ; fixupword
 	DB 2		;09E8 02
-	DW FCB1		;09E9 03 31 ; fixupword
+	DW Sys001	;09E9 03 31 ; fixupword
 	DB 0		;09EB 00
 	NOP		;09EC 01
 	SVC $29		;09ED 66 29			@MV
@@ -338,7 +317,7 @@ E_09BE: ; Main entry point
 	DW 0		;09F3 00 00
 L_09F5:	NOP		;09F5 01
 	SVC $34		;09F6 66 34			@RF
-	DW FCB0		;09F8 03 13 ; fixupword
+	DW Sys000	;09F8 03 13 ; fixupword
 	DW L_093F	;09FA 09 3F ; fixupword
 	DW L_0826	;09FC 08 26 ; fixupword
 	DW 0		;09FE 00 00
@@ -364,7 +343,7 @@ L_09F5:	NOP		;09F5 01
 	DB 1		;0A25 01
 @0A26:	NOP		;0A26 01
 	SVC $35		;0A27 66 35			write formatted?
-	DW FCB1		;0A29 03 31 ; fixupword		  ptr FCB
+	DW Sys001	;0A29 03 31 ; fixupword		  ptr FCB
 	DW L_093F	;0A2B 09 3F ; fixupword		  buf
 	DW L_0826	;0A2D 08 26 ; fixupword		  format?
 	DW 0		;0A2F 00 00
@@ -391,7 +370,7 @@ L_09F5:	NOP		;09F5 01
 	BZ @0a8e	;0A51 14 3B
 	NOP		;0A53 01
 	SVC $34		;0A54 66 34			@RF
-	DW FCB2		;0A56 03 4F ; fixupword		ptr FCB
+	DW Sys002	;0A56 03 4F ; fixupword		ptr FCB
 	DW L_093F	;0A58 09 3F ; fixupword
 	DW L_08AB	;0A5A 08 AB ; fixupword
 	DW 0		;0A5C 00 00
@@ -409,7 +388,7 @@ L_09F5:	NOP		;09F5 01
 	NOP		;0A71 01
 	SVC $3a		;0A72 66 3A			@CT
 	DB 4		;0A74 04
-	DW FCB2		;0A75 03 4F ; fixupword
+	DW Sys002		;0A75 03 4F ; fixupword
 	NOP		;0A77 01
 	SVC $26		;0A78 66 26			@CN
 	DW L_09B0	;0A7A 09 B0 ; fixupword
@@ -456,7 +435,7 @@ L_09F5:	NOP		;09F5 01
 	DW L_09B8	;0ABF 09 B8 ; fixupword
 	NOP		;0AC1 01
 	SVC $35		;0AC2 66 35			@WF  write formatted
-	DW FCB81	;0AC4 02 F5 ; fixupword		  ptr FCB 
+	DW Sys081	;0AC4 02 F5 ; fixupword		  ptr FCB 
 	DW L_0951	;0AC6 09 51 ; fixupword		  ptr buf
 	DW L_0937	;0AC8 09 37 ; fixupword		  ptr format literal
 	DW L_099F	;0ACA 09 9F ; fixupword		  ?
@@ -465,7 +444,7 @@ L_09F5:	NOP		;09F5 01
 
 L_0ad1:	NOP		;0AD1 01
 	SVC $35		;0AD2 66 35			@WF  write formatted
-	DW FCB1		;0AD4 03 31 ; fixupword		ptr FCB
+	DW Sys001		;0AD4 03 31 ; fixupword		ptr FCB
 	DW L_094A	;0AD6 09 4A ; fixupword		ptr buf
 	DW L_099C	;0AD8 09 9C ; fixupword		ptr format lit
 	DW L_0826	;0ADA 08 26 ; fixupword		?
@@ -505,7 +484,7 @@ L_0ad1:	NOP		;0AD1 01
 	DW L_09B0	;0B14 09 B0 ; fixupword
 	NOP		;0B16 01
 	SVC $35		;0B17 66 35			@WF  write formatted
-	DW FCB1		;0B19 03 31 ; fixupword
+	DW Sys001		;0B19 03 31 ; fixupword
 	DW L_093F	;0B1B 09 3F ; fixupword
 	DW L_097D	;0B1D 09 7D ; fixupword
 	DW 0		;0B1F 00 00
@@ -517,7 +496,7 @@ L_0ad1:	NOP		;0AD1 01
 	DB 6		;0B2A 06
 L_0B2B:	NOP		;0B2B 01
 	SVC $34		;0B2C 66 34			@RF
-	DW FCB2		;0B2E 03 4F ; fixupword		  ptr FCB
+	DW Sys002	;0B2E 03 4F ; fixupword		  ptr FCB
 	DW L_093F	;0B30 09 3F ; fixupword
 	DW L_08AB	;0B32 08 AB ; fixupword
 	DW 0		;0B34 00 00
@@ -535,7 +514,7 @@ L_0B2B:	NOP		;0B2B 01
 	NOP		;0B49 01
 :	SVC $3a		;0B4A 66 3A			@CT
 	DB 4		;0B4C 04
-	DW FCB2		;0B4D 03 4F ; fixupword
+	DW Sys002	;0B4D 03 4F ; fixupword
 L_0B4F:	NOP		;0B4F 01
 	SVC $26		;0B50 66 26			@CN
 	DW L_09B0	;0B52 09 B0 ; fixupword
@@ -544,7 +523,7 @@ L_0B4F:	NOP		;0B4F 01
 	DB 1		;0B58 01
 	NOP		;0B59 01
 	SVC $35		;0B5A 66 35			@WF  write formatted
-	DW FCB1		;0B5C 03 31 ; fixupword		  ptr FCB
+	DW Sys001	;0B5C 03 31 ; fixupword		  ptr FCB
 	DW L_093F	;0B5E 09 3F ; fixupword		  ptr buff
 	DW Msg_098E	;0B60 09 8E ; fixupword		  ptr format literal
 	DW 0		;0B62 00 00
@@ -562,7 +541,7 @@ E_0B71:	LDAB 08ab	;0B71 81 08 AB ; fixupword
 	BZ L_0b4f	;0B77 14 D6
 	NOP		;0B79 01
 	SVC $35		;0B7A 66 35			@WF  write formatted
-	DW FCB1		;0B7C 03 31 ; fixupword		  ptr FCB
+	DW Sys001	;0B7C 03 31 ; fixupword		  ptr FCB
 	DW L_093F	;0B7E 09 3F ; fixupword		  ptr buff
 	DW L_08AB	;0B80 08 AB ; fixupword		  ptr format literal
 	DW 0		;0B82 00 00
@@ -575,16 +554,16 @@ E_0B71:	LDAB 08ab	;0B71 81 08 AB ; fixupword
 	JMP L_0b2b	;0B8E 71 0B 2B ; fixupword
 
 L_0B91:	JSR @L_0BF9	;0B91 7A 0B F9 ; fixupword
-	DW FCB1		;0B94 03 31 ; fixupword
+	DW Sys001	;0B94 03 31 ; fixupword
 	SVC $05		;0B96 66 05			@TS  get date/time
 	DB $C		;0B98 0C			  format?
-	DW FCB0		;0B99 03 13 ; fixupword		  ptr buf
+	DW Sys000	;0B99 03 13 ; fixupword		  ptr buf
 	SVC $05		;0B9B 66 05			@TS  get date/time
 	DB $d		;0B9D 0D			  format?
-	DW FCB1		;0B9E 03 31 ; fixupword		  ptr buf
+	DW Sys001	;0B9E 03 31 ; fixupword		  ptr buf
 	NOP		;0BA0 01
 	SVC $35		;0BA1 66 35			@WF  write formatted
-	DW FCB81	;0BA3 02 F5 ; fixupword		  ptr FCB
+	DW Sys081	;0BA3 02 F5 ; fixupword		  ptr FCB
 	DW L_093F	;0BA5 09 3F ; fixupword		  ptr buf
 	DW L_0965	;0BA7 09 65 ; fixupword		  ptr format lit
 	DW 0		;0BA9 00 00
@@ -643,7 +622,7 @@ E_0BF3:
 @0BFB:	LDA (XW+)	;0BFB 95 41
 	STA @0c0a	;0BFD B3 0B
 	STA @0c11	;0BFF B3 10
-	LDB 0a(AW)	;0C01 D5 08 0A
+	LDB 10(AW)	;0C01 D5 08 0A
 	DCR BW,8	;0C04 31 27
 	BZ @0c0e	;0C06 14 06
 	SVC $38		;0C08 66 38		@WB

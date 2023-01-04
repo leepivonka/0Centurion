@@ -1,157 +1,125 @@
 ; XAssm.4.bin loaded at $200
 
-	DW 0,0,0,0	;0200 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0208 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0210 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0218 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0220 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0228 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0230 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0238 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0240 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0248 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0250 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0258 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0260 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0268 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0270 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0278 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0280 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0288 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0290 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;0298 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;02A0 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;02A8 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;02B0 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;02B8 00 00 00 00 00 00 00 00
-	DW 0,0,0,0	;02C0 00 00 00 00 00 00 00 00
+	DW 0,4		;0200 00 00 00 00 00 00 00 00
+	DW 0,4		;0208 00 00 00 00 00 00 00 00
+	DW 0,4		;0210 00 00 00 00 00 00 00 00
+	DW 0,4		;0218 00 00 00 00 00 00 00 00
+	DW 0,4		;0220 00 00 00 00 00 00 00 00
+	DW 0,4		;0228 00 00 00 00 00 00 00 00
+	DW 0,4		;0230 00 00 00 00 00 00 00 00
+	DW 0,4		;0238 00 00 00 00 00 00 00 00
+	DW 0,4		;0240 00 00 00 00 00 00 00 00
+	DW 0,4		;0248 00 00 00 00 00 00 00 00
+	DW 0,4		;0250 00 00 00 00 00 00 00 00
+	DW 0,4		;0258 00 00 00 00 00 00 00 00
+	DW 0,4		;0260 00 00 00 00 00 00 00 00
+	DW 0,4		;0268 00 00 00 00 00 00 00 00
+	DW 0,4		;0270 00 00 00 00 00 00 00 00
+	DW 0,4		;0278 00 00 00 00 00 00 00 00
+	DW 0,4		;0280 00 00 00 00 00 00 00 00
+	DW 0,4		;0288 00 00 00 00 00 00 00 00
+	DW 0,4		;0290 00 00 00 00 00 00 00 00
+	DW 0,4		;0298 00 00 00 00 00 00 00 00
+	DW 0,4		;02A0 00 00 00 00 00 00 00 00
+	DW 0,4		;02A8 00 00 00 00 00 00 00 00
+	DW 0,4		;02B0 00 00 00 00 00 00 00 00
+	DW 0,4		;02B8 00 00 00 00 00 00 00 00
+	DW 0,4		;02C0 00 00 00 00 00 00 00 00
 L_02c8:	; top of return stack
 
 	DW 0	;02C8 00 00
 
-L_02ca: ; file control block?   program source?
-	DB 00	;02CA 00	status
-	DB 01	;02CB 01
-	DB 01	;02CC 01
-	DB 09	;02CD 09	device
-	DB 01	;02CE 01
-	DB 90	;02CF 90
-	DW L_059B	;02D0 05 9B ; fixupword
-	DB 00	;02D2 00
-	DB 00	;02D3 00
-	DB 00	;02D4 00
-	DB 01	;02D5 01
-	DB 02	;02D6 02
-	DB 02	;02D7 02
-	DB 00	;02D8 00
-	DB 84	;02D9 84
-	DW L_0514	;02DA 05 14 ; fixupword	record buffer?
-	DB 00	;02DC 00
-	DB 00	;02DD 00
-	DB 00	;02DE 00
-	DB 00	;02DF 00
-	DB 00	;02E0 00
-	DB 00	;02E1 00
-	DB 00	;02E2 00
-	DB 00	;02E3 00
-	DB 00	;02E4 00
-	DB 00	;02E5 00
-	DB 00	;02E6 00
-	DB 84	;02E7 84
+Sys001: ; file control block   program source?
+	DB 0	;02CA 00	+0 status
+	DB 1	;02CB 01	+1 sys#
+	DB 1	;02CC 01	+2
+	DB 9	;02CD 09	+3 function?
+	DW 400	;02CE 01 90	+4 block buffer length?
+	DW L_059B	;02D0 05 9B  fixupword	+6 block buffer ptr?
+	DB 00	;02D2 00	+8
+	DB 00	;02D3 00	+9
+	DW 1	;02D4 00 01	+10
+	DB 02	;02D6 02	+12
+	DB 02	;02D7 02	+13
+	DW 132	;02D8 00 84	+14 record length?
+	DW L_0514	;02DA 05 14 +16 fixupword	record buffer?
+	DW 0	;02DC 00 00	+18
+	DW 0	;02DE 00 00	+20
+	DW 0	;02E0 00 00	+22
+	DW 0	;02E2 00 00	+24
+	DB 00	;02E4 00	+26
+	DB 00	;02E5 00	+27
+	DW 132	;02E6 00 84	+28
 
-L_02e8: ; file control block?
-	DB 00	;02E8 00
-	DB 02	;02E9 02
-	DB 02	;02EA 02
-	DB 09	;02EB 09
-	DB 01	;02EC 01
-	DB 90	;02ED 90
-	DW L_072E	;02EE 07 2E ; fixupword
-	DB 00	;02F0 00
-	DB 00	;02F1 00
-	DW L_236B	;02F2 23 6B ; fixupword
-	DB 02	;02F4 02
-	DB 04	;02F5 04
-	DB 00	;02F6 00
-	DB 84	;02F7 84
-	DB 00	;02F8 00
-	DB 00	;02F9 00
-	DB 00	;02FA 00
-	DB 00	;02FB 00
-	DB 00	;02FC 00
-	DB 00	;02FD 00
-	DB 00	;02FE 00
-	DB 00	;02FF 00
-	DB 00	;0300 00
-	DB 00	;0301 00
-	DB 00	;0302 00
-	DB 00	;0303 00
-	DB 00	;0304 00
-	DB 84	;0305 84
+Sys002: ; file control block
+	DB 0	;02E8 00	+0 status
+	DB 2	;02E9 02	+1 sys#
+	DB 2	;02EA 02	+2
+	DB 9	;02EB 09	+3 function?
+	DW 400	;02EC 01 90	+4 block buffer length?
+	DW E_072E	;02EE 07 2E ; fixupword +6 block buffer ptr? (will overwrite startup code?)
+	DB 00	;02F0 00	+8
+	DB 00	;02F1 00	+9
+	DW L_236B	;02F2 23 6B fixupword	+10
+	DB 02	;02F4 02	+12
+	DB 04	;02F5 04	+13
+	DW 132	;02F6 00 84	+14 record length
+	DW 0	;02F8 00 00	+16 record ptr
+	DW 0	;02FA 00 00	+18
+	DW 0	;02FC 00 00	+20
+	DW 0	;02FE 00 00	+22
+	DW 0	;0300 00 00	+24
+	DB 00	;0302 00	+26
+	DB 00	;0303 00	+27
+	DW 0	;0304 00 84	+28
 
-L_0306: ; file control block?
-	DB 00	;0306 00
-	DB 03	;0307 03
-	DB 02	;0308 02
-	DB 09	;0309 09
-	DB 01	;030A 01
-	DB 90	;030B 90
-	DB 00	;030C 00
-	DB 00	;030D 00
-	DB 00	;030E 00
-	DB 00	;030F 00
-	DW 0	;0310 00 00
-	DB 01	;0312 01
-	DB 02	;0313 02
-	DB 00	;0314 00
-	DB 84	;0315 84
-	DW 0	;0316 00 00	write string ptr
-	DB 00	;0318 00
-	DB 00	;0319 00
-	DB 00	;031A 00
-	DB 00	;031B 00
-	DB 00	;031C 00
-	DB 00	;031D 00
-	DB 00	;031E 00
-	DB 00	;031F 00
-	DB 00	;0320 00
-	DB 00	;0321 00
-	DB 00	;0322 00
-	DB 84	;0323 84
+Sys003: ; file control block	program listing
+	DB 00	;0306 00	+0 status
+	DB 03	;0307 03	+1 sys#
+	DB 02	;0308 02	+2
+	DB 09	;0309 09	+3 function
+	DW 400	;030A 01 90	+4 block buffer length?
+	DW 0	;030C 00 00	+6 block buffer ptr?
+	DB 00	;030E 00	+8
+	DB 00	;030F 00	+9
+	DW 0	;0310 00 00	+10
+	DB 01	;0312 01	+12
+	DB 02	;0313 02	+13
+	DW 132	;0314 00 84	+14 record length?
+	DW 0	;0316 00 00	+16 record ptr?
+	DW 0	;0318 00 00	+18
+	DW 0	;031A 00 00	+20
+	DW 0	;031C 00 00	+22
+	DW 0	;031E 00 00	+24
+	DB 00	;0320 00	+26
+	DB 00	;0321 00	+27
+	DW 132	;0322 00 84	+28
 
-L_0324: ; file control block?
-	DB 00	;0324 00
-	DB 04	;0325 04
-	DB 02	;0326 02
-	DB 09	;0327 09
-	DB 01	;0328 01
-	DB 90	;0329 90
-	DW 0	;032A 00 00
-	DB 00	;032C 00
-	DB 00	;032D 00
-	DB 00	;032E 00
-	DB 04	;032F 04
-	DB 02	;0330 02
-	DB 01	;0331 01
-	DB 00	;0332 00
-	DB 04	;0333 04
-	DW L_08C1	;0334 08 C1 ; fixupword
-	DB 00	;0336 00
-	DB 00	;0337 00
-	DB 00	;0338 00
-	DB 00	;0339 00
-	DB 00	;033A 00
-	DB 00	;033B 00
-	DB 00	;033C 00
-	DB 00	;033D 00
-	DB 00	;033E 00
-	DB 00	;033F 00
-	DB 00	;0340 00
-	DB 04	;0341 04
+Sys004: ; file control block
+	DB 0	;0324 00	+0 status
+	DB 4	;0325 04	+1 sys#
+	DB 2	;0326 02	+2
+	DB 9	;0327 09	+3 function?
+	DW 400	;0328 01 90	+4 block buffer length?
+	DW 0	;032A 00 00	+6 block buffer ptr?
+	DB 00	;032C 00	+8
+	DB 00	;032D 00	+9
+	DW 4	;032E 00 04	+10
+	DB 02	;0330 02	+12
+	DB 01	;0331 01	+13
+	DW 4	;0332 00 04	+14 record length?
+	DW L_08C1	;0334 08 C1 fixupword +16 record ptr?
+	DW 0	;0336 00 00	+18
+	DW 0	;0338 00 00	+20
+	DW 0	;033A 00 00	+22
+	DW 0	;033C 00 00	+24
+	DB 00	;033E 00	+26
+	DB 00	;033F 00	+27
+	DW 4	;0340 00 04	+28
 
 E_0342: ; do file operation?
 	LDAB (XW+)	;0342 85 41	get inline function code?
-	LDB (XW)	;0344 DA	get inline file control block ptr?
+	LDB (XW)	;0344 DA	get inline file control block ptr
 	STAB 3(BW)	;0345 A5 28 03	set function code?
 	SVC $18		;0348 66 18	file something???
 	LDB (XW+)	;034A D5 41	get inline file control block ptr? again
@@ -160,23 +128,24 @@ E_0342: ; do file operation?
 
 E_034E: ; read program source line?
 	JSR E_0342	;034E 7B F2		do file operation?
-	DB 1		;0350 01	 	  function?
-	DW L_02CA	;0351 02 CA ; fixupword	  FCB?
+	DB 1		;0350 01	 	  function: read string
+	DW Sys001	;0351 02 CA ; fixupword	  FCB
 	BNZ @035e	;0353 15 09		if error?
 	JSR E_2344	;0355 79 23 44 ; fixupword  uppercase a string
 	DW L_0514	;0358 05 14 ; fixupword
-	LDA #L_0516	;035A 90 05 16 ; fixupword
+	LDA #L_0516	;035A 90 05 16 ; fixupword	return string data ptr
 	RSR		;035D 09
 
-@035E:	JSR E_0342	;035E 7B E2		file operation?
-	DB 4		;0360 04		  function?
-	DW L_02CA	;0361 02 CA ; fixupword	  FCB?
-	CLA		;0363 3A
+@035E: ; read got an error
+	JSR E_0342	;035E 7B E2		file operation?
+	DB 4		;0360 04		  function: ??
+	DW Sys001	;0361 02 CA ; fixupword	  FCB
+	CLA		;0363 3A		return null string data ptr
 L_0364:	RSR		;0364 09
 
-L_0365:	LDA L_0324+6	;0365 93 C3
+L_0365:	LDA Sys004+6	;0365 93 C3	block buffer assigned?
 L_0367:	BNZ @036e	;0367 15 05
-	LDB #$c0b0	;0369 D0 C0 B0
+	LDB #$c0b0 ;@0	;0369 D0 C0 B0
 	JMP @0393	;036C 73 25
 
 @036E:	LDA #$ffff	;036E 90 FF FF
@@ -188,14 +157,14 @@ L_0367:	BNZ @036e	;0367 15 05
 	CLR AW,1	;037E 32 01
 	JSR E_03cf	;0380 7B 4D
 	JSR E_0342	;0382 7B BE		file operation?
-	DB $b		;0384 0B		  function?
-	DW L_0324	;0385 03 24 ; fixupword	  FCB?
+	DB $b		;0384 0B		  function: ???
+	DW Sys004	;0385 03 24 ; fixupword	  FCB
 	LDAB #1		;0387 80 01
-	STAB L_0324+2	;0389 A3 9B
+	STAB Sys004+2	;0389 A3 9B
 	JSR E_0342	;038B 7B B5		file operation?
-	DB 9		;038D 09		  function?
-	DW L_0324	;038E 03 24 ; fixupword	  FCB?
-	LDB #$C0D1?	;0390 D0 C0 B1
+	DB 9		;038D 09		  function: ????
+	DW Sys004	;038E 03 24 ; fixupword	  FCB
+	LDB #$C0D1 ;@Q	;0390 D0 C0 B1
 
 @0393:	STB L_03b8+4	;0393 F3 27
 	SVC $05		;0395 66 05
@@ -209,17 +178,17 @@ L_0367:	BNZ @036e	;0367 15 05
 	DW E_042D	;039F 04 2D ; fixupword	; write a blank line
 	DW E_03F6	;03A1 03 F6 ; fixupword		write string
 	DW L_09C8	;03A3 09 C8 ; fixupword
-	DW L_02CA	;03A5 02 CA ; fixupword
-	DW L_02E8	;03A7 02 E8 ; fixupword
-	DW L_0306	;03A9 03 06 ; fixupword
+	DW Sys001	;03A5 02 CA ; fixupword
+	DW Sys002	;03A7 02 E8 ; fixupword
+	DW Sys003	;03A9 03 06 ; fixupword
 	DW L_046D	;03AB 04 6D ; fixupword	# errors
 	DW L_03E0	;03AD 03 E0 ; fixupword
-	DW L_0324	;03AF 03 24 ; fixupword
+	DW Sys004	;03AF 03 24 ; fixupword
 	DW L_08C3	;03B1 08 C3 ; fixupword
 	DW L_03ED	;03B3 03 ED ; fixupword
 
 	SVC $09		;03B5 66 09		abort
-	DB $03		;03B7 03		  code
+	DB 3		;03B7 03		  code
 
 L_03b8:	DB $A0 ; 	;03B8 A0
 	DB $A0 ; 	;03B9 A0
@@ -229,39 +198,39 @@ L_03b8:	DB $A0 ; 	;03B8 A0
 	DB $00		;03BE 00
 
 E_03BF:
-	STA L_02e8+$10	;03BF B1 02 F8 ; fixupword
+	STA Sys002+16	;03BF B1 02 F8 ; fixupword
 	JSR E_0342	;03C2 79 03 42 ; fixupword	file operation?
-	DB 2		;03C5 02			  function?
-	DW L_02E8	;03C6 02 E8 ; fixupword		  FCB?
+	DB 2		;03C5 02			  function: write string?
+	DW Sys002	;03C6 02 E8 ; fixupword		  FCB
 	BZ L_0364	;03C8 14 9A			if no error
 L_03CA:	SVC $09		;03CA 66 09			abort		
 	DB $34		;03CC 34			  code
 
 E_03CD:	CLR AW,5	;03CD 32 04
-E_03CF:	LDB L_0324+6	;03CF D1 03 2A ; fixupword
+E_03CF:	LDB Sys004+6	;03CF D1 03 2A ; fixupword	block buffer assigned?
 	BZ @03df	;03D2 14 0B
-	STA 08c1	;03D4 B1 08 C1 ; fixupword
+	STA L_08c1	;03D4 B1 08 C1 ; fixupword
 	JSR E_0342	;03D7 79 03 42 ; fixupword	file operation?
-	DB 2		;03DA 02			  function?
-	DW L_0324	;03DB 03 24 ; fixupword		  FCB?
+	DB 2		;03DA 02			  function: write string?
+	DW Sys004	;03DB 03 24 ; fixupword		  FCB
 	BNZ ??		;03DD 15 EB
 @03DF:	RSR		;03DF 09
 
 E_03E0:	JSR E_0342	;03E0 79 03 42 ; fixupword	file operation?
-	DB 1		;03E3 01			  function?
-	DW L_0324	;03E4 03 24 ; fixupword		  FCB?
-	BZ @03ec	;03E6 14 04			if no error
-	JSR L_03ed	;03E8 7B 03
+	DB 1		;03E3 01			  function: read string?
+	DW Sys004	;03E4 03 24 ; fixupword		  FCB
+	BZ @03ec	;03E6 14 04			if error
+	JSR L_03ed	;03E8 7B 03			  ???
 	LDAB #1		;03EA 80 01
 @03ec:	RSR		;03EC 09
 
 L_03ED:	JSR E_0342	;03ED 79 03 42 ; fixupword	file operation?
-	DB 4		;03F0 04			  function?
-	DW L_0324	;03F1 03 24 ; fixupword		  FCB?
+	DB 4		;03F0 04			  function: ???
+	DW Sys004	;03F1 03 24 ; fixupword		  FCB
 	RSR		;03F3 09
 
 L_03F4:	JSR E_042d	;03F4 7B 37		start a new page
-E_03F6: ; write string
+E_03F6: ; write string to listing file
 	LDA L_046b	;03F6 93 73		decrement lines remaining on page
 	DCA		;03F8 39
 	STA L_046b	;03F9 B3 70
@@ -273,7 +242,7 @@ E_03FF: ; write a line, trimming trailing spaces
 @0404:	DW 0		;0404 00 00
 	LDB @0404	;0406 D3 FC
 E_0408: ; write a line
-	STB L_0306+$10	;0408 F1 03 16 ; fixupword
+	STB Sys003+16	;0408 F1 03 16 ; fixupword
 	LDA (BW)	;040B 99			if length > 0
 	BLE @0427	;040C 19 19
 	STA (-SW)	;040E B5 A2			  save A
@@ -284,13 +253,14 @@ E_0408: ; write a line
 	LDAB #$8d	;0416 80 8D			  append CR
 	STAB (-BW)	;0418 A5 22
 	JSR E_0342	;041A 79 03 42 ; fixupword	  file operation? write line?
-	DB 2		;041D 02			    function write?
-	DW L_0306	;041E 03 06 ; fixupword		    FCB?
+	DB 2		;041D 02			    function: write string?
+	DW Sys003	;041E 03 06 ; fixupword		    FCB
 	BNZ L_03ca	;0420 15 A8			  error?
 	LDB (SW+)	;0422 D5 A1			  restore B
 	LDA (SW+)	;0424 95 A1			  restore A
 	STA (BW)	;0426 B9			  restore string length
-@0427:	RSR		;0427 09			return
+@0427:
+	RSR		;0427 09			return
 
 E_0428: ; write a blank line
 	LDB #L_0463	;0428 D0 04 63 ; fixupword
@@ -505,29 +475,33 @@ L_04bc:	DB $A0 ; 	;04BC A0
 
 L_0514: ; string: source file record buffer?
 	DS 2		;0514   length
-	DS ??		;0516	chars
+	DS 132		;0516	chars
 
 
 
+L_059b: DS 400	; Sys001 block buffer?
 
-E_072E: ; Main entry point
+
+E_072E: ; Main entry point; also 400byte Sys002 block buffer?
 	JMP L_2576	;072E 71 25 76 ; fixupword
 
-	DW L_08C8	;0731 08 C8 ; fixupword
+	DW L_08C8	;0731 08 C8 ; fixupword  ptr to dynamic memory allocator init
 
+L_08c1: ; DS 4  Sys004 record buffer?
 L_08c3:	DS 2		;08c3
 L_08c5:	DS 2		;08c5
 
-L_08C8:
-	LDA (XW+)	;08C8 95 41
-	STA L_08ed	;08CA B3 21
+
+L_08C8: ; init free memory stuff
+	LDA (XW+)	;08C8 95 41		get 1st parm
+	STA L_08ed	;08CA B3 21		  set start of buf
 	LDB #60		;08CC D0 00 3C
 	AAB		;08CF 58
-	STB L_08eb	;08D0 F3 19
-	LDB (XW+)	;08D2 D5 41
-	STB L_08e9	;08D4 F3 13
-	LDB (XW+)	;08D6 D5 41
-	STB L_08ef	;08D8 F3 15
+	STB L_08eb	;08D0 F3 19		  set next available byte
+	LDB (XW+)	;08D2 D5 41		get 2nd parm
+	STB L_08e9	;08D4 F3 13		  set end of free memory
+	LDB (XW+)	;08D6 D5 41		get 3rd parm
+	STB L_08ef	;08D8 F3 15		  set ???
 	STX (-SW)	;08DA 6D A2		save X
 	LDX #60/2	;08DC 60 00 1E		zero 60 bytes
 	CLR BW,0	;08DF 32 20
@@ -537,12 +511,12 @@ L_08C8:
 	LDX (SW+)	;08E6 65 A1		restore X
 	RSR		;08E8 09		return
 
-L_08e9: DS 2	; 2nd parm
-L_08eb:	DS 2	; end of buf
+L_08e9: DS 2	; end of free memory
+L_08eb:	DS 2	; next available byte
 L_08ed: DS 2	; start of buf
 L_08ef:	DS 2	; 3rd parm
 
-E_08F1: ; alloc memory???
+E_08F1: ; alloc memory: 1st parm is requested size, 2nd parm is returned ptr
 	LDA (XW+)	;08F1 95 41		get requested size
 	LDB L_08eb	;08F3 D3 F6		return location
 	STB (XW+)	;08F5 F5 41
@@ -555,16 +529,17 @@ E_08F1: ; alloc memory???
 
 @0901:					; overflowed buffer, get more
 	SVC $59		;0901 66 59		alloc another contig page???
-	SVC $07		;0903 66 07		yield?
+	SVC $07		;0903 66 07		yield
 	LDB L_08e9	;0905 D3 E2		clear 2KBytes at end of buf
 	CLR AW,8	;0907 32 08
 @0909:	FIL $100,#0,(B)	;0909 47 9E FF 00 02  ssss=9 mm=3 nn=2 count=100 ??
-	ADD BW,BW,#$100 ;090E 50 32 01 00
+	ADD BW,#$100	;090E 50 32 01 00
 	DCA		;0912 39
 	BGZ @0909	;0913 18 F4
 	STB L_08e9	;0915 F3 D2		save new buf end
 	DCR XW,4	;0917 31 43		try the command again
 	JMP E_08f1	;0919 73 D6
+
 
 E_091B: ; convert char in AL to index in BW
 	LDBB #'>'+$80	;091B C0 BE
@@ -593,9 +568,9 @@ E_0930: ; alloc memory for ???
 	INA		;0941 38
 	AAB		;0942 58
 	STB @0947	;0943 F3 02
-	JSR E_08f1	;0945 7B AA		alloc memory?
-@0947:	DW 0		;0947 00 00		requested size
-@0949:	DW 0		;0949 00 00		ptr to new mem
+	JSR E_08f1	;0945 7B AA		alloc memory: 1st parm is requested size, 2nd parm is returned ptr
+@0947:	DW 0		;0947 00 00		  requested size
+@0949:	DW 0		;0949 00 00		  ptr to new mem
 	LDA @0949	;094B 93 FC
 	BZ @097d	;094D 14 2E
 	LDB (XW)	;094F DA
@@ -747,10 +722,10 @@ E_09C8: ; find a string in some table???  maybe symbol lookup???
 
 L_0A43:	LDA #L_2343	;0A43 90 23 43 ; fixupword	init expression eval stack ptr
 	XAY		;0A46 5C
-	JSR E_08c8	;0A47 79 08 C8 ; fixupword
-L_0a4a:	DW 0		;0A4A 00 00
-L_0a4c:	DW 0		;0A4C 00 00
-	DW 3		;0A4E 00 03
+	JSR E_08c8	;0A47 79 08 C8 ; fixupword	init dynamic memory allocator
+L_0a4a:	DW 0		;0A4A 00 00			  start of buf
+L_0a4c:	DW 0		;0A4C 00 00			  end of buf
+	DW 3		;0A4E 00 03			  ???
 	JSR E_0a76	;0A50 7B 24
 	JSR E_0ab1	;0A52 7B 5D
 	LDA L_0a9e	;0A54 93 48			remember start location counter
@@ -775,7 +750,7 @@ E_0A76:	CLA		;0A76 3A
 	STAB L_1c22	;0A7F A1 1C 22 ; fixupword
 	STA L_0a8e	;0A82 B3 0A
 	STA L_046d	;0A84 B1 04 6D ; fixupword	init # errors
-	LDA #L_2343	;0A87 90 23 43 ; fixupword
+	LDA #L_2343	;0A87 90 23 43 ; fixupword	init expression eval stack ptr
 	XAY		;0A8A 5C
 	RSR		;0A8B 09
 
@@ -789,7 +764,7 @@ L_0a92:	DB 1	;0A92 01	PRInt on/off
 L_0a93:	DB 1	;0A93 01	PRInt co/no   console?
 L_0a99:	DB 0	;0A99 00
 L_0a9a:	DB 0	;0A9A 00
-L_0a9b:	DW 0	;0A9B 00 00
+L_0a9b:	DW 0	;0A9B 00 00	flags?
 L_0a9d:	DB 0	;0A9D 00	operand size in bytes?
 L_0a9e:	DW 0	;0A9E 00 00	location counter
 L_0aa0:	DB 0	;0AA0 00
@@ -907,7 +882,7 @@ L_0B26:	LDAB (ZW)	;0B26 8C
 	BZ @0b72	;0B67 14 09
 	LDBB L_0a90	;0B69 C1 0A 90 ; fixupword
 	BNZ @0b72	;0B6C 15 04
-	JSR E_1a2e	;0B6E 79 1A 2E ; fixupword	M error
+	JSR ErrM	;0B6E 79 1A 2E ; fixupword	M error
 	RSR		;0B71 09
 
 @0B72:	LDBB #1		;0B72 C0 01
@@ -925,10 +900,10 @@ L_0B26:	LDAB (ZW)	;0B26 8C
 	STA (-YW)	;0B86 B5 62
 	RSR		;0B88 09
 
-@0B89:	XFR AW,ZW	;0B89 55 80
+@0B89:	XFR AW,ZW	;0B89 55 80			save opcode text ptr
 	STA L_0aa5	;0B8B B1 0A A5 ; fixupword
 	JSR E_1e59	;0B8E 79 1E 59 ; fixupword	look up opcode
-	LDAB (YW)	;0B91 8B			valid?
+	LDAB (YW)	;0B91 8B			notfound?
 	INAB		;0B92 28
 	BZ @0ba2	;0B93 14 0D
 	DCAB		;0B95 29
@@ -941,31 +916,32 @@ L_0B26:	LDAB (ZW)	;0B26 8C
 	JSR E_0bc7	;0B9E 7B 27			call the pseudo-op routine
 	JMP @0bb2	;0BA0 73 10
 
-@0BA2:	JSR E_1a02	;0BA2 79 1A 02 ; fixupword
-	XFR AW,ZW	;0BA5 55 80
+@0BA2: ; opcode not found
+	JSR E_1a02	;0BA2 79 1A 02 ; fixupword	skip alpha chars
+	XFR AW,ZW	;0BA5 55 80			save text ptr
 	STA L_0aa7	;0BA7 B1 0A A7 ; fixupword
-	CLA		;0BAA 3A
+	CLA		;0BAA 3A			push end marker
 	STA (YW)	;0BAB BB
 	STA (-YW)	;0BAC B5 62
-	JSR E_1a34	;0BAE 79 1A 34 ; fixupword	O error
+	JSR ErrO	;0BAE 79 1A 34 ; fixupword	O error
 	RSR		;0BB1 09
 
-@0BB2:	LDAB (ZW)	;0BB2 8C
+@0BB2:	LDAB (ZW)	;0BB2 8C			more operands?
 	LDBB #','+$80	;0BB3 C0 AC
 	SABB		;0BB5 49
 	BZ @0bbc	;0BB6 14 04
-	CLA		;0BB8 3A
+	CLA		;0BB8 3A			no
 	STA (-YW)	;0BB9 B5 62
 	RSR		;0BBB 09
 
-@0BBC:	INR ZW,1	;0BBC 30 80
+@0BBC:	INR ZW,1	;0BBC 30 80			skip ','
 	JSR E_15e5	;0BBE 79 15 E5 ; fixupword
 	XFR AW,ZW	;0BC1 55 80
 	STA L_0aab	;0BC3 B1 0A AB ; fixupword
 	RSR		;0BC6 09
 
 E_0BC7: ; do pseudo-op
-	JSR 1a02	;0BC7 79 1A 02 ; fixupword
+	JSR 1a02	;0BC7 79 1A 02 ; fixupword	skip alpha chars
 	XFR AW,ZW	;0BCA 55 80
 	STA L_0aa7	;0BCC B1 0A A7 ; fixupword
 	JSR E_1a10	;0BCF 79 1A 10 ; fixupword	 skip spaces in (Z)
@@ -980,23 +956,23 @@ E_0BC7: ; do pseudo-op
 	JMP @(BW)	;0BE2 75 24
 
 @0be4: ; indexed by pseudo-op opcode
-	DW L_0C00	;0BE4 0C 00 ; fixupword	0=EQU
-	DW L_0C04	;0BE6 0C 04 ; fixupword 1=???
-	DW L_0C2A	;0BE8 0C 2A ; fixupword 2=ORG
-	DW L_0C47	;0BEA 0C 47 ; fixupword 3=DB
-	DW L_0C53	;0BEC 0C 53 ; fixupword 4=DW
-	DW L_0C5B	;0BEE 0C 5B ; fixupword 5=DC
-	DW L_0C5F	;0BF0 0C 5F ; fixupword 6=DS
-	DW L_0C77	;0BF2 0C 77 ; fixupword 7=BEG
-	DW L_0CA2	;0BF4 0C A2 ; fixupword 8=END
-	DW L_0CB0	;0BF6 0C B0 ; fixupword 9=ENT
-	DW L_0CB4	;0BF8 0C B4 ; fixupword A=EXT
-	DW L_0CBA	;0BFA 0C BA ; fixupword B=PRInt
-	DW L_0CF7	;0BFC 0C F7 ; fixupword C=TITle
-	DW L_0D1F	;0BFE 0D 1F ; fixupword D=EJEct
+	DW PS_EQUate	;0BE4 0C 00 ; fixupword	0=EQUate
+	DW E_0C04	;0BE6 0C 04 ; fixupword 1=???
+	DW PS_ORG	;0BE8 0C 2A ; fixupword 2=ORG
+	DW PS_DB	;0BEA 0C 47 ; fixupword 3=DB
+	DW PS_DW	;0BEC 0C 53 ; fixupword 4=DW
+	DW PS_DC	;0BEE 0C 5B ; fixupword 5=DC
+	DW PS_DS	;0BF0 0C 5F ; fixupword 6=DS
+	DW PS_BEGin	;0BF2 0C 77 ; fixupword 7=BEGin
+	DW PS_END	;0BF4 0C A2 ; fixupword 8=END
+	DW PS_ENTry	;0BF6 0C B0 ; fixupword 9=ENTry
+	DW PS_EXTernal	;0BF8 0C B4 ; fixupword A=EXTernal
+	DW PS_PRInt	;0BFA 0C BA ; fixupword B=PRInt
+	DW PS_TITle	;0BFC 0C F7 ; fixupword C=TITle
+	DW PS_EJEct	;0BFE 0D 1F ; fixupword D=EJEct
 
 
-E_0C00: ; EQU
+PS_EQUate: ; EQUate
 	LDA (YW+)	;0C00 95 61
 	JMP L_0c18	;0C02 73 14
 
@@ -1020,7 +996,7 @@ L_0c21:	LDAB L_0a99	;0C21 81 0A 99 ; fixupword
 	STAB 0a9a	;0C26 A1 0A 9A ; fixupword
 @0C29:	RSR		;0C29 09
 
-L_0C2A: ; ORG
+PS_ORG: ; ORG
 	LDA (YW+)	;0C2A 95 61
 	JSR (L_0c62+1)	;0C2C 7C 35	E_15e5
 	LDA (YW)	;0C2E 9B
@@ -1035,10 +1011,10 @@ L_0C3B:	STA (-YW)	;0C3B B5 62
 
 E_0C3E:	LDA L_0a9b	;0C3E 91 0A 9B ; fixupword
 	BZ L_0c46	;0C41 14 03
-L_0c43:	JSR E_1a1a	;0C43 79 1A 1A ; fixupword	if ??? A error
+L_0c43:	JSR ErrA	;0C43 79 1A 1A ; fixupword	A error
 L_0C46:	RSR		;0C46 09
 
-E_0C47: ; DB
+PS_DB: ; DB
 	LDAB #1		;0C47 80 01			set operand size to 1
 	STAB L_0a9d	;0C49 A1 0A 9D ; fixupword
 	JSR E_1534	;0C4C 79 15 34 ; fixupword
@@ -1046,16 +1022,16 @@ E_0C47: ; DB
 	INA		;0C50 38
 	JMP L_0c3b	;0C51 73 E8
 
-E_0C53: ; DW
+PS_DW: ; DW
 	JSR E_1534	;0C53 79 15 34 ; fixupword
 	LDA #2		;0C56 90 00 02
 	JMP L_0c3b	;0C59 73 E0
 
-E_0C5B: ; DC
+PS_DC: ; DC	character literal
 	JSR E_0d6f	;0C5B 79 0D 6F ; fixupword
 	RSR		;0C5E 09
 
-E_0C5F: ; DS
+PS_DS: ; DS	define space
 	JSR E_1b6a	;0C5F 79 1B 6A ; fixupword	insert location counter into print line
 L_0c62:	JSR E_15e5	;0C62 79 15 E5 ; fixupword
 L_0c65:	JSR E_1b5e	;0C65 79 1B 5E ; fixupword	insert operand into print line
@@ -1065,8 +1041,8 @@ L_0c65:	JSR E_1b5e	;0C65 79 1B 5E ; fixupword	insert operand into print line
 	STB L_0a9e	;0C6E F1 0A 9E ; fixupword
 	LDAB (L_0c21+1)	;0C71 84 AF	L_0a99
 	BZ L_0c38	;0C73 14 C3
-	JSR (L_0c43+1)	;0C75 7C CD	E_1a1a		if ??? A error
-E_0C77: ; BEG
+	JSR (L_0c43+1)	;0C75 7C CD	ErrA		A error
+PS_BEGin: ; BEG
 	LDA (YW+)	;0C77 95 61
 	LDAB (YW)	;0C79 8B
 	BZ @0c8e	;0C7A 14 12
@@ -1087,7 +1063,7 @@ E_0C77: ; BEG
 	STA L_1cae	;0C9D B1 1C AE ; fixupword
 	JMP L_0c38	;0CA0 73 96
 
-E_0CA2: ; END
+PS_END: ; END
 	JSR E_1b6a	;0CA2 79 1B 6A ; fixupword	insert location counter into print line
 	JSR (L_0c62+1)	;0CA5 7C BC	E_15e5
 	JSR (L_0c65+1)	;0CA7 7C BD	E_1b5e	insert operand into print line
@@ -1095,16 +1071,16 @@ E_0CA2: ; END
 	STA L_0a8e	;0CAB B1 0A 8E ; fixupword
 	JMP L_0c38	;0CAE 73 88
 
-E_0CB0: ; ENT
+PS_ENTry: ; ENTry
 	LDAB #8		;0CB0 80 08
 	JMP L_0cb6	;0CB2 73 02
 
-E_0CB4: ; EXT
+PS_EXTernal: ; EXT
 	LDAB #$11	;0CB4 80 11
 L_0CB6:	JSR E_0d2a	;0CB6 7B 72
 	JMP L_0c3a	;0CB8 73 80
 
-E_0CBA: ; PRInt
+PS_PRInt: ; PRInt
 	LDA (ZW)	;0CBA 9C			get next chars
 	LDB #$cfce	;0CBB D0 CF CE	"ON"  on
 	SAB		;0CBE 59
@@ -1127,21 +1103,21 @@ E_0CBA: ; PRInt
 @0CDA:	LDB #$cecf	;0CDA D0 CE CF	"NO"
 	SAB		;0CDD 59
 	BZ @0ce4	;0CDE 14 04
-	JSR E_1a48	;0CE0 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0CE0 79 1A 48 ; fixupword	syntax error
 	RSR		;0CE3 09
 
 @0CE4:	STBB L_0a93	;0CE4 E1 0A 93 ; fixupword
-@0CE7:	JSR 1a02	;0CE7 79 1A 02 ; fixupword
+@0CE7:	JSR E_1a02	;0CE7 79 1A 02 ; fixupword	skip alpha chars
 	LDAB (ZW+)	;0CEA 85 81
 	LDBB #'<'+$80	;0CEC C0 AC
 	SABB		;0CEE 49
-	BZ E_0cba	;0CEF 14 C9
+	BZ PS_PRInt	;0CEF 14 C9
 	DCR ZW,1	;0CF1 31 80
 	CLA		;0CF3 3A
 	STA (-YW)	;0CF4 B5 62
 	RSR		;0CF6 09
 
-E_0CF7: ; TITle
+PS_TITle: ; TITle
 	JSR L_0d6f	;0CF7 7B 76
 	LDX (YW+)	;0CF9 65 61
 	ADD YW,XW	;0CFB 50 46
@@ -1161,7 +1137,7 @@ L_0D0B:	LDA #L_04bc	;0D0B 90 04 BC ; fixupword   ^ title in header line
 	STB L_0482+0	;0D19 F1 04 82 ; fixupword
 	LDA (SW+)	;0D1C 95 A1
 	XAY		;0D1E 5C
-L_0D1F: ; EJEct
+PS_EJEct: ; EJEct
 	CLA		;0D1F 3A			set # lines remaining on paage to zero
 	STA L_046b	;0D20 B1 04 6B ; fixupword
 	STA (-YW)	;0D23 B5 62
@@ -1183,7 +1159,7 @@ L_0D2A:	STAB (-SW)	;0D2A A5 A2
 	LDBB #1		;0D42 C0 01
 	ANDB BL,BH	;0D44 42 23
 	BNZ @0d4d	;0D46 15 05
-	JSR E_1a4e	;0D48 79 1A 4E ; fixupword	U error
+	JSR ErrU	;0D48 79 1A 4E ; fixupword	U error
 	JMP @0d63	;0D4B 73 16
 
 @0D4D:	LDBB #8		;0D4D C0 08
@@ -1217,7 +1193,7 @@ L_0D6F:	XFR AW,ZW	;0D6F 55 80
 	XAZ		;0D83 5E
 	CLA		;0D84 3A
 	STA (-YW)	;0D85 B5 62
-	JSR E_1a48	;0D87 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0D87 79 1A 48 ; fixupword	syntax error
 	RSR		;0D8A 09
 
 @0D8B:	STX (SW)	;0D8B 6D A0
@@ -1239,12 +1215,12 @@ L_0D6F:	XFR AW,ZW	;0D6F 55 80
 	JMP @0d8f	;0DA4 73 E9
 
 @0DA6:	DCR ZW,1	;0DA6 31 80
-	JSR E_1a48	;0DA8 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0DA8 79 1A 48 ; fixupword	syntax error
 @0DAB:	STX (-YW)	;0DAB 6D 62
 	LDX (SW+)	;0DAD 65 A1
 	RSR		;0DAF 09
 
-L_0DB0: ; do opcode
+E_0DB0: ; do opcode
 	LDAB (YW)	;0DB0 8B			get flags & processor byte
 	LDBB #2		;0DB1 C0 02			has byte variant?
 	NABB		;0DB3 4A
@@ -1254,15 +1230,16 @@ L_0DB0: ; do opcode
 	SUBB BL,BH	;0DB9 41 23
 	BNZ @0dcf	;0DBB 15 12
 	INR ZW,1	;0DBD 30 80			  eat the 'B'
-	LDBB #1		;0DBF C0 01
-	STBB L_0a9d	;0DC1 E1 0A 9D ; fixupword
+	LDBB #1		;0DBF C0 01			  ???
+	STBB L_0a9d	;0DC1 E1 0A 9D fixupword
 	LDB #$1000	;0DC4 D0 10 00			  flip opcode bit 4 to get the byte version
 	LDBB 1(YW)	;0DC7 C5 68 01
 	OREB BL,BH	;0DCA 44 23
 	STBB 1(YW)	;0DCC E5 68 01
-@0DCF:	XFR BW,ZW	;0DCF 55 82			save line char ptr
-	STB L_0aa7	;0DD1 F1 0A A7 ; fixupword
-	RL		;0DD4 07			get processor # from byte
+@0DCF:
+	XFR BW,ZW	;0DCF 55 82			save text line char ptr
+	STB L_0aa7	;0DD1 F1 0A A7 fixupword
+	RL		;0DD4 07			get operand processor # from byte
 	RRRB AL,1	;0DD5 26 10
 	SRRB AL,3	;0DD7 24 12
 	SLAB		;0DD9 2D			jsr indexed
@@ -1274,8 +1251,9 @@ L_0DB0: ; do opcode
 	DCA		;0DE3 39
 	DCA		;0DE4 39
 	BNZ @0dea	;0DE5 15 03
-	JSR E_2110	;0DE7 79 21 10 ; fixupword	substitute certain opcodes
-@0DEA:	RSR		;0DEA 09
+	JSR E_2110	;0DE7 79 21 10 ; fixupword	  substitute certain opcodes
+@0DEA:
+	RSR		;0DEA 09
 
 @0deb: ; opcode processor routines
 	DW L_0E09	;0DEB 0E 09 ; fixupword	0x Inherent
@@ -1354,7 +1332,7 @@ L_0E6B:	JSR E_15e5	;0E6B 79 15 E5 ; fixupword
 	LDB #0		;0E70 D0 00 00
 	ADD AW,BW	;0E73 50 20
 	BP @0e7b	;0E75 17 04
-@0E77:	JSR E_1a1a	;0E77 79 1A 1A ; fixupword	if ??? A error
+@0E77:	JSR ErrA	;0E77 79 1A 1A ; fixupword	A error
 	CLA		;0E7A 3A
 @0E7B:	LDB #$f		;0E7B D0 00 0F
 	SAB		;0E7E 59
@@ -1380,7 +1358,7 @@ E_0E8E: ; opcode processor 2x= RegReg
 	JSR E_1598	;0E9E 79 15 98 ; fixupword
 	JSR E_145a	;0EA1 79 14 5A ; fixupword
 	BZ @0ea9	;0EA4 14 03
-	JSR E_1a48	;0EA6 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0EA6 79 1A 48 ; fixupword	syntax error
 @0EA9:	JSR E_1598	;0EA9 79 15 98 ; fixupword
 	LDBB (YW+)	;0EAC C5 61
 	LDAB (YW)	;0EAE 8B
@@ -1393,7 +1371,7 @@ E_0E8E: ; opcode processor 2x= RegReg
 
 @0EB9:	LDBB L_0a9d	;0EB9 C1 0A 9D ; fixupword
 	BZ @0ec1	;0EBC 14 03
-	JSR E_1a48	;0EBE 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0EBE 79 1A 48 ; fixupword	syntax error
 @0EC1:	LDBB #'/'+$80	;0EC1 C0 AF
 	SABB		;0EC3 49
 	BZ @0ecf	;0EC4 14 09
@@ -1408,7 +1386,7 @@ E_0E8E: ; opcode processor 2x= RegReg
 	STA (-SW)	;0ED7 B5 A2
 	JSR E_145a	;0ED9 79 14 5A ; fixupword
 	BZ @0ee1	;0EDC 14 03
-	JSR E_1a48	;0EDE 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0EDE 79 1A 48 ; fixupword	syntax error
 @0EE1:	JSR E_1598	;0EE1 79 15 98 ; fixupword
 	JSR E_145a	;0EE4 79 14 5A ; fixupword
 	BZ 0eec	;0EE7 14 03
@@ -1432,7 +1410,7 @@ L_0EF1:	LDAB (YW)	;0EF1 8B
 L_0F03:	LDBB #'-'+$80	;0F03 C0 AD
 	SABB		;0F05 49
 	BZ @0f1c	;0F06 14 14
-	JSR E_1a48	;0F08 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0F08 79 1A 48 ; fixupword	syntax error
 	CLA		;0F0B 3A
 	STAB (-YW)	;0F0C A5 62
 	STA (-YW)	;0F0E B5 62
@@ -1449,126 +1427,129 @@ L_0F03:	LDBB #'-'+$80	;0F03 C0 AD
 	JSR E_1598	;0F23 79 15 98 ; fixupword
 	JSR 145a	;0F26 79 14 5A ; fixupword
 	BZ @0f2e	;0F29 14 03
-	JSR E_1a48	;0F2B 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0F2B 79 1A 48 ; fixupword	syntax error
 @0F2E:	JSR E_1534	;0F2E 79 15 34 ; fixupword
 	LDA (YW+)	;0F31 95 61
 	STA (-SW)	;0F33 B5 A2
 	JSR 145a	;0F35 79 14 5A ; fixupword
 	BZ 0eec	;0F38 14 B2
-	JSR E_1a48	;0F3A 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;0F3A 79 1A 48 ; fixupword	syntax error
 	JMP 0eec	;0F3D 73 AD
 
 E_0F3F: ; opcode processor 3x= relative
 	INR YW,1	;0F3F 30 60
-	JSR E_1a10	;0F41 79 1A 10 ; fixupword	 skip spaces in (Z)
-	XFR AW,ZW	;0F44 55 80
-	STA 0aa9	;0F46 B1 0A A9 ; fixupword
+	JSR E_1a10	;0F41 79 1A 10 ; fixupword	skip spaces in (Z)
+	XFR AW,ZW	;0F44 55 80			save text position
+	STA L_0aa9	;0F46 B1 0A A9 ; fixupword
 	JSR 1550	;0F49 79 15 50 ; fixupword
-	LDA #0002	;0F4C 90 00 02
+	LDA #2		;0F4C 90 00 02
 	STA (-YW)	;0F4F B5 62
 	RSR		;0F51 09
 
 E_0F52: ; opcode processor 4x=  Lit,Dir,Indir,Rel,RelInd,Index,(r)
-	STX (-SW)	;0F52 6D A2
-	CLA		;0F54 3A
-	STAB 0fb3	;0F55 A3 5C
+	STX (-SW)	;0F52 6D A2			save X
+	CLA		;0F54 3A			default to addr mode 0
+	STAB @0fb3	;0F55 A3 5C
 	XAX		;0F57 5B
-	LDAB (YW+)	;0F58 85 61
-	SRRB AL,3	;0F5A 24 12
-	BNL @0f6b	;0F5C 11 0D
-	LDAB (ZW+)	;0F5E 85 81
-	LDBB #'='+$80	;0F60 C0 BD
+	LDAB (YW+)	;0F58 85 61			get flags
+	SRRB AL,3	;0F5A 24 12			bit 2 set?  is literal valid?
+	BNL @0F6B	;0F5C 11 0D
+	LDAB (ZW+)	;0F5E 85 81			get text char
+	LDBB #'='+$80	;0F60 C0 BD			'='?
 	SABB		;0F62 49
 	BNZ @0f6d	;0F63 15 08
-	LDBB #1		;0F65 C0 01
-	STBB 0fb3	;0F67 E3 4A
+	LDBB #1		;0F65 C0 01			  ???
+	STBB @0fb3	;0F67 E3 4A
 	JMP @0f9a	;0F69 73 2F
 
-@0F6B:	LDAB (ZW+)	;0F6B 85 81
-@0F6D:	LDBB #0		;0F6D C0 00
-	STBB 0a9d	;0F6F E1 0A 9D ; fixupword
-	INX		;0F72 3E
-	LDBB #'/'+$80	;0F73 C0 AF
+@0F6B:	LDAB (ZW+)	;0F6B 85 81			get text char
+@0F6D:	LDBB #0		;0F6D C0 00			???
+	STBB L_0a9d	;0F6F E1 0A 9D ; fixupword
+	INX		;0F72 3E			X=1
+	LDBB #'/'+$80	;0F73 C0 AF			'/'? (direct)
 	SABB		;0F75 49
 	BZ @0f9a	;0F76 14 22
-	INX		;0F78 3E
-	LDBB #'#'+$80	;0F79 C0 A4
+	INX		;0F78 3E			X=2
+	LDBB #'#'+$80	;0F79 C0 A4			'#'? (indirect)
 	SABB		;0F7B 49
 	BZ @0f9a	;0F7C 14 1C
-	INX		;0F7E 3E
-	LDBB #a0	;0F7F C0 A0
+	INX		;0F7E 3E			X=3
+	LDBB #$a0	;0F7F C0 A0			' '? (relative)
 	SABB		;0F81 49
 	BZ @0fb4	;0F82 14 30
-	INX		;0F84 3E
-	LDBB #'*'+$80	;0F85 C0 AA
+	INX		;0F84 3E			X=4
+	LDBB #'*'+$80	;0F85 C0 AA			'*'? (relative indirect)
 	SABB		;0F87 49
 	BZ @0fb4	;0F88 14 2A
-	INX		;0F8A 3E
-	LDBB #'-'+$80	;0F8B C0 AD
+	INX		;0F8A 3E			X=5
+	LDBB #'-'+$80	;0F8B C0 AD			'-'? (indexed predec)
 	SABB		;0F8D 49
 	BZ @0fc3	;0F8E 14 33
-	LDBB #'+'+$80	;0F90 C0 AB
+	LDBB #'+'+$80	;0F90 C0 AB			'+'? (indexed postinc)
 	SABB		;0F92 49
 	BZ @0fc3	;0F93 14 2E
-	JSR 1a34	;0F95 79 1A 34 ; fixupword	O error
-	CLA		;0F98 3A
+	JSR ErrO	;0F95 79 1A 34 ; fixupword	O error
+	CLA		;0F98 3A			X=0
 	XAX		;0F99 5B
-@0F9A:	STX (-YW)	;0F9A 6D 62
-	LDX (SW+)	;0F9C 65 A1
+@0F9A:	STX (-YW)	;0F9A 6D 62			save addr mode offset
+	LDX (SW+)	;0F9C 65 A1			restore X
 	JSR E_0fcd	;0F9E 7B 2D
 	JSR E_1534	;0FA0 79 15 34 ; fixupword
 	LDAB 0a9d	;0FA3 81 0A 9D ; fixupword
 	BNZ @0fbd	;0FA6 15 15
-	LDAB 0fb3	;0FA8 83 09
+	LDAB @0fb3	;0FA8 83 09
 	BNZ @0fae	;0FAA 15 02
 	JSR E_0fe1	;0FAC 7B 33
-@0FAE:	LDA #0003	;0FAE 90 00 03
+@0FAE:	LDA #3		;0FAE 90 00 03			3 bytes?
 	JMP @0fc0	;0FB1 73 0D
 
-	DB 00		;0FB3 00
+@0FB3:	DB 0		;0FB3 00			
 
-@0FB4:	STX (-YW)	;0FB4 6D 62
-	LDX (SW+)	;0FB6 65 A1
+@0FB4:	STX (-YW)	;0FB4 6D 62			save addr mode
+	LDX (SW+)	;0FB6 65 A1			restore X
 	JSR E_0fcd	;0FB8 7B 13
 	JSR E_1550	;0FBA 79 15 50 ; fixupword
-@0FBD:	LDA #2		;0FBD 90 00 02
+@0FBD:	LDA #2		;0FBD 90 00 02			2 bytes?
 @0FC0:	STA (-YW)	;0FC0 B5 62
 	RSR		;0FC2 09
 
-@0FC3:	STX (-YW)	;0FC3 6D 62
-	LDX (SW+)	;0FC5 65 A1
+@0FC3: ; it's indexed something
+	STX (-YW)	;0FC3 6D 62			save indexed addr mode
+	LDX (SW+)	;0FC5 65 A1			restore X
 	JSR E_0fcd	;0FC7 7B 04
 	JSR E_14c5	;0FC9 79 14 C5 ; fixupword
 	RSR		;0FCC 09
 
-E_0FCD:	LDA (YW+)	;0FCD 95 61
-	LDBB (YW)	;0FCF CB
+E_0FCD:
+	LDA (YW+)	;0FCD 95 61			pop addr mode
+	LDBB (YW)	;0FCF CB			modify opcode?
 	ORIB BL,AL	;0FD0 43 13
 	STBB (YW)	;0FD2 EB
-	XFR AW,ZW	;0FD3 55 80
-	STA 0aa7	;0FD5 B1 0A A7 ; fixupword
-	JSR E_1a10	;0FD8 79 1A 10 ; fixupword	 skip spaces in (Z)
-	XFR AW,ZW	;0FDB 55 80
+	XFR AW,ZW	;0FD3 55 80			save text ptr
+	STA L_0aa7	;0FD5 B1 0A A7 ; fixupword
+	JSR E_1a10	;0FD8 79 1A 10 ; fixupword	skip spaces in (Z)
+	XFR AW,ZW	;0FDB 55 80			save text ptr
 	STA L_0aa9	;0FDD B1 0A A9 ; fixupword
 	RSR		;0FE0 09
 
-E_0FE1:	LDBB (YW)	;0FE1 CB
+E_0FE1:
+	LDBB (YW)	;0FE1 CB
 	LDAB 1(YW)	;0FE2 85 68 01
 	XFRB BH,AL	;0FE5 45 12
 	LDA L_0a9e	;0FE7 91 0A 9E ; fixupword	get location counter
 	INR AW,3	;0FEA 30 02			+3
-	SUB AW,BW	;0FEC 51 20
+	SUB AW,BW	;0FEC 51 20			calc relative displacement
 	LDB #$7f	;0FEE D0 00 7F			check range
 	SAB		;0FF1 59
 	BGZ @100c	;0FF2 18 18
-	LDB #ff80	;0FF4 D0 FF 80
+	LDB #$ff80	;0FF4 D0 FF 80
 	SAB		;0FF7 59
 	BM @100c	;0FF8 16 12
 	LDAB L_21d4	;0FFA 81 21 D4 ; fixupword	if no error yet
-	LDBB #a0	;0FFD C0 A0
+	LDBB #$a0	;0FFD C0 A0
 	SABB		;0FFF 49
 	BNZ @100c	;1000 15 0A
-	LDA L_0a9b	;1002 91 0A 9B ; fixupword
+	LDA L_0a9b	;1002 91 0A 9B ; fixupword	???
 	BNZ @100c	;1005 15 05
 	LDBB #'I'+$80	;1007 C0 C9			  I error?
 	STBB L_21d4	;1009 E1 21 D4 ; fixupword
@@ -1592,7 +1573,7 @@ E_100D: ; opcode processor 5x Dma
 	SABB		;102B 49
 	BZ @1037	;102C 14 09
 	DCR ZW,1	;102E 31 80
-@1030:	JSR E_1a48	;1030 79 1A 48 ; fixupword	no match, syntax error
+@1030:	JSR ErrSyntax	;1030 79 1A 48 ; fixupword	no match, syntax error
 	CLRB BL,0	;1033 22 30
 	JMP L_1078	;1035 73 41
 
@@ -1607,14 +1588,14 @@ E_100D: ; opcode processor 5x Dma
 E_1041:	; DMA opcode processor 0
 	JSR 145a	;1041 79 14 5A ; fixupword
 	BZ @104c	;1044 14 06
-	JSR E_1a48	;1046 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;1046 79 1A 48 ; fixupword	syntax error
 	CLA		;1049 3A
 	JMP @1057	;104A 73 0B
 
 @104C:	JSR E_15e5	;104C 79 15 E5 ; fixupword
 	LDA (YW+)	;104F 95 61
 	BP @1057	;1051 17 04
-@1053:	JSR 1a1a	;1053 79 1A 1A ; fixupword	if ??? A error
+@1053:	JSR ErrA	;1053 79 1A 1A ; fixupword	A error
 	CLA		;1056 3A
 @1057:	LDB #3		;1057 D0 00 03
 	SAB		;105A 59
@@ -1625,7 +1606,7 @@ E_1041:	; DMA opcode processor 0
 E_1061: ; DMA opcode processor 1
 	JSR 145a	;1061 79 14 5A ; fixupword
 	BZ @106c	;1064 14 06
-	JSR E_1a48	;1066 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;1066 79 1A 48 ; fixupword	syntax error
 	CLA		;1069 3A
 	JMP L_1076	;106A 73 0A
 
@@ -1657,7 +1638,7 @@ E_1082: ; 6x opcode processor: Cad,Dec,Inc,Iad,Rtr,Rtl,Shr,Shl
 @1098:	LDBB #'-'+$80	;1098 C0 AD			is it '-'?
 	SABB		;109A 49
 	BZ @10a7	;109B 14 0A
-	JSR 1a34	;109D 79 1A 34 ; fixupword	O error
+	JSR ErrO	;109D 79 1A 34 ; fixupword	O error
 	DCR ZW,1	;10A0 31 80
 	CLA		;10A2 3A
 	INA		;10A3 38
@@ -1668,7 +1649,7 @@ E_1082: ; 6x opcode processor: Cad,Dec,Inc,Iad,Rtr,Rtl,Shr,Shl
 	JSR E_1598	;10AA 79 15 98 ; fixupword
 	LDAB (YW)	;10AD 8B
 	BNZ @10b4	;10AE 15 04
-	JSR E_1a48	;10B0 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;10B0 79 1A 48 ; fixupword	syntax error
 	CLAB		;10B3 2A
 @10B4:	INAB		;10B4 28
 	SLRB AL,4	;10B5 25 13
@@ -1692,7 +1673,7 @@ E_10CD: ; opcode processor 7x A,C,Ctb,Cfb,D,Drm,M,S,Zad,Zsu
 	BNL @10d5	;10D2 11 01
 	DCA		;10D4 39
 @10D5:	STA @10f2+1	;10D5 B3 1C
-	LDAB #$46	;10D7 80 46		1st instruction byte
+	LDAB #$46	;10D7 80 46			1st instruction byte
 	LDBB 1(YW)	;10D9 C5 68 01
 	STAB 1(YW)	;10DC A5 68 01
 	CLAB		;10DF 2A
@@ -1772,7 +1753,7 @@ L_115C:	CLA		;115C 3A
 	BZ L_116d	;1167 14 04
 L_1169:	LDAB #0		;1169 80 00	modified
 	BNZ L_1177	;116B 15 0A
-L_116D:	JSR E_1a48	;116D 79 1A 48 ; fixupword	syntax error
+L_116D:	JSR ErrSyntax	;116D 79 1A 48 ; fixupword	syntax error
 	DCR ZW,1	;1170 31 80
 	JMP L_118f	;1172 73 1B
 
@@ -1894,7 +1875,7 @@ E_123E: ; opcode processor Ax Svc,Xrc
 	STAB (-YW)	;1248 A5 62
 	XFRB AH,AH	;124A 45 00
 	BZ @1251	;124C 14 03
-	JSR E_1a48	;124E 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;124E 79 1A 48 ; fixupword	syntax error
 @1251:	LDA #0002	;1251 90 00 02
 	STA (-YW)	;1254 B5 62
 	RSR		;1256 09
@@ -1906,16 +1887,16 @@ E_1257: ; opcode processor BX Pop,Stk,Scn
 	LDAB (YW)	;125F 8B
 	SLRB AL,4	;1260 25 13
 	STAB (YW)	;1262 AB
-	JSR 145a	;1263 79 14 5A ; fixupword
+	JSR E_145a	;1263 79 14 5A ; fixupword
 	BZ@ 126d	;1266 14 05
-@1268:	JSR E_1a48	;1268 79 1A 48 ; fixupword	syntax error
+@1268:	JSR ErrSyntax	;1268 79 1A 48 ; fixupword	syntax error
 	JMP L_127e	;126B 73 11
 
 @126D:	JSR E_15e5	;126D 79 15 E5 ; fixupword
 	LDA (YW+)	;1270 95 61
 	DCA		;1272 39
 	BM @1268	;1273 16 F3
-	LDB #000f	;1275 D0 00 0F
+	LDB #$f		;1275 D0 00 0F
 	SAB		;1278 59
 	BGZ @1268	;1279 18 ED
 	LDBB (YW)	;127B CB
@@ -1938,18 +1919,18 @@ E_1292: ; opcode processor Dx Lar,Sar
 	JSR E_1469	;1294 79 14 69 ; fixupword	skip spaces in (Z)
 	JSR E_15e5	;1297 79 15 E5 ; fixupword
 	LDA (YW)	;129A 9B
-	BP 12a6	;129B 17 09
-L_129D:	CLAB		;129D 2A
+	BP @12a6	;129B 17 09
+@129D:	CLAB		;129D 2A
 	INR YW,1	;129E 30 60
 	STAB (YW)	;12A0 AB
-	JSR E_1a48	;12A1 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;12A1 79 1A 48 ; fixupword	syntax error
 	JMP L_127e	;12A4 73 D8
 
-L_12A6:	LDB #000f	;12A6 D0 00 0F
+@12A6:	LDB #$f		;12A6 D0 00 0F
 	SAB		;12A9 59
-	BGZ 129d	;12AA 18 F1
-	JSR 145a	;12AC 79 14 5A ; fixupword
-	BNZ 129d	;12AF 15 EC
+	BGZ @129d	;12AA 18 F1
+	JSR E_145a	;12AC 79 14 5A ; fixupword
+	BNZ @129d	;12AF 15 EC
 	JSR E_1598	;12B1 79 15 98 ; fixupword
 	LDBB (YW+)	;12B4 C5 61
 	LDA (YW+)	;12B6 95 61
@@ -1977,17 +1958,17 @@ L_12D3:	JSR E_1469	;12D3 79 14 69 ; fixupword	skip spaces in (Z)
 	JSR E_1598	;12D6 79 15 98 ; fixupword
 	LDAB (YW+)	;12D9 85 61
 	SRAB		;12DB 2C
-	BL 12e8	;12DC 10 0A
+	BL L_12e8	;12DC 10 0A
 	SLRB AL,5	;12DE 25 14
 	LDBB (YW)	;12E0 CB
 	AABB		;12E1 48
 	STBB (YW)	;12E2 EB
 	JSR 145a	;12E3 79 14 5A ; fixupword
-	BZ 12f3	;12E6 14 0B
+	BZ L_12f3	;12E6 14 0B
 L_12E8:	DCR ZW,1	;12E8 31 80
-	LDA #0002	;12EA 90 00 02
+	LDA #2		;12EA 90 00 02
 L_12ED:	STA (-YW)	;12ED B5 62
-	JSR E_1a48	;12EF 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;12EF 79 1A 48 ; fixupword	syntax error
 	RSR		;12F2 09
 
 L_12F3:	JSR E_1598	;12F3 79 15 98 ; fixupword
@@ -2012,7 +1993,7 @@ L_1309:	JSR E_15e5	;1309 79 15 E5 ; fixupword
 	BZ 131e	;1313 14 09
 	INRB AH,1	;1315 20 00
 	BZ 131e	;1317 14 05
-	LDA #0003	;1319 90 00 03
+	LDA #3		;1319 90 00 03
 	JMP 12ed	;131C 73 CF
 
 L_131E:	LDA #3		;131E 90 00 03
@@ -2046,7 +2027,7 @@ L_1342:	STAB (-SW)	;1342 A5 A2
 	JSR E_145c	;1352 79 14 5C ; fixupword	consume char AL if present on (Z)
 	BZ 135f	;1355 14 08
 	LDAB (SW+)	;1357 85 A1
-L_1359:	JSR E_1a48	;1359 79 1A 48 ; fixupword	syntax error
+L_1359:	JSR ErrSyntax	;1359 79 1A 48 ; fixupword	syntax error
 	CLA		;135C 3A
 	XAB		;135D 5D
 	RSR		;135E 09
@@ -2352,7 +2333,7 @@ E_14C5:	CLAB		;14C5 2A
 	LDB #0080	;151D D0 00 80
 	AAB		;1520 58
 	BL @1527	;1521 10 04
-@1523:	JSR 1a1a	;1523 79 1A 1A ; fixupword	if ??? A error
+@1523:	JSR ErrA	;1523 79 1A 1A ; fixupword	A error
 	CLA		;1526 3A
 @1527:	STAB (-YW)	;1527 A5 62
 	LDA #3		;1529 90 00 03
@@ -2376,20 +2357,20 @@ E_1534:	LDBB L_0a9d	;1534 C1 0A 9D ; fixupword
 	LDAB (YW+)	;1545 85 61
 	DCAB		;1547 29
 	BZ @154f	;1548 14 05
-	JSR 1a1a	;154A 79 1A 1A ; fixupword	if ??? A error
+	JSR ErrA	;154A 79 1A 1A ; fixupword	A error
 	INR YW,1	;154D 30 60
 @154F:	RSR		;154F 09
 
 L_1550:	JSR E_15e5	;1550 79 15 E5 ; fixupword
-	LDAB L_0a99	;1553 81 0A 99 ; fixupword
+@1553:	LDAB L_0a99	;1553 81 0A 99 ; fixupword
 	BZ @155d	;1556 14 05
-	LDA L_0a9b	;1558 91 0A 9B ; fixupword
+@1558:	LDA L_0a9b	;1558 91 0A 9B ; fixupword
 	BZ @1569	;155B 14 0C
-@155D:	JSR 1a1a	;155D 79 1A 1A ; fixupword	if ??? A error
+@155D:	JSR ErrA	;155D 79 1A 1A ; fixupword	A error
 	LDA (YW+)	;1560 95 61
 	CLA		;1562 3A
-	STAB (1554)	;1563 A4 EF	L_0a99
-	STA (1559)	;1565 B4 F2	0a9b
+	STAB (@1553+1)	;1563 A4 EF	L_0a99
+	STA (@1558+1)	;1565 B4 F2	0a9b
 	JMP @1595	;1567 73 2C
 
 @1569:	STAB L_0a99	;1569 A1 0A 99 ; fixupword
@@ -2410,7 +2391,7 @@ L_1550:	JSR E_15e5	;1550 79 15 E5 ; fixupword
 	LDB #$80	;158B D0 00 80
 	AAB		;158E 58
 	BL @1595	;158F 10 04
-	JSR E_1a3a	;1591 79 1A 3A ; fixupword	if ??? R error
+	JSR ErrRelRange	;1591 79 1A 3A ; fixupword	Range error
 	CLAB		;1594 2A			fake it with zero
 @1595:	STAB (-YW)	;1595 A5 62			store relative
 	RSR		;1597 09
@@ -2431,7 +2412,7 @@ E_1598:	; look up byte register name in (Z), push to Y
 
 @15AF:	LDAB L_0a9d	;15AF 81 0A 9D ; fixupword
 	BNZ @15b7	;15B2 15 03
-	JSR E_1a48	;15B4 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;15B4 79 1A 48 ; fixupword	syntax error
 @15B7:	LDAB (YW)	;15B7 8B
 	INAB		;15B8 28
 	STAB (YW)	;15B9 AB
@@ -2443,7 +2424,7 @@ E_15BB:	; look up word register name in (Z), push to Y
 	LDA #@15dc	;15BF 90 15 DC ; fixupword
 @15C2:	LDBB (AW+)	;15C2 C5 01
 	BNZ @15cf	;15C4 15 09
-	JSR E_1a48	;15C6 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;15C6 79 1A 48 ; fixupword	syntax error
 	DCR ZW,1	;15C9 31 80
 	CLR BW,0	;15CB 32 20
 	JMP @15d9	;15CD 73 0A
@@ -2471,7 +2452,7 @@ E_15E5:	JSR E_16ba	;15E5 79 16 BA ; fixupword
 	ZAD 16,2,$10(YW),(YW) ;15E8 46 F1 39 60 60 0E
 	B?? ??		;15ee 13 09
 	CVX $4b,??	;15F0 47 4A 0D 66 14 03
-	JSR E_1a48	;15F6 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;15F6 79 1A 48 ; fixupword	syntax error
 	INR YW,14	;15F9 30 6D
 	RSR		;15FB 09
 
@@ -2507,7 +2488,7 @@ E_15FC:
 	B?? @163f	;1633 14 0A
 	CPF (A),L_171c,(Y) ;1635 67 82 17 1C 06 ; fixupword ssss=8 mm=0 nn=2
 	BZ @163f	;163A 14 03
-	JSR E_1a48	;163C 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;163C 79 1A 48 ; fixupword	syntax error
 @163F:	INR YW,16	;163F 30 6F
 	STX (-SW)	;1641 6D A2
 	XFR AW,YW	;1643 55 60
@@ -2517,7 +2498,7 @@ E_15FC:
 	BNZ @1652	;164B 15 05
 	LDAB 0a9b	;164D 81 0A 9B ; fixupword
 	BZ @16ac	;1650 14 5A
-@1652:	JSR E_1a48	;1652 79 1A 48 ; fixupword	syntax error
+@1652:	JSR ErrSyntax	;1652 79 1A 48 ; fixupword	syntax error
 	JMP @16ac	;1655 73 55
 
 @1657:	JSR E_16ba	;1657 79 16 BA ; fixupword
@@ -2597,7 +2578,7 @@ E_16BA:	JSR E_16e9	;16BA 7B 2D
 	JMP @16bc	;16DF 73 DB
 
 @16E1:	INR ZW,1	;16E1 30 80
-	JSR 1a02	;16E3 79 1A 02 ; fixupword
+	JSR E_1a02	;16E3 79 1A 02 ; fixupword	skip alpha chars
 	JSR E_16e9	;16E6 7B 01
 @16E8:	RSR		;16E8 09
 
@@ -2607,7 +2588,7 @@ E_16E9:	JSR E_1704	;16E9 7B 19
 	SAB		;16EF 59
 	BNZ @1703	;16F0 15 11
 	INR ZW,1	;16F2 30 80
-	JSR 1a02	;16F4 79 1A 02 ; fixupword
+	JSR E_1a02	;16F4 79 1A 02 ; fixupword	skip alpha chars
 	JSR E_1704	;16F7 7B 0B
 	CVX 90,#?,#?	;16F9 47 59 0F 60 60 10
 	INR YW,16	;16FF 30 6F
@@ -2620,7 +2601,7 @@ E_1704:	LDA (ZW)	;1704 9C
 	SAB		;1708 59
 	BNZ @1719	;1709 15 0E
 	INR ZW,1	;170B 30 80
-	JSR 1a02	;170D 79 1A 02 ; fixupword
+	JSR E_1a02	;170D 79 1A 02 ; fixupword	skip alpha chars
 	JSR E_172c	;1710 7B 1A
 	CVX 115,#?,#?	;1712 47 72 0F  17  fixupWord
 	???		;1716 1C 06
@@ -2706,7 +2687,7 @@ L_176D:	LDAB (ZW+)	;176D 85 81	get next source char
 	LDBB #'M'+$80	;1797 C0 CD
 	SABB		;1799 49
 	BNZ @17b4	;179A 15 18
-	JSR E_1a02	;179C 79 1A 02 ; fixupword
+	JSR E_1a02	;179C 79 1A 02 ; fixupword	skip alpha chars
 	JSR E_17b7	;179F 7B 16
 	LDA #L_21ac	;17A1 90 21 AC ; fixupword
 	DRM 16,16,$10(YW),(YW)	;17A4 46 FF 79 60 60 10
@@ -2759,7 +2740,7 @@ E_17B7:	LDAB (ZW+)	;17B7 85 81	get next source char
 @17FA:	LDBB #c3	;17FA C0 C3
 	SABB		;17FC 49
 	BZ @1802	;17FD 14 03
-	JSR E_1a48	;17FF 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;17FF 79 1A 48 ; fixupword	syntax error
 @1802:	JSR 1928	;1802 79 19 28 ; fixupword
 @1805:	JSR 19f6	;1805 79 19 F6 ; fixupword	compare inline char to source char, consume if match
 	DB "'"+$80	;1808 A7
@@ -2780,7 +2761,7 @@ L_180F:	LDAB (ZW+)	;180F 85 81
 @181E:	DCR ZW,1	;181E 31 80
 	JSR 19e3	;1820 79 19 E3 ; fixupword
 	BP @1829	;1823 17 04
-	JSR E_1a48	;1825 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;1825 79 1A 48 ; fixupword	syntax error
 	RSR		;1828 09
 
 @1829:	JSR E_185f	;1829 7B 34
@@ -2794,14 +2775,14 @@ L_180F:	LDAB (ZW+)	;180F 85 81
 	LDAB #01	;183D 80 01
 	ANDB AL,AH	;183F 42 01
 	BNZ @1847	;1841 15 04
-	JSR E_1a4e	;1843 79 1A 4E ; fixupword	U error
+	JSR ErrU	;1843 79 1A 4E ; fixupword	U error
 	RSR		;1846 09
 
-@1847:	LDAB #10	;1847 80 10
+@1847:	LDAB #$10	;1847 80 10
 	ANDB AL,AH	;1849 42 01
 	BZ @1850	;184B 14 03
 	STB 0a9b	;184D F1 0A 9B ; fixupword
-@1850:	LDAB #04	;1850 80 04
+@1850:	LDAB #4		;1850 80 04
 	ANDB AL,AH	;1852 42 01
 	BNZ @1857	;1854 15 01
 	RSR		;1856 09
@@ -2828,7 +2809,7 @@ E_185F:	XFR AW,ZW	;185F 55 80
 	DW L_0930	;187C 09 30 ; fixupword
 	LDA L_18c9	;187E 93 49
 	BNZ @1888	;1880 15 06
-	JSR E_1a28	;1882 79 1A 28 ; fixupword	F error
+	JSR ErrF	;1882 79 1A 28 ; fixupword	F error
 	LDA #L_0a94	;1885 90 0A 94 ; fixupword
 @1888:	CLR BW,0	;1888 32 20
 	STB 3(AW)	;188A F5 08 03
@@ -2880,7 +2861,7 @@ L_18CC:	STK ZH,2	;18CC 7E 81
 	LDB (SW+)	;18DE D5 A1
 	CTB 1,10,(BW),(YW) ;18E0 46 0F 8A 26 len=1,10 ssss=8 mm=2 nn=2 cvt_to_bin
 	B?F? @18e9	;18E4 13 03
-	JSR E_1a48	;18E6 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;18E6 79 1A 48 ; fixupword	syntax error
 @18e9:	RSR		;18E9 09
 
 L_18EA:	STK ZH,2	;18EA 7E 81
@@ -2899,7 +2880,7 @@ L_18EA:	STK ZH,2	;18EA 7E 81
 	LDB (SW+)	;1902 D5 A1
 	CTB 15,16,(BW),(YW) ;1904 46 EF 8A 26 len=1,10 ssss=8 mm=2 nn=2  cvt_to_bin
 	B?? @190d	;1908 13 03
-	JSR E_1a48	;190A 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;190A 79 1A 48 ; fixupword	syntax error
 @190d:	RSR		;190D 09
 
 L_190E:	STK ZH,2	;190E 7E 81
@@ -2912,7 +2893,7 @@ L_190E:	STK ZH,2	;190E 7E 81
 	LDB (SW+)	;191C D5 A1
 	CTB 9,16,(BW),(YW) ;191E 46 8F 8A 26  len=9,10 ssss=8 mm=2 nn=2  cvt_to_bin
 	B?? @1927	;1922 13 03
-	JSR E_1a48	;1924 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;1924 79 1A 48 ; fixupword	syntax error
 @1927:	RSR		;1927 09
 
 E_1928:	STK XH,2	;1928 7E 41
@@ -2934,7 +2915,7 @@ E_1928:	STK XH,2	;1928 7E 41
 	BZ @1955	;1947 14 0C
 	LDBB (XW)	;1949 CA
 	BZ @1951	;194A 14 05
-	JSR E_1a48	;194C 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;194C 79 1A 48 ; fixupword	syntax error
 	JMP @1955	;194F 73 04
 
 @1951:	STAB (XW+)	;1951 A5 41
@@ -2965,7 +2946,7 @@ E_196C: ; get string literal, AL=max length
 	LDB #"C'"+$8080	;197B D0 C3 A7
 	SAB		;197E 59
 	BZ @198a	;197F 14 09
-	JSR E_1a48	;1981 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;1981 79 1A 48 ; fixupword	syntax error
 	INR SW,3	;1984 30 A2	drop saved Y & AL
 	CLAB		;1986 2A	push 0
 	STAB (-YW)	;1987 A5 62
@@ -2996,7 +2977,7 @@ E_196C: ; get string literal, AL=max length
 	BZ @19d2	;19A9 14 27
 	BM @19b4	;19AB 16 07
 	ADD YW,AW	;19AD 50 06
-	JSR E_1a48	;19AF 79 1A 48 ; fixupword	syntax error
+	JSR ErrSyntax	;19AF 79 1A 48 ; fixupword	syntax error
 	JMP @19d2	;19B2 73 1E
 
 @19B4: ; pad parm to max length
@@ -3033,11 +3014,11 @@ L_19D7:	LDBB #'9'+$80	;19D7 C0 B9
 	SABB		;19E1 49
 	RSR		;19E2 09
 
-L_19E3: ; convert letter to index starting at '>'
+L_19E3: ; convert letter to index in BL starting at '>', negative = not valid
 	LDBB #'Z'+$80	;19E3 C0 DA
 	SABB		;19E5 49
 	BLE @19eb	;19E6 19 03
-	LDBB #$ff	;19E8 C0 FF
+	LDBB #$ff	;19E8 C0 FF		not valid, return negative
 	RSR		;19EA 09
 
 @19EB:	LDBB #'>'+$80	;19EB C0 BE
@@ -3045,7 +3026,8 @@ L_19E3: ; convert letter to index starting at '>'
 	RSR		;19EE 09
 
 
-L_19EF:	JSR E_19e3	;19EF 7B F2		convert letter to index starting at '>'
+L_19EF:
+	JSR E_19e3	;19EF 7B F2		convert letter to index starting at '>'
 	BP @19f5	;19F1 17 02
 	JSR E_19d7	;19F3 7B E2
 @19F5:	RSR		;19F5 09
@@ -3057,17 +3039,17 @@ E_19F6: ; compare inline char to source char, consume if match
 	SABB		;19FA 49
 	BZ @1a01	;19FB 14 04
 	DCR ZW,1	;19FD 31 80
-	JSR E_1a48	;19FF 7B 47	syntax error
+	JSR ErrSyntax	;19FF 7B 47	syntax error
 @1A01:	RSR		;1A01 09
 
-E_1A02:
+E_1A02: ; skip alpha chars in (Z)
 	LDAB (ZW+)	;1A02 85 81	get char
-	LDBB #'.'+$80	;1A04 C0 AE
+	LDBB #'.'+$80	;1A04 C0 AE	a '.'?
 	SABB		;1A06 49
 	BZ @1a0f	;1A07 14 06
-	JSR E_19e3	;1A09 7B D8
+	JSR E_19e3	;1A09 7B D8	convert letter to index in BL starting at '>'
 	BP E_1a02	;1A0B 17 F5
-	DCR ZW,1	;1A0D 31 80
+	DCR ZW,1	;1A0D 31 80	put the non-alpha char back
 @1A0F:	RSR		;1A0F 09
 
 E_1A10: ; skip spaces in (Z)
@@ -3078,7 +3060,7 @@ E_1A10: ; skip spaces in (Z)
 	DCR ZW,1	;1A17 31 80
 	RSR		;1A19 09
 
-E_1A1A: ; A error
+ErrA: ; A error
 	LDAB L_21d4	;1A1A 81 21 D4 ; fixupword	if not previous error
 	LDBB #$a0	;1A1D C0 A0
 	SABB		;1A1F 49
@@ -3087,22 +3069,22 @@ E_1A1A: ; A error
 	LDAB #'A'+$80	;1A24 80 C1
 	JMP L_1a52	;1A26 73 2A
 
-E_1A28: ; F error encountered
+ErrF: ; F error encountered
 	LDBB #2		;1A28 C0 02
 	LDAB #'F'+$80	;1A2A 80 C6
 	JMP L_1a52	;1A2C 73 24
 
-E_1A2E: ; M error encountered
+ErrM: ; M error encountered
 	LDBB #2		;1A2E C0 02
 	LDAB #'M'+$80	;1A30 80 CD
 	JMP L_1a52	;1A32 73 1E
 
-E_1A34: ; O error encountered
+ErrO: ; O error encountered
 	LDBB #2		;1A34 C0 02
 	LDAB #'O'+$80	;1A36 80 CF
 	JMP L_1a52	;1A38 73 18
 
-E_1A3A: ; Relative out-of-range error
+ErrRelRange: ; Relative out-of-range error
 	LDAB L_21d4	;1A3A 81 21 D4 ; fixupword  if no previous error
 	LDBB #$a0	;1A3D C0 A0
 	SABB		;1A3F 49
@@ -3111,15 +3093,15 @@ E_1A3A: ; Relative out-of-range error
 	LDAB #'R'+$80	;1A44 80 D2
 	JMP L_1a52	;1A46 73 0A
 
-E_1A48: ; syntax error encountered
+ErrSyntax: ; syntax error encountered
 	LDBB #1		;1A48 C0 01
 	LDAB #'S'+$80	;1A4A 80 D3
 	JMP L_1a52	;1A4C 73 04
 
-E_1A4E: ; U error encountered
+ErrU: ; U (undefined?) error encountered
 	LDBB #1		;1A4E C0 01
 	LDAB #'U'+$80	;1A50 80 D5
-E_1A52: ; error encountered, AL=letter, BL=??
+L_1A52: ; error encountered, AL=letter, BL=??
 	STAB L_21d4	;1A52 A1 21 D4 ; fixupword	save error letter in print line
 	STBB L_1a5f	;1A55 E3 08
 	LDA L_046d	;1A57 91 04 6D ; fixupword	increment # errors
@@ -3251,7 +3233,7 @@ E_1B18:	XFR AW,YW	;1B18 55 60
 	BZ @1b4a	;1B3F 14 09
 	SUB BW,XW	;1B41 51 42
 	BZ @1b4a	;1B43 14 05
-@1B45:	JSR E_1a2e	;1B45 79 1A 2E ; fixupword	M error
+@1B45:	JSR ErrM	;1B45 79 1A 2E ; fixupword	M error
 	JMP @1b58	;1B48 73 0E
 
 @1B4A:	STX 3(AW)	;1B4A 6D 08 03
@@ -3380,7 +3362,7 @@ E_1C0B:	LDAB L_1c22	;1C0B 83 15
 	STAB L_1c22	;1C1C A3 04
 	RSR		;1C1E 09
 
-L_PushF2F3:	D@ 0	;1C1F 00 00
+L_PushF2F3:	DW 0	;1C1F 00 00
 	DB 00	;1C21 00
 L_1c22:	DB 0	;1C22 00
 L_1c23:	DW 0	;1C23 00 00
@@ -3413,7 +3395,7 @@ L_1CC0:	STB L_1cef+1	;1CC0 F3 2E
 	BZ 1cf6		;1CCA 14 2A
 	CLA		;1CCC 3A
 	LDAB L_1d17	;1CCD 83 48
-	LDB #0076	;1CCF D0 00 76
+	LDB #$76	;1CCF D0 00 76
 	SAB		;1CD2 59
 	BLE 1ce1	;1CD3 19 0C
 	JSR E_1d09	;1CD5 7B 32
@@ -3422,7 +3404,7 @@ L_1CC0:	STB L_1cef+1	;1CC0 F3 2E
 	CLA		;1CE0 3A
 	STX (-SW)	;1CE1 6D A2
 	LDX #L_1d1a	;1cE3 60 1D 1A ; fixupword
-	?? 		;1CE5 50 04
+	ADD XW,AW	;1CE5 50 04
 	INR AW,2	;1CE8 30 01
 	STAB L_1d17	;1CEA A3 2B
 	LDA L_0a9e	;1CEC 91 0A 9E ; fixupword	get location counter
@@ -3489,24 +3471,24 @@ E_1E2A: ; blank L_21bd
 	FIL (A),#$a0,(B) ;1E33 67 9E A0 02	ssss=9 mm=3 nn=2
 L_1E37:	RSR		;1E37 09
 
-L_1E38:	MVF 1,#80,L_21bd+1 ;1E38 47 4C 00 50 21 BE ; fixupword   set length to 80
-	LDB #L_1e4f	;1E3E D0 1E 4F ; fixupword
-	SVC $10		;1E41 66 10				do file op
+L_1E38: ; write line to console?
+	MVF 1,#80,L_21bd+1 ;1E38 47 4C 00 50 21 BE ; fixupword   set length to 80
+	LDB #Sys082B	;1E3E D0 1E 4F ; fixupword
+	SVC $10		;1E41 66 10				async do file op
 	SVC $08		;1E43 66 08				flush
-	DW L_1E4F	;1E45 1E 4F ; fixupword
+	DW Sys082B	;1E45 1E 4F ; fixupword
 	MVF 1,#132,L_21bd+1 ;1E47 47 4C 00 84 21 BE ; fixupword set length to 132
 	JMP E_1e25	;1E4D 73 D6	write L_21BD & blank out
 
-L_1e4f: ; short file control block?
-	DB 00	;1E4F 00
-	DB 82	;1E50 82
-	DB 00	;1E51 00
-	DB 02	;1E52 02
-	DB 00	;1E53 00
-	DB 80	;1E54 50
-	DW L_21BD	;1E55 21 BD ; fixupword
-	DB 00	;1E57 00
-	DB 00	;1E58 00
+Sys082B: ; short file control block (see also Sys082A)
+	DB 0	;1E4F 00	+0 status
+	DB $82	;1E50 82	+1 Sys#
+	DB 0	;1E51 00
+	DB 2	;1E52 02	+3 function: write
+	DW 80	;1E53 00 50	+4 buffer length
+	DW L_21BD ;1E55 21 BD fixupword +6 buffer ptr
+	DB 0	;1E57 00	+8
+	DB 0	;1E58 00	+9
 
 E_1E59: ; look up opcode
 	STX (-SW)	;1E59 6D A2
@@ -3544,7 +3526,7 @@ E_1E59: ; look up opcode
 	JMP @1e98	;1E91 73 05
 
 @1E93: ; no match
-	LDA #ffff	;1E93 90 FF FF	
+	LDA #$ffff	;1E93 90 FF FF		push dummy parms on Y
 	STA (-YW)	;1E96 B5 62
 @1E98:	LDX (SW+)	;1E98 65 A1		restore X
 	RSR		;1E9A 09
@@ -3655,10 +3637,10 @@ E_1E59: ; look up opcode
 
 @1f9d: ; starts with 'E'
 	DB 'Q'+$80,'U'+$80,$00,$01	;1F9D D1 D5 00 01	EQU PseudoOp	EQUate?
-	DB 'X'+$80,'T'+$80,$0A,$01	;1FA1 D8 D4 0A 01	EXT PseudoOp	external ref?
-	DB 'N'+$80,'T'+$80,$09,$01	;1FA5 CE D4 09 01	ENT PseudoOp	entry?
+	DB 'X'+$80,'T'+$80,$0A,$01	;1FA1 D8 D4 0A 01	EXT PseudoOp	EXTernal ref?
+	DB 'N'+$80,'T'+$80,$09,$01	;1FA5 CE D4 09 01	ENT PseudoOp	ENTry?
 	DB 'I'+$80,' '+$80,$04,$00	;1FA9 C9 A0 04 00	EI  Inherent
-	DB 'N'+$80,'D'+$80,$08,$01	;1FAD CE C4 08 01	END PseudoOp	end of file?
+	DB 'N'+$80,'D'+$80,$08,$01	;1FAD CE C4 08 01	END PseudoOp	END of file?
 	DB 'J'+$80,'E'+$80,$0D,$01	;1FB1 CA C5 0D 01	EJE PseudoOp	EJEct?
 	DB 'C'+$80,'K'+$80,$B6,$00	;1FB5 C3 CB B6 00	ECK Inherent	enable clock interrupt?
 	DB 'A'+$80,'O'+$80,$56,$00	;1FB9 C1 CF 56 00	EAO Inherent
@@ -3769,7 +3751,7 @@ E_1E59: ; look up opcode
 	DB 0				;20E4 00	end of list
 
 @20e5: ; starts with 'T'
-	DB 'I'+$80,'T'+$80,$0C,$01	;20E5 C9 D4 0C 01	TIT PseudoOp	title?
+	DB 'I'+$80,'T'+$80,$0C,$01	;20E5 C9 D4 0C 01	TIT PseudoOp	TITle?
 	DB 0				;20E9 00	end of list
 
 @20ea: ; starts with 'X'
@@ -3827,41 +3809,41 @@ L_2110: ; optimize: substitute certain opcodes with 1byte equivalents
 	RSR		;214E 09
 
 @214f: ; 1st 2 bytes are original instruction, 3rd byte is replacement instruction
-	DB $30,$00,$38	;214F 30 00 38	INR A --> INA??
-	DB $20,$10,$28	;2152 20 10 28	INRB AL --> INAB ??
-	DB $31,$00,$39	;2155 31 00 39	DCR A --> DCA ??
-	DB $21,$10,$29	;2158 21 10 29	DCRB AL --> DCAB ??
-	DB $32,$00,$3A	;215B 32 00 3A	CLR A --> CLA ?? 
-	DB $22,$10,$2A	;215E 22 10 2A	CLRB AL --> CLAB ??
-	DB $33,$00,$3B	;2161 33 00 3B	IVR A --> IVA ??
-	DB $23,$10,$2B	;2164 23 10 2B	IVRB AL --> IVAB ??
-	DB $34,$00,$3C	;2167 34 00 3C	SRR A --> SRA ??
-	DB $24,$10,$2C	;216A 24 10 2C	SRRB AL --> SRAB ??
-	DB $35,$00,$3D	;216D 35 00 3D	SLR A --> SLA ??
-	DB $25,$10,$2D	;2170 25 10 2D	SLRB AL --> SLAB ??
-	DB $30,$40,$3E	;2173 30 40 3E	INR X --> INX ??
-	DB $31,$40,$3F	;2176 31 40 3F	DCR X --> DCX ??
-	DB $50,$02,$58	;2179 50 02 58	ADD B,A --> AAB ??
-	DB $40,$13,$48	;217C 40 13 48	ADDB BL,AL --> AABB ??
-	DB $51,$02,$59	;217F 51 02 59	SUB B,A --> SAB ??
-	DB $41,$13,$49	;2182 41 13 49	SUBB BL,AL --> SABB ??
-	DB $52,$02,$5A	;2185 52 02 5A	AND B,A --> NAB ??
-	DB $42,$13,$4A	;2188 42 13 4A	ANDB BL,AL --> NABB ??
-	DB $55,$04,$5B	;218B 55 04 5B	XFR X,A --> XAX ??
-	DB $45,$15,$4B	;218E 45 15 4B	XFRB XL,AL --> XAXB ??
-	DB $55,$06,$5C	;2191 55 06 5C	XFR Y,A --> XAY ??
-	DB $45,$17,$4C	;2194 45 17 4C	XFRB YL,AL --> XAYB ??
-	DB $55,$02,$5D	;2197 55 02 5D	XFR B,A --> XAB ??
-	DB $45,$13,$4D	;219A 45 13 4D	XFRB BL,AL --> XABB ??
-	DB $55,$08,$5E	;219D 55 08 5E	XFR Z,A --> XAZ ??
-	DB $45,$19,$4E	;21A0 45 19 4E	XFRB ZL,AL --> XAZB ??
-	DB $55,$0A,$5F	;21A3 55 0A 5F	XFR S,A --> XAS ??
-	DB $45,$1B,$4F	;21A6 45 1B 4F	XFRB SL,AL --> XASB ??
+	DB $30,$00,$38	;214F 30 00 38	INR A --> INA
+	DB $20,$10,$28	;2152 20 10 28	INRB AL --> INAB
+	DB $31,$00,$39	;2155 31 00 39	DCR A --> DCA
+	DB $21,$10,$29	;2158 21 10 29	DCRB AL --> DCAB
+	DB $32,$00,$3A	;215B 32 00 3A	CLR A --> CLA 
+	DB $22,$10,$2A	;215E 22 10 2A	CLRB AL --> CLAB
+	DB $33,$00,$3B	;2161 33 00 3B	IVR A --> IVA
+	DB $23,$10,$2B	;2164 23 10 2B	IVRB AL --> IVAB
+	DB $34,$00,$3C	;2167 34 00 3C	SRR A --> SRA
+	DB $24,$10,$2C	;216A 24 10 2C	SRRB AL --> SRAB
+	DB $35,$00,$3D	;216D 35 00 3D	SLR A --> SLA
+	DB $25,$10,$2D	;2170 25 10 2D	SLRB AL --> SLAB
+	DB $30,$40,$3E	;2173 30 40 3E	INR X --> INX
+	DB $31,$40,$3F	;2176 31 40 3F	DCR X --> DCX
+	DB $50,$02,$58	;2179 50 02 58	ADD B,A --> AAB
+	DB $40,$13,$48	;217C 40 13 48	ADDB BL,AL --> AABB
+	DB $51,$02,$59	;217F 51 02 59	SUB B,A --> SAB
+	DB $41,$13,$49	;2182 41 13 49	SUBB BL,AL --> SABB
+	DB $52,$02,$5A	;2185 52 02 5A	AND B,A --> NAB
+	DB $42,$13,$4A	;2188 42 13 4A	ANDB BL,AL --> NABB
+	DB $55,$04,$5B	;218B 55 04 5B	XFR X,A --> XAX
+	DB $45,$15,$4B	;218E 45 15 4B	XFRB XL,AL --> XAXB
+	DB $55,$06,$5C	;2191 55 06 5C	XFR Y,A --> XAY
+	DB $45,$17,$4C	;2194 45 17 4C	XFRB YL,AL --> XAYB
+	DB $55,$02,$5D	;2197 55 02 5D	XFR B,A --> XAB
+	DB $45,$13,$4D	;219A 45 13 4D	XFRB BL,AL --> XABB
+	DB $55,$08,$5E	;219D 55 08 5E	XFR Z,A --> XAZ
+	DB $45,$19,$4E	;21A0 45 19 4E	XFRB ZL,AL --> XAZB
+	DB $55,$0A,$5F	;21A3 55 0A 5F	XFR S,A --> XAS
+	DB $45,$1B,$4F	;21A6 45 1B 4F	XFRB SL,AL --> XASB
 	DB 0,0,0	;21A9 00 00 00	end of list
 
 L_21ac:	DS 16	; parameter accumulator
 
-L_21bd: ?? print line string
+L_21bd: ; print line string
 	DS 2		; length
 	DS ???		; chars
 L_21d4: ???  error column in print string
@@ -3870,6 +3852,7 @@ L_2202:	???
 
 L_2244: ??
 
+	DS 256	???	;2243 expression stack
 L_2343: ; top of expression evaluation stack
 
 E_2344: ; uppercase a string
@@ -3912,20 +3895,21 @@ E_2344: ; uppercase a string
 	DW 0		;237E 00 00
 	DW L_24D5	;2380 24 D5 ; fixupword
 
-E_2382:	STX (-SW)	;2382 6D A2
+E_2382: ; Z=FCB ptr
+	STX (-SW)	;2382 6D A2
 	JSR E_23b1	;2384 7B 2B
 	DB 2		;2386 02
 	BZ @23af	;2387 14 26
 	CLA		;2389 3A
-	STA $12(ZW)	;238A B5 88 12
-	STA $16(ZW)	;238D B5 88 16
-	STB $14(ZW)	;2390 F5 88 14
-	STB $18(ZW)	;2393 F5 88 18
+	STA 18(ZW)	;238A B5 88 12
+	STA 22(ZW)	;238D B5 88 16
+	STB 20(ZW)	;2390 F5 88 14
+	STB 24(ZW)	;2393 F5 88 18
 	JSR E_23b1	;2396 7B 19
 	DB 5		;2398 05
 	LDBB #$0f	;2399 C0 0F
 	ANDB BL,BH	;239B 42 23
-	LDAB $d(ZW)	;239D 85 88 0D
+	LDAB 13(ZW)	;239D 85 88 0D
 	BM @23a8	;23A0 16 06
 	SABB		;23A2 49
 	BZ @23a8	;23A3 14 03
@@ -3936,7 +3920,7 @@ E_2382:	STX (-SW)	;2382 6D A2
 	JSR E_23c8	;23AD 7B 19
 @23af:	JMP L_2426	;23AF 73 75
 
-E_23B1:
+E_23B1: ; Z=FCB ptr
 	LDAB (XW+)	;23B1 85 41		get inline parm
 	STAB @23bb	;23B3 A3 06
 	XFR BW,ZW	;23B5 55 82
@@ -3951,59 +3935,60 @@ E_23B1:
 	XFR AW,AW	;23C5 55 00
 @23C7:	RSR		;23C7 09
 
-E_23C8:	JSR E_23b1	;23C8 7B E7
+E_23C8: ; Z=FCB ptr
+	JSR E_23b1	;23C8 7B E7
 	DB 2		;23CA 02
-	LDA $16(ZW)	;23CB 95 88 16
+	LDA 22(ZW)	;23CB 95 88 16
 	SUB AW,BW	;23CE 51 20
 	BL @23d6	;23D0 10 04
 	LDAB #1		;23D2 80 01
 	JMP @23ea	;23D4 73 14
 
-@23D6:	LDA $16(ZW)	;23D6 95 88 16
-	STA $12(ZW)	;23D9 B5 88 12
+@23D6:	LDA 22(ZW)	;23D6 95 88 16
+	STA 18(ZW)	;23D9 B5 88 12
 	STA 8(ZW)	;23DC B5 88 08
 	JSR E_23f4	;23DF 7B 13
-	DB 1		;23E1 01			file #1?
+	DB 1		;23E1 01			function #1?
 	LDB $12(ZW)	;23E2 D5 88 12
 	INR BW,1	;23E5 30 20
-	STB $16(ZW)	;23E7 F5 88 16
-@23EA:	STAB (ZW)	;23EA AC
+	STB 22(ZW)	;23E7 F5 88 16
+@23EA:	STAB (ZW)	;23EA AC		store FCB.status
 	RSR		;23EB 09
 
-E_23EC: ; wait for ???
-	LDAB (ZW)	;23EC 8C
-	BP @23f3	;23ED 17 04
-	SVC $07		;23EF 66 07				yield
-	JMP E_23ec	;23F1 73 F9
+E_23EC: ; wait for ???, Z=FCB ptr
+	LDAB (ZW)	;23EC 8C		get FCB.status
+	BP @23f3	;23ED 17 04		if >=0, it's done
+	SVC $07		;23EF 66 07		yield
+	JMP E_23ec	;23F1 73 F9		check again
 
 @23F3:	RSR		;23F3 09
 
-E_23F4: ; do file operation?
-	XFR BW,ZW	;23F4 55 82		B=FCB ptr?
+E_23F4: ; do file operation? Z=FCB ptr
+	XFR BW,ZW	;23F4 55 82		B=FCB ptr
 	LDAB (XW+)	;23F6 85 41		get inline file function?
 	STAB 3(ZW)	;23F8 A5 88 03		  set into FCB?
-	SVC $00		;23FB 66 00
+	SVC $00		;23FB 66 00		async file operation?
 	JSR E_23ec	;23FD 7B ED		wait for completion?
 	RSR		;23FF 09
 
 E_2400:	STX (-SW)	;2400 6D A2
 L_2402:	LDA 6(ZW)	;2402 95 88 06
 E_2405:	INR AW,2	;2405 30 01
-	LDB $18(ZW)	;2407 D5 88 18
-	STB $14(ZW)	;240A F5 88 14
+	LDB 24(ZW)	;2407 D5 88 18
+	STB 20(ZW)	;240A F5 88 14
 	ADD AW,BW	;240D 50 20
 	XAY		;240F 5C
 	LDA (YW)	;2410 9B
 	LDBB #$84	;2411 C0 84
 	LDAB #1		;2413 80 01
 	SUBB BL,AH	;2415 41 03
-	BZ 2425	;2417 14 0C
+	BZ L_2425	;2417 14 0C
 	DCRB AH,1	;2419 21 00
 	BNF 242a	;241B 13 0D
 	JSR 23c8	;241D 7B A9
 	CLA		;241F 3A
 	STA 18(ZW)	;2420 B5 88 18
-	JMP 2402	;2423 73 DD
+	JMP L_2402	;2423 73 DD
 
 L_2425:	STAB (ZW)	;2425 AC
 L_2426:	LDB (SW+)	;2426 D5 A1
@@ -4077,12 +4062,13 @@ E_2452:	STX (-SW)	;2452 6D A2
 @24A0:	CLAB		;24A0 2A
 	JMP L_2425	;24A1 73 82
 
-E_24A3:	CLA		;24A3 3A
-	STA $18(ZW)	;24A4 B5 88 18
-	LDA $12(ZW)	;24A7 95 88 12
-	STA $08(ZW)	;24AA B5 88 08
+E_24A3: ; Z=FCB ptr
+	CLA		;24A3 3A
+	STA 24(ZW)	;24A4 B5 88 18
+	LDA 18(ZW)	;24A7 95 88 12
+	STA 8(ZW)	;24AA B5 88 08
 	JSR E_23f4	;24AD 79 23 F4 ; fixupword
-	DB 2		;24B0 02			file #2?
+	DB 2		;24B0 02			function #2?
 	RSR		;24B1 09
 
 E_24B2:	JSR E_24a3	;24B2 7B EF
@@ -4103,10 +4089,10 @@ E_24B2:	JSR E_24a3	;24B2 7B EF
 @24D0:	CLA		;24D0 3A
 @24D1:	RSR		;24D1 09
 
-@24D2:	LDAB #02	;24D2 80 02
+@24D2:	LDAB #2		;24D2 80 02
 	RSR		;24D4 09
 
-	DB 6D ;m	;24D5 6D
+	DB 6D ;m	;24D5 6D	dead code?
 	DB A2 ;"	;24D6 A2
 	DB 7B ;{	;24D7 7B
 	DB CA ;J	;24D8 CA
@@ -4175,7 +4161,7 @@ E_2532: ; insert chars; A=dest length, B=src length,  inline1=dest ptr, inline2=
 	INR XW,2	;253D 30 41
 	JMP @2554	;253F 73 13
 
-@2541:	FIL (A),$a0,(Y)	;2541 67 9E A0 06	fill with spaces
+@2541:	FIL (A),#$a0,(Y) ;2541 67 9E A0 06	fill with spaces
 	INA		;2545 38
 	SAB		;2546 59
 	BLE @254c	;2547 19 03
@@ -4207,6 +4193,7 @@ E_2557: ; trim trailing spaces off a string
 	RSR		;2575 09	return
 
 L_2576:	JMP L_289c	;2576 71 28 9C ; fixupword
+	; also 400byte block buffer?
 
 L_289C: ; main entry jmp to jmp to here
 	XFR SW,SW,#L_02c8 ;289C 55 BA 02 C8 ; fixupword  init return stack ptr
@@ -4216,7 +4203,7 @@ L_289C: ; main entry jmp to jmp to here
 	DB $c		;28A4 0C
 	DW L_0a4c	;28a5 0A 4C ; fixupword	   ^ status
 	JSR E_293f	;28A7 79 29 3F ; fixupword	write "ASSM - 6.05" to console
-	DW L_29BF	;28AA 29 BF ; fixupword
+	DW Sys082A	;28AA 29 BF ; fixupword
 	SVC $5c		;28AC 66 5C		file??? device 1?
 	DB 0		;28AE 00
 	DB 1		;28AF 01		   device
@@ -4230,16 +4217,16 @@ L_289C: ; main entry jmp to jmp to here
 	LDAB @28b8	;28BA 83 FC		get status???
 	SRAB		;28BC 2C
 	BL @28c4	;28BD 10 05
-	LDBB #$80	;28BF C0 80
-	STBB L_29b5+1	;28C1 E1 29 B6 ; fixupword
+	LDBB #$80	;28BF C0 80		  change Sys081 to be Sys080?
+	STBB Sys081+1	;28C1 E1 29 B6 ; fixupword
 @28C4:	SRAB		;28C4 2C
 	BNL @28f7	;28C5 11 30
 	LDA #L_29d7	;28C7 90 29 D7 ; fixupword	string "ENTER TITLE"
-	STA L_29bf+6	;28CA B1 29 C5 ; fixupword
+	STA Sys082A+6	;28CA B1 29 C5 ; fixupword
 	JSR E_293f	;28CD 7B 70		write string to console
-	DW L_29BF	;28CF 29 BF ; fixupword
+	DW Sys082A	;28CF 29 BF ; fixupword
 	JSR E_293f	;28D1 7B 6C		get string from console???
-	DW L_29B5	;28D3 29 B5 ; fixupword
+	DW Sys081	;28D3 29 B5 ; fixupword  FCB
 @28d5:	LDAB #0		;28D5 80 00		modified with svc $5c status
 	LDBB #$20	;28D7 C0 20
 	NABB		;28D9 4A
@@ -4282,7 +4269,7 @@ L_289C: ; main entry jmp to jmp to here
 	LDAB @28d5+1	;292B 83 A9			get svc %5c status
 	LDBB #$20	;292D C0 20
 	NABB		;292F 4A
-	BZ L_294b		;2930 14 19
+	BZ L_294b	;2930 14 19
 	SVC $1c		;2932 66 1C			getclock?
 @2934:	DW 0		;2934 00 00
 	LDA @2934	;2936 93 FC			get ptr back
@@ -4290,12 +4277,13 @@ L_289C: ; main entry jmp to jmp to here
 	STBB 8(AW)	;293A E5 08 08
 	JMP L_2951	;293D 73 12
 
-E_293F:	LDB (XW)	;293F DA		get inline fcb ptr
-	SVC $10		;2940 66 10		DoFileOp
+E_293F: ; write string in FCB to console
+	LDB (XW)	;293F DA		get inline fcb ptr
+	SVC $10		;2940 66 10		async DoFileOp
 @2942:	SVC $07		;2942 66 07		Yield
 	LDB (XW)	;2944 DA		get inline fcb ptr again
 	LDAB (BW)	;2945 89		get file status
-	BM @2942	;2946 16 FA
+	BM @2942	;2946 16 FA		if incomplete, check again
 	LDB (XW+)	;2948 D5 41		skip inline fcb ptr
 	RSR		;294A 09
 
@@ -4303,7 +4291,7 @@ L_294B:	LDA #L_04b1	;294B 90 04 B1 ; fixupword	ptr into page header line
 	STA L_0d0c	;294E B1 0D 0C ; fixupword
 L_2951:	LDA #L_2576	;2951 90 25 76 ; fixupword	get filename???
 	XAY		;2954 5C
-	LDB #L_0306	;2955 D0 03 06 ; fixupword
+	LDB #Sys003	;2955 D0 03 06 ; fixupword
 	SVC $52		;2958 66 52
 	DB 1		;295A 01
 	DB 0		;295B 00
@@ -4313,14 +4301,14 @@ L_2951:	LDA #L_2576	;2951 90 25 76 ; fixupword	get filename???
 	BZ @2975	;2961 14 12
 	LDA #L_2576	;2963 90 25 76 ; fixupword
 	STA L_030c	;2966 B1 03 0C ; fixupword
-	ADD YW,YW,#$193 ;2969 50 76 01 93
+	ADD YW,#400+3	;2969 50 76 01 93
 	LDA #1		;296D 90 00 01
-	STA L_0310	;2970 B1 03 10 ; fixupword
+	STA Sys003+10	;2970 B1 03 10 ; fixupword
 	JMP @297a	;2973 73 05
 
 @2975:	LDA #L_2576	;2975 90 25 76 ; fixupword
 	STA @2988+1	;2978 B3 0F
-@297A:	LDB #L_0324	;297A D0 03 24 ; fixupword
+@297A:	LDB #Sys004	;297A D0 03 24 ; fixupword
 	SVC $5c		;297D 66 5C			file??? device 1?
 	DB 1		;297F 01
 	DB 1		;2980 01
@@ -4329,48 +4317,46 @@ L_2951:	LDA #L_2576	;2951 90 25 76 ; fixupword	get filename???
 	LDBB @2982	;2984 C3 FC
 	BZ @2997	;2986 14 0F
 @2988:	LDA #L_2709	;2988 90 27 09 ; fixupword
-	STA L_0324+6	;298B B1 03 2A ; fixupword
-	ADD YW,YW,#$193	;298E 50 76 01 93
-	LDB #L_0324	;2992 D0 03 24 ; fixupword
+	STA Sys004+6	;298B B1 03 2A ; fixupword	set as block buffer ptr
+	ADD YW,#$193	;298E 50 76 01 93
+	LDB #Sys004	;2992 D0 03 24 ; fixupword
 	SVC $18		;2995 66 18
-@2997:	LDB #L_02ca	;2997 D0 02 CA ; fixupword
+@2997:	LDB #Sys001	;2997 D0 02 CA ; fixupword
 	SVC $18		;299A 66 18
 	SVC $05		;299C 66 05
 	DB $c		;299E 0C
-	DW L_02CA	;299F 02 CA ; fixupword
+	DW Sys001	;299F 02 CA ; fixupword
 	STA L_1cb7	;29A1 B1 1C B7 ; fixupword
-	LDB #L_02e8	;29A4 D0 02 E8 ; fixupword
+	LDB #Sys002	;29A4 D0 02 E8 ; fixupword
 	SVC $18		;29A7 66 18
-	LDB #L_0306	;29A9 D0 03 06 ; fixupword
+	LDB #Sys003	;29A9 D0 03 06 ; fixupword
 	SVC $18		;29AC 66 18
 	STR?? YW,L_0A4A	;29AE D6 67 0A 4A ; fixupword
 	JMP L_0a43	;29B2 71 0A 43 ; fixupword
 
-L_29b5: ; short file control block?
-	DB 0		;29B5 00	status
-	DB $81		;29B6 81	option flags?
-	DB 0		;29B7 00
-	DB 1		;29B8 01	device
-	DB 0		;29B9 00	function?
-	DB $57		;29BA 57
-	DW L_29E5	;29BB 29 E5 ; fixupword  I/O buffer ptr?
-	DB 0		;29BD 00
-	DB 0		;29BE 00
+Sys081: ; short file control block?  input from console or Sys080?
+	DB 0		;29B5 00	+0 status
+	DB $81		;29B6 81	+1 sys#  (sometimes modified to $80)
+	DB 0		;29B7 00	+2 
+	DB 1		;29B8 01	+3 function?
+	DW 87		;29B9 00 57	+4 buffer length
+	DW L_29E5	;29BB 29 E5 fixupword  +6 buffer ptr
+	DB 0		;29BD 00	+8
+	DB 0		;29BE 00	+9
 
-L_29bf: ; short file control block? for console?
-	DB 0		;29BF 00	statuc
-	DB $82		;29C0 82
-	DB 0		;29C1 00
-	DB 2		;29C2 02	device
-	DB 0		;29C3 00	function?
-	DB 80		;29C4 50
-	DW L_29C9	;29C5 29 C9 ; fixupword	  ^ string to write
-	DB 0		;29C7 00
-	DB 0		;29C8 00
+Sys082A: ; short file control block? output to console? (see also Sys082B)
+	DB 0		;29BF 00	+0 status
+	DB $82		;29C0 82	+1 sys#
+	DB 0		;29C1 00	+2
+	DB 2		;29C2 02	+3 function?
+	DW 80		;29C3 00 50	+4 buffer length?
+	DW L_29C9	;29C5 29 C9 fixupword	+6 buffer ptr
+	DB 0		;29C7 00	+8
+	DB 0		;29C8 00	+9
 
 L_29c9: ; string: version
-	DW 12		;29C9 00 0C
-	DB C1 ;A	;29CB C1
+	DW 12		;29C9 00 0C	length
+	DB C1 ;A	;29CB C1	chars
 	DB D3 ;S	;29CC D3
 	DB D3 ;S	;29CD D3
 	DB CD ;M	;29CE CD
@@ -4384,8 +4370,8 @@ L_29c9: ; string: version
 	DB 8D		;29D6 8D
 
 L_29D7: ; string: prompt
-	DW 12		;29D7 00 0C
-	DB C5 ;E	;29D9 C5
+	DW 12		;29D7 00 0C	length
+	DB C5 ;E	;29D9 C5	chars
 	DB CE ;N	;29DA CE
 	DB D4 ;T	;29DB D4
 	DB C5 ;E	;29DC C5
