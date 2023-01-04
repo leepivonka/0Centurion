@@ -1022,11 +1022,9 @@ struct MEM { // real memory map
 
 	} Mem;
 
-//**********************************************************
-// Execute instructions
 
-struct CPU6 { // Centurion CPU6 (started with ee 200)
-
+struct CPU6 { // Centurion CPU6 (started with ee 200) **********************************************************
+  // https://github.com/sjsoftware/centurion-cpu6/wiki
 /* Contexts
 ; Each register and the flags appears to exist in 16 contexts and these contexts are mapped between 0x0000 and 0x00FF
 ; 16 bytes per context starting with context 0 and working upwards.
@@ -1327,46 +1325,50 @@ private:
 		FlagBMV(V); RVBW(RV,V); }
 
 	unsigned __int8 RRDestReg; // from RRRead
-	unsigned __int16 RRSrcValue;  // from RRRead
 	unsigned __int16 RRRead(unsigned __int8 const RR) {
 		RRDestReg=RR&0xe;  unsigned __int8 SrcR=(RR>>4)&0xe;
 		switch(RR&0x11) {
-			case 0x10: // dest_reg <- src_reg op immediate
-				RRSrcValue=RegW(SrcR); return Fetch2U();
-			case 0x01: // dest_reg <- src_reg op (direct)
-				RRSrcValue=RegW(SrcR); return Mru2(Fetch2U());
+			case 0x01: // dest_reg <- src_reg op immediate
+				return Fetch2U();
+			case 0x10: // dest_reg <- src_reg op (direct)
+				return Mru2(Fetch2U());
 			case 0x11: // dest_reg <- (src_reg + disp16) op dest_reg
-				RRSrcValue=Mru2(RegW(SrcR)+Fetch2U()); return RegW(RRDestReg);
+				return Mru2(RegW(SrcR)+Fetch2U());
 			default: // dest_reg <- src_reg op dest_reg
-				RRSrcValue=RegW(SrcR); return RegW(RRDestReg);
+				return RegW(SrcR);
 			}
+		return 0;
 		}
 	void Add(unsigned __int8 const M) { // Add word Src to Dest
-		unsigned __int32 D=RRRead(M), R=D+RRSrcValue; RegW(RRDestReg,unsigned __int16(R));
-		Link=bool(R&0x10000); Fault=bool((D^RRSrcValue)&0x8000)?0:bool((D^R)&0x8000); FlagWMV(unsigned __int16(R)); }
+		unsigned __int32 S=RRRead(M), D=RegW(RRDestReg), R=D+S; RegW(RRDestReg,unsigned __int16(R));
+		Link=bool(R&0x10000); Fault=bool((D^S)&0x8000)?0:bool((D^R)&0x8000); FlagWMV(unsigned __int16(R)); }
 	void AddB(unsigned __int8 const M) { // Add byte Src to Dest
 		unsigned __int8 DR=M&0xf, SR=M>>4;  unsigned __int32 V=RegB(DR), W=RegB(SR), S=V+W; RegB(DR,unsigned __int8(S)); 
 		Link=bool(S&  0x100); Fault=bool((V^W)&0x80)?0:bool((V^S)&0x80); FlagBMV(unsigned __int8(S)); }
 	void Sub(unsigned __int8 const M) { // Subtract word Src to Dest
-		unsigned __int32 D=RRRead(M), R=RRSrcValue-D; RegW(RRDestReg,unsigned __int16(R));
-		Link=!bool(R&0x10000); Fault=bool((RRSrcValue^D)&0x8000)?bool((RRSrcValue^R)&0x8000):0; FlagWMV(unsigned __int16(R)); }
+		unsigned __int32 S=RRRead(M), D=RegW(RRDestReg), R=S-D; RegW(RRDestReg,unsigned __int16(R));
+		Link=!bool(R&0x10000); Fault=bool((S^D)&0x8000)?bool((S^R)&0x8000):0; FlagWMV(unsigned __int16(R)); }
 	void SubB(unsigned __int8 const M) { // Subtract byte Src to Dest
 		unsigned __int8 DR=M&0xf, SR=M>>4;  unsigned __int32 V=RegB(SR), W=RegB(DR), S=V-W; RegB(DR,unsigned __int8(S)); 
 		Link=!bool(S&0x100); 
 		Fault=bool(((V^W)&(V^S))&0x80);
 		FlagBMV(unsigned __int8(S)); }
 	void And(unsigned __int8 const M) { // AND word Src to Dest
-		unsigned __int16 R=RRRead(M); R&=RRSrcValue; RegW(RRDestReg,R); FlagWMV(R); }
+		unsigned __int16 R=RRRead(M); R&=RegW(RRDestReg); RegW(RRDestReg,R); FlagWMV(R); }
 	void AndB(unsigned __int8 const M) { // AND byte Src to Dest
 		unsigned __int8 DR=M&0xf, SR=M>>4;  unsigned __int8 V=RegB(DR); V&=RegB(SR); RegB(DR,V); FlagBMV(V); }
 	void Ori(unsigned __int8 const M) { // OR word Src to Dest
-		unsigned __int16 R=RRRead(M); R|=RRSrcValue; RegW(RRDestReg,R); FlagWMV(R); }
+		unsigned __int16 R=RRRead(M); R|=RegW(RRDestReg); RegW(RRDestReg,R); FlagWMV(R); }
 	void OriB(unsigned __int8 const M) { // OR byte Src to Dest
 		unsigned __int8 DR=M&0xf, SR=M>>4;  unsigned __int8 V=RegB(DR); V|=RegB(SR); RegB(DR,V); FlagBMV(V); }
 	void Ore(unsigned __int8 const M) { // XOR word Src to Dest
-		unsigned __int16 R=RRRead(M); R^=RRSrcValue; RegW(RRDestReg,R); FlagWMV(R); }
+		unsigned __int16 R=RRRead(M); R^=RegW(RRDestReg); RegW(RRDestReg,R); FlagWMV(R); }
 	void OreB(unsigned __int8 const M) { // XOR byte Src to Dest
 		unsigned __int8 DR=M&0xf, SR=M>>4;  unsigned __int8 V=RegB(DR); V^=RegB(SR); RegB(DR,V); FlagBMV(V); }
+	void Xfr(unsigned __int8 const M) { // XFR word Src to Dest
+		uint16_t R=RRRead(M); RegW(RRDestReg,R); FlagWMV(R); }
+	void XfrB(unsigned __int8 const M) { // XOR byte Src to Dest
+		unsigned __int8 DR=M&0xf, SR=M>>4;  unsigned __int8 V=RegB(SR); RegB(DR,V); FlagBMV(V); }
 
 	void LdB(unsigned __int8 RegX, unsigned __int16 const Adr) { // load byte register
 		unsigned __int8 V=Mru1(Adr); RegB(RegX,V); FlagBMV(V); }
@@ -1380,85 +1382,40 @@ private:
 	void Jsr(unsigned __int16 const Adr) { PushW(RegW(XW)); RegW(XW,PC); PC=Adr; }
 	void Branch(bool Flag) { signed __int8 Rel=Fetch1S();  if(Flag) PC+=Rel;  }
 
-	struct SSMN {
-		unsigned __int8 ssss, mm, nn; // ssss=function, mm=1st addr mode, nn=2nd addr mode
-		unsigned __int8 RR; // registers (if required)
-		unsigned __int16 M, N; // 1st & 2nd operand results
+	struct SSMN { // state while parsing ssmn operands
+		unsigned __int8 B2; // ssss=function, mm=1st addr mode, nn=2nd addr mode
+		unsigned __int16 M, N; // 1st & 2nd operand address
+		inline unsigned __int8 ssss(void) { return B2>>4; }
 		} ;
-	void GetSSMN1(SSMN &C) { // get ssssmmnn
-		uint8_t B2=Fetch1U();  C.ssss=B2>>4; C.mm=(B2>>2)&3; C.nn=B2&3;
-		C.RR= (C.mm==2 || C.nn==2) ? Fetch1U() : 0;
+	void SSMNGet1(SSMN &C) { // fetch ssssmmnn byte
+		C.B2=Fetch1U();
 		C.M=0;  C.N=0;
 		}
-	void GetSSMN2(SSMN &C, uint8_t const Size1, uint8_t const Size2) { // get operand pointers
-		switch(C.mm) {
-			case 0: { uint16_t A=Fetch2U(); C.M=(Size1==1)?Mru1(A):Mru2(A); } break;
-			case 1: Stop.InvalidInstruction=1; break; //???
-			case 2: C.M=RegB(C.RR>>4); break;
-			case 3: C.M=Fetch1U(); break;
+	void SSMNGet2(SSMN &C, uint8_t const Size1, uint8_t const Size2) { // fetch operand pointers
+		// 46 13 x0    b4 16 b4 12   A [R_b416|0xb416](2), [R_b412|0xb412](4)
+		// 47    x1 00 e0 87 r0 03   memcpy 0x01, [ConfigTib0|0xe087], [Z + 0x03]
+		// 47    x2    8e 6b 0r         unkblk0 [R_8e6b|0x8e6b], [Z]
+		// 46 25 34    r0 1e a8 5c   ZAD [Y + 0x1e](3), [R_a85c|0xa85c](6)
+		// 46 22 x5    r0 24 r0 1e   C [Y + 0x24](3), [Y + 0x1e](3)
+		// 46 23 x6    r0 2d 0r      ZAD [Y + 0x2d](3), [B](4)
+		// 46 03 x8    r0 a8 62      A [Z](1), [R_a862|0xa862](4)
+		// 46 32 x9    r0 r0 1e      C [A](4), [Y + 0x1e](3)
+		// 47    xa 00 rr            memcpy 0x01, [B], [Z]
+		// 47    xc 01 00 04 e3 91   memcpy 0x02, 0x0004, [R_e391|0xe391]
+		// 46 02 xd    01 r0 24      A 0x01(1), [Y + 0x24](3)
+		// 47    xe 01 ff 00 0r      memcpy 0x02, 0xff00, [Z]
+		unsigned __int8 RR=0;
+		switch((C.B2>>2)&3) { // do mm
+			case 0: { C.M=Fetch2U(); } break;  // direct
+			case 1: { RR=Fetch1U(); C.M=Fetch1S()+RegW((RR>>4&0xe)); }  break; // n(r)
+			case 2: { RR=Fetch1U(); C.M=RegW((RR>>4)&0xe); } break;  // (r)
+			case 3: { C.M=PC; PC+=Size1; } break;  // immediate
 			}
-		switch(C.nn) {
-			case 0: C.N=Mru2(Fetch2U()); break;
-			case 1: Stop.InvalidInstruction=1; break; //???
-			case 2: C.N=RegW(C.RR&0xf); break;
-			case 3: C.N=Fetch2U(); break;
-			}
-		}
-
-	void MemBlock(bool const LengthInA) {
-		// eg: 47 40 FF 01 00 02 00
-		SSMN C; GetSSMN1(C);
-		unsigned __int16 Len=(LengthInA?RegW(AW):Fetch1U())+1;
-		GetSSMN2(C,2,2);
-		switch(C.ssss) {
-			case 0: { uint16_t BaseAddr=C.M, RecordAddr=C.N; // CVX Implements most of the Centurion binary record format in Microcode.
-				Stop.InvalidInstruction=1; } break;
-			case 1: { uint16_t Src=C.M, Dest=C.N;  // CPV  strcmp
-				uint8_t a=0, b=0;  do { a=Mru1(Src++); b=Mru1(Dest++); if(a!=b || a==0) break; } while(--Len);
-				Value=(a==b); Minus=(a-b)>>7; Link=(a>b); Fault=0; } break;
-			case 2: { // MVV Copies from Source to Dest until matching byte is found
-					// (can be used as strcpy). Sets Fault if no match found.
-					// Sets Y to match in Src. Sets Z to match in Dest
-				uint16_t MaxCount=Len; uint8_t MatchByte=RegB(AL); uint16_t Src=C.M, Dest=C.N; 
-				uint8_t a=0;  do { a=Mru1(Src++); Mwu1(Dest++,a); } while(MaxCount-- && a!=MatchByte);
-				Value=(a==MatchByte);  RegW(YW,Src-1); RegW(ZW,Dest-1); } break;
-			case 3: { // SCN	https://github.com/sjsoftware/centurion-cpu6/wiki/SCN
-				// Operand 1 is length byte Operand 2 is memory address (table) Operand 3 is memory address (string)
-				uint8_t const MaskL=RegB(BL), MaskH=RegB(BH); // On entry B holds two bytes - low byte is used with string, high byte is used with table.
-				Fault=0;
-				while(1) {
-					uint8_t v=Mru1(C.N)&MaskL;  // BL is ANDed with first byte of string. (e.g., mask out high bit on string)
-					uint8_t f=Mru1(C.M+v)&MaskH; // BH is ANDed with the byte at the destination address plus the result.
-					if(f) {  // If the AND of BH and destination is non-zero
-						RegB(BL,f); // set BL to the result of the destination AND
-						RegB(AL,Len); // AL to the remaining length.
-						RegW(XW,C.M+v); RegW(YW,C.N); // X and Y are set to the table entry address and address in string
-						break; }
-					C.N++; if(--Len) {  // If there's no bytes left
-						Fault=1; // set fault.
-						break; }
-					}
-				} break;
-			case 4: { uint16_t Src = C.M; uint16_t Dest = C.N; // MVF copy block of memory from first argument to second argument
-				do { Mwu1(Dest++,Mru1(Src++)); } while(--Len);  }  break;
-			case 5: { // ANC  bitwise and.  guessing on flags
-				uint16_t Src = C.M, Dest = C.N;
-				do { Mwu1(Dest,Mru1(Dest)&Mru1(Src)); Dest++, Src++; } while(--Len); } break;
-			case 6: { // ORC  bitwise or.  guessing on flags
-				uint16_t Src=C.M, Dest=C.N;
-				do { Mwu1(Dest,Mru1(Dest)|Mru1(Src)); Dest++, Src++; } while(--Len); } break;
-			case 7: { // XRC  bitwise xor.  guessing on flags
-				uint16_t Src=C.M, Dest=C.N;
-				do { Mwu1(Dest,Mru1(Dest)^Mru1(Src)); Dest++, Src++; } while(--Len); } break;
-			case 8: { // CPF compare two blocks of memory
-				uint16_t Src=C.M, Dest=C.N;
-				do { Mwu1(Dest,Mru1(Dest)^Mru1(Src)); Dest++, Src++; } while(--Len);
-				uint16_t r=0;  do { r=uint16_t(Mru1(Src++))-uint16_t(Mru1(Dest++)); if(r!=0) break; } while(--Len);
-				Value=(r==0); Minus=r>>7; Link=r>>8; Fault=0; } break;
-			case 9: { // FIL copies first arg repeated to second arg
-				uint8_t Pattern=Mru1(C.M); uint16_t Dest=C.N;
-				do { Mwu1(Dest++,Pattern); } while(--Len);  } break;
-			default: Stop.InvalidInstruction=1;
+		switch(C.B2&3) { // do nn
+			case 0: { C.N=Fetch2U(); } break;  // direct
+			case 1: { RR=Fetch1U(); C.N=Fetch1S()+RegW(RR&0xe); } break; // n(r)
+			case 2: { if(C.B2&0xf!=0xa) RR=Fetch1U(); C.N=RegW(RR&0xe); } break;  // (r)
+			case 3: { C.N=PC; PC+=Size2; } break; // immediate
 			}
 		}
 
@@ -1548,12 +1505,11 @@ public:
 				case 0x0e: if(UserMode()) Abort(0); break; // DLY ; Delay 4.55 ms - for TTY bit timing
 				case 0x0f: { // RSV aka RSYS ; Return from SVC using stack.  https://github.com/sjsoftware/centurion-cpu6/wiki/RSV
 					if(UserMode()) Abort(0);
-					RegW(PW,PC);
-					S++;	// Skip arg
-					PC = RegW(XW);  RegW(XW,PopW());
-					LVx16=0x10* (PopB()&0xf);	// Loads new IL
-					uint8_t byte = PopB(); 	// SVC might have saved the flags, but RSV doesn't restore them
-					MapBase = byte & 0x07;
+					RegW(PW,PC);  // save PC to P
+					S++;	// Skip arg (flags?)
+					PC = RegW(XW);  RegW(XW,PopW()); // load PC from X, load X from stack
+					LVx16= (PopB()&0xf)<<4;	// Loads new IL
+					MapBase= PopB()&7; 	// SVC might have saved the flags, but RSV doesn't restore them
 					} break;
 
 				case 0x10: Branch( Link           ); break; // BL  rel ; Branch if Link Set
@@ -1607,9 +1563,9 @@ public:
 
 				case 0x2e: { // Memory mapping
 					if(UserMode()) Abort(0);
-					SSMN C; GetSSMN1(C); GetSSMN2(C,1,1);
+					SSMN C; SSMNGet1(C); SSMNGet2(C,1,1);
 					unsigned __int8 M=Mru1(C.M), Count=(M>>3), Base=(M&7);
-					switch (C.ssss) {
+					switch (C.ssss()) {
 						case 0: { // WPF; write count page table entries with page table base from Operand 2 address
 							// Low 3 bits: page table base. High 5 bits: count	Address
 							// eg: 2E 0C F9 03 00  write $20 entrys from $300 to base 1
@@ -1741,8 +1697,7 @@ public:
 				case 0x42: AndB(Fetch1U()); break; // ANDB DestReg,SrcReg ; AND byte Src to Dest
 				case 0x43: OriB(Fetch1U()); break; // ORIB DestReg,SrcReg ; OR byte Src to Dest
 				case 0x44: OreB(Fetch1U()); break; // OREB DestReg,SrcReg ; XOR byte Src to Dest
-				case 0x45: { // XFRB DestReg,SrcReg ; Copy byte of Src register into byte of Dest register
-					unsigned __int8 RR=Fetch1U(), V=RegB(RR>>4); RegB(RR&0xf,V); FlagBMV(V); } break;
+				case 0x45: XfrB(Fetch1U()); break; // XFRB DestReg,SrcReg ; Copy byte of Src register into byte of Dest register
 
 				case 0x48: AddB(0x13); break; // AABB		; BL+=AL
 				case 0x49: SubB(0x13); break; // SABB		; BL=AL-BL
@@ -1758,10 +1713,7 @@ public:
 				case 0x52: And (Fetch1U()); break; // AND  DestReg,SrcReg ; AND word Src to Dest
 				case 0x53: Ori (Fetch1U()); break; // ORI  DestReg,SrcReg ; OR word Src to Dest
 				case 0x54: Ore (Fetch1U()); break; // ORE  DestReg,SrcReg ; XOR word Src to Dest
-				case 0x55: {  // XFR DestReg,SrcReg ; Copy Src register into Dest register
-					unsigned __int8 RR=Fetch1U(); unsigned __int16 V=RegW(RR>>4); RegW(RR&0xf,V); FlagWMV(V);
-					if(RR&0x11) Stop.InvalidInstruction=1; // is this extended addressing???
-					} break;
+				case 0x55: Xfr (Fetch1U()); break; // XFR DestReg,SrcReg ; Copy Src register into Dest register
 
 				case 0x58: Add (0x02); break; // AAB		; BW+=AW
 				case 0x59: Sub (0x02); break; // SAB		; BW=AW-BW
@@ -1773,22 +1725,42 @@ public:
 				case 0x5f: { unsigned __int16 V=RegW(AW); RegW(SW,V); FlagWMV(V); } break; // XAS	; SW=AW
 
 				case 0xD6: { // STR : A 16 bit move/store that uses the inverse of 5x Extended Addressing.
-					uint8_t RR=Fetch1U(); // Takes a operand byte with register nibbles.
+					uint8_t RR=Fetch1U(), DR=(RR>>4)&0xe, SR=RR&0xe; // Takes a operand byte with register nibbles.
 					switch(RR&0x11) { // The lower bit of each register nibble selects an addressing mode
-						case 0x00: RegW(RR>>4,RegW(RR&0xe)); break; // General register mode - Left <- Right
-						case 0x01: Mwu2(Fetch2U(),RegW(RR&0xe)); break; // store Right to 16bit (direct) address
-						case 0x10: Mwu2(PC,RegW(RR&0xe)); PC+=2; break; // store Right to 16bit literal at PC
-						case 0x11: Mwu2(Fetch2U()+RegW((RR>>4)&0xe),RegW(RR&0xe)); break; // store Right to (Left + 16bit offset)
+						case 0x00: RegW(DR,RegW(SR)); break; // General register mode - Left <- Right
+						case 0x10: Mwu2(Fetch2U(),RegW(SR)); break; // store Right to 16bit (direct) address
+						case 0x01: Mwu2(PC,RegW(SR)); PC+=2; break; // store Right to 16bit literal at PC
+						case 0x11: Mwu2(Fetch2U()+RegW(DR),RegW(SR)); break; // store Right to (Left + 16bit offset)
 						default: Stop.InvalidInstruction=1;
 						}
 					} break;
 
 				case 0x46: { // big number operations  https://github.com/sjsoftware/centurion-cpu6/wiki/Big-Number
+					// 46 15 7c 01 90 a0 01   DRM 0x0190(2), [L_a001](6)
+					// 46 35 38 00 a0 01      ZAD [A](4), [R_a001|0xa001](6)
+					// 46 11 2d 01 90 80 04   C 0x0190(2), [Z + 0x8004](2)
+					// 46 23 36 60 2a 00      ZAD [Y + 0x2a](3), [A](4)
+					// 46 22 00 a8 6f a8 66   A [R_a86f|0xa86f](3), [R_a866|0xa866](3)
+					// 46 11 0d 08 00 00      A 0x0800(2), [A + 0x0c](2)
+					// 46 12 0c 08 00 8e      addbig(1, 2) 0x08, [0x008e]
+					// 46 77 59 20 00 29      unkbig5(7, 7) [B], [A + 0x29]
+					// 46 57 59 20 00 29      unkbig5(5, 7) [B], [A + 0x29]
+					// 46 57 79 20 60 29      unkbig7(5, 7) [B], [Y + 0x29]
+					// 46 13 38 40 95 c3      unkbig3(1, 3) [X], [R_95c3|0x95c3]
+					// 46 22 00 8e 6a 8e d5   A [R_8e6a|0x8e6a](3), [R_8ed5|0x8ed5](3)
+					// 46 75 36 00 29 02      ZAD [A + 0x29](8), [B](6)
+					// 46 15 38 40 95 c3      ZAD [X](2), [R_95c3|0x95c3](6)
+					// 46 55 2a 26            C [B](6), [Y](6)
+					// 46 13 38 40 95 c3      ZAD [X](2), [R_95c3|0x95c3](4)
+					// 46 01 30 9a 47 97 a2   ZAD [R_9a46+1|0x9a47](1), [L_97a1+1|0x97a2](2)
+					// 46 33 4a 22            ZSU [B](4), [B](4)
+					// 46 35 38 00 a0 01      ZAD [A](4), [R_a001|0xa001](6)
+					// 46 15 54 80 1c a0 01   M [Z + 0x1c](2), [R_a001|0xa001](6)
 					uint8_t LLKK=Fetch1U(), MSize=(LLKK>>4)+1, NSize=(LLKK&0xf)+1;  // operand sizes (1..16 bytes)
-					SSMN C;  GetSSMN1(C);  // we don't know lengths yet...
-					switch(C.ssss) {
+					SSMN C;  SSMNGet1(C); 
+					switch(C.ssss()) {
 						case 0: { // A	aka ADDBIG	Adds two big numbers. Dest = Src + Dest
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							// my guess, not based on the real machine
 							uint16_t SA=C.M, DA=C.N;  int Sx=MSize, Dx=NSize;
 							uint16_t v=0, vlast=0, Z=0, SExt=(Mru1(SA)&0x80)?0xff:0;
@@ -1797,7 +1769,7 @@ public:
 							Value=Z!=0; Minus=bool(vlast&0x80); Link=bool(v&1);  Fault=bool(((vlast>>8)^(vlast>>7))&1);
 							} break;
 						case 1: { // S	aka SUBBIG  Dest = Src - Dest
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							// my guess, not based on the real machine
 							uint16_t SA=C.M, DA=C.N;  int Sx=MSize, Dx=NSize;
 							uint16_t v=0, vlast=0, Z=0, SExt=(Mru1(SA)&0x80)?0xff:0;
@@ -1806,7 +1778,7 @@ public:
 							Value=Z!=0; Minus=bool(vlast&0x80); Link=bool(v&1);  Fault=bool(((vlast>>8)^(vlast>>7))&1);
 							} break;
 						case 2: { // C	aka CMPBIG
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							// my guess, not based on the real machine
 							uint16_t SA=C.M, DA=C.N;  int Sx=MSize, Dx=NSize;
 							uint16_t v=0, vlast=0, Z=0, SExt=(Mru1(SA)&0x80)?0xff:0;
@@ -1816,7 +1788,7 @@ public:
 							Fault=bool(((vlast>>8)^(vlast>>7))&1);
 							} break;
 						case 3: { //  ZAD	zero & add, aka move
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							// my guess, not based on the real machine
 							uint16_t SA=C.M, DA=C.N;  int Sx=MSize, Dx=NSize;
 							uint16_t Z=0, v=0, vlast=0, SExt=(Mru1(SA)&0x80)?0xff:0;
@@ -1825,7 +1797,7 @@ public:
 							Value=bool(Z!=0); Minus=bool(vlast&0x80); Link=bool(v&1);  Fault=bool(((vlast>>8)^(vlast>>7))&1);
 							} break;
 						case 4: { // ZSU	zero & subtract?, aka move negated
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							// my guess, not based on the real machine
 							uint16_t SA=C.M, DA=C.N;  int Sx=MSize, Dx=NSize;
 							uint16_t v=0, vlast=0, Z=0, SExt=(Mru1(SA)&0x80)?0xff:0;
@@ -1834,21 +1806,21 @@ public:
 							Value=Z!=0; Minus=bool(vlast&0x80); Link=bool(v&1);  Fault=bool(((vlast>>8)^(vlast>>7))&1);
 							} break;
 						case 5: { // M	aka MULBIG	Multiplies two big numbers.
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							Stop.InvalidInstruction=1;
 							} break;
 						case 6: { //  D		divide
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							Stop.InvalidInstruction=1;
 							} break;
 						case 7: { // DRM	divide returning remainder
-							GetSSMN2(C,MSize,NSize);
+							SSMNGet2(C,MSize,NSize);
 							Stop.InvalidInstruction=1;
 							} break;
 				/*		case 8: { // CTB	ASCII to bignum
 							// eg: 	BigFromAscii 9,1,L_075b,@04d4	;04C4 46 80 80 07 5B 04 D4  ; 075b is 8 bytes, 04d4 is 2 bytes
 							unsigned src_width = RegB(AL);
-							GetSSMN2(C,src_width,NSize);
+							SSMNGet2(C,src_width,NSize);
 					//		uint16_t src_addr = get_twobit(mode, 0, src_width);
 					//		uint16_t dst_addr = get_twobit(mode, 1, b_size);
 
@@ -1870,7 +1842,7 @@ public:
 							} break;
 						case 9: { // CFB	bignum to Ascii  
 							unsigned __int8 dest_width=RegB(AL);
-							GetSSMN2(C,dest_width,NSize);
+							SSMNGet2(C,dest_width,NSize);
 						//	uint16_t dst_addr = get_twobit(mode, 0, dest_width);
 						//	uint16_t src_addr = get_twobit(mode, 1, b_size);
 
@@ -1911,10 +1883,192 @@ public:
 						}
 					} break; // 0x46:
 
-				case 0x47: MemBlock(0); break; // string ops with immediate length
-				case 0x67: MemBlock(1); break; // string ops with AL (maybe AW) length
+				case 0x47:   // string ops with immediate length
+				case 0x67: { // string ops with    AW     length
+					// https://github.com/sjsoftware/centurion-cpu6/wiki/Memory-Block
+					//	47 9e 3b 00 08         memset 0x3c, 0x00, [Z]
+					//	47 4d 01 47 00 80 00   memcpy 0x02, 0x4700, [Z + 0x00]
+					bool LengthInA=(op==0x67);
+					SSMN C; SSMNGet1(C);
+					switch(C.ssss()) {
+						case 0: { // CVX Implements most of the Centurion binary record format
+							// from Phire load6 disassembly...
+							// So this is a crazy microcoded instruction, it appears to implement the whole inner loop of
+							// WECB record loading
+							//
+							// This is how I think the instruction should work:
+							// First argument is the base address, destinations will be calculated relative to this
+							// Second arg is an implementable source containing the record.
+							//
+							// First byte is the type field. Known types are 0x00 and 0x01
+							// Byte two is a length (potentially signed? @LOAD never uses a value higher than 0x78)
+							// Bytes three and four are a RecordAddress
+							// Then there <Length> bytes of data will follow
+							// Followed by a single checksum byte. The checksum is calculated as:
+							// 0x100 - sum(all header/data bytes)
+							// 
+							// In a type 0 record, the data is simply copied to RecordAddress (plus BaseAddress)
+							// A zero-length type 0 record is valid, and should copy no data
+							// WECB files use a zero-length record at the end to indicate the entry address
+							// In a type 1 record, the data is one or more 16bit fixup addresses.
+							// For each 16bit FixupAddress, the microcode should:
+							//   FixupAddress = BaseAddress+BaseAddress
+							//   FixupValue = 16bit load from Fixup address
+							//   FixupValue = FixupValue + RecordAddress + BaseAddress
+							//   Write FixupValue back to FixupAddress
+							//
+							// On completion:
+							//   Fault flag should be set if there was an error
+							//   Carry flag should be set depending on some condition (record length > 0x80?)
+							//   A = RecordAddress + BaseAddress
+							//   Z = pointer to next record
 
-				case 0x56: AbortOnOverflow=true; break; // EAO
+							// see also struct CBIN
+							// see also https://github.com/sjsoftware/centurion-cpu6/wiki/CVX
+							SSMNGet2(C,2,2);  uint16_t base=C.M, src=C.N;  // base=base_addr; src=source_record_addr
+							uint8_t b; // fetched byte temp
+							Value=0; Link=0; Fault=0;  // init flags???
+							uint8_t chk=0;  // sumcheck
+							signed __int8 type = signed __int8(Mru1(src++));  chk+=type;
+							uint8_t lengt = Mru1(src++);  chk+=lengt;
+							b=Mru1(src++);  chk +=b;  uint16_t addr=uint16_t(b)<<8;
+							b=Mru1(src++);  chk +=b;  addr|=b;
+							uint16_t dest = base + addr;
+							RegW(AW,dest);
+							if(type == 0x80) {
+								Value=1; Link=1; // set flags V, L; keep F
+								RegW(ZW,src);
+								goto End;  }
+							if(type == 0) {
+								if(lengt == 0) {
+									Value=1; // set flags V, keep L, F
+									}
+								while(lengt-- > 0) {
+									b=Mru1(src++);  chk+=b;  Mwu1(dest++,b); }
+								chk += Mru1(src++);
+								Fault=(chk!=0); // set F from chk
+								RegW(ZW,src);
+								goto End;  }
+							if (type == 1 || type == -1) {
+								if (lengt & 1 == 1) {
+									Fault=1; // set flags F, keep L
+									goto End;  }
+								while (lengt > 0) {
+									b=Mru1(src++);  addr=uint16_t(b)<<8;  chk +=b;
+									b=Mru1(src++);  addr|=b;              chk +=b;
+									dest = base + addr;
+									uint16_t fixup = Mru2(dest);
+									fixup += RegW(AW)*type;
+									Mwu2(dest,fixup);  lengt-=2;
+									}
+								chk += Mru1(src++);  // fetch sumcheck byte
+								Fault=(chk!=0);  // set F from chk;
+								RegW(ZW,src);
+								}
+					End: ;	} break;
+						case 1: { // CPV  strcmp
+							// Compares two strings (case insensitive) until Terminator is reached.
+							// Flags are set based on Operand 3 being greater than Operand 2 in dictionary ordering.
+							// Sets Y and Z to byte after first difference (or byte after terminator) for Operand 2 and 3 respectively.
+							// F is set if there is no difference or end of string within 256 bytes.
+							uint8_t Terminator=Fetch1U();
+							SSMNGet2(C,1,1);  uint16_t Src=C.M, Src0=Src, Dest=C.N;
+							Value=0; Minus=0; Link=0; Fault=0;
+							while(1) {
+								uint8_t a=Mru1(Src++), b=Mru1(Dest++);
+								if(a==Terminator && b==Terminator) { Value=0; Minus=0; break; }
+								if(a==Terminator) { Value=1; Minus=1; break; }
+								if(b==Terminator) { Value=1; Minus=0; break; }
+								a&=0x7f;  if(a>='a' && a<='z') b&=0xdf;  // uppercase & strip hi bit
+								b&=0x7f;  if(b>='a' && b<='z') b&=0xdf;  // uppercase & strip hi bit
+								if(a!=b) { Value=1; Link=Minus=b>a; break; }
+								if(Src-Src0>=256) { Fault=1; break; }
+								}
+							RegW(YW,Src); RegW(ZW,Dest);
+							} break;
+						case 2: { // MVV
+								// Copies from Operand 3 to Operand 4 until matching byte is found.
+								// Sets Fault if no match found.
+								// Sets Y to match in Operand 3.
+								// Sets Z to match in Operand 4
+							uint16_t MaxCount=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							uint8_t Terminator=Fetch1U();
+							SSMNGet2(C,MaxCount,MaxCount); uint16_t Src=C.M, Dest=C.N;
+							while(1) {
+								uint8_t a=Mru1(Src++);  Mwu1(Dest++,a);
+								if(a==Terminator) { Fault=0; break; }
+								if(--MaxCount==0) { Fault=1; break; }
+								}
+							RegW(YW,Src-1); RegW(ZW,Dest-1);
+							} break;
+						case 3: { // SCN	https://github.com/sjsoftware/centurion-cpu6/wiki/SCN
+							// Operand 1 is length byte Operand 2 is memory address (table) Operand 3 is memory address (string)
+							uint16_t Len=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							SSMNGet2(C,Len,Len); 
+							uint8_t const MaskL=RegB(BL), MaskH=RegB(BH); // On entry B holds two bytes - low byte is used with string, high byte is used with table.
+							Fault=0;
+							while(1) {
+								uint8_t v=Mru1(C.N)&MaskL;  // BL is ANDed with first byte of string. (e.g., mask out high bit on string)
+								uint8_t f=Mru1(C.M+v)&MaskH; // BH is ANDed with the byte at the destination address plus the result.
+								if(f) {  // If the AND of BH and destination is non-zero
+									RegB(BL,f); // set BL to the result of the destination AND
+									RegB(AL,Len); // AL to the remaining length.
+									RegW(XW,C.M+v); RegW(YW,C.N); // X and Y are set to the table entry address and address in string
+									break; }
+								C.N++; if(--Len) {  // If there's no bytes left
+									Fault=1; // set fault.
+									break; }
+								}
+							} break;
+						case 4: { // MVF
+							// Copy block of memory from Operand 2 to Operand 3.
+							// Y and Z are set to point to the byte following the copied memory in Operand 2 and 3 respectively.
+							// Value is set if all the bytes copied are zero.
+							uint16_t Len=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							SSMNGet2(C,Len,Len);  uint16_t Src=C.M, Dest=C.N;
+							uint8_t Z=0;
+							do { uint8_t b=Mru1(Src++); Z|=b; Mwu1(Dest++,b); } while(--Len);
+							RegW(YW,Src); RegW(ZW,Dest);  Value=(Z==0);
+							} break;
+						case 5: { // ANC  bitwise AND
+							// AND operation applied to each respective byte in Operand 2 and 3 and stored in Operand 3.
+							uint16_t Len=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							SSMNGet2(C,Len,Len);  uint16_t Src=C.M, Dest=C.N;
+							do { Mwu1(Dest,Mru1(Dest)&Mru1(Src)); Dest++, Src++; } while(--Len);
+							} break;
+						case 6: { // ORC  bitwise or
+							// OR operation applied to each respective byte in Operand 2 and 3 and stored in Operand 3
+							uint16_t Len=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							SSMNGet2(C,Len,Len);  uint16_t Src=C.M, Dest=C.N;
+							do { Mwu1(Dest,Mru1(Dest)|Mru1(Src)); Dest++, Src++; } while(--Len);
+							} break;
+						case 7: { // XRC  bitwise xor
+							// XOR operation applied to each respective byte in Operand 2 and 3 and stored in Operand 3
+							uint16_t Len=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							SSMNGet2(C,Len,Len);  uint16_t Src=C.M, Dest=C.N;
+							do { Mwu1(Dest,Mru1(Dest)^Mru1(Src)); Dest++, Src++; } while(--Len);
+							} break;
+						case 8: { // CPF compare two blocks of memory
+							// Compare two blocks of memory.
+							// Returns flags based on Operand 3 byte - Operand 2 byte.
+							// F is set if there is no difference between the two blocks
+							uint16_t Len=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							SSMNGet2(C,Len,Len);  uint16_t Src=C.M, Dest=C.N;
+							uint16_t r=0;  do { r=uint16_t(Mru1(Dest++))-uint16_t(Mru1(Src++)); if(r!=0) break; } while(--Len);
+							Value=(r==0); Minus=r>>7; Link=r>>8; Fault=0;
+							} break;
+						case 9: { // FIL
+							// copies byte at Operand 2 repeated to Operand 3
+							uint16_t Len=(LengthInA?RegW(AW):Fetch1U())+uint16_t(1);
+							SSMNGet2(C,1,Len);  uint8_t Pattern=Mru1(C.M); uint16_t Dest=C.N;
+							do { Mwu1(Dest++,Pattern); } while(--Len);
+							} break;
+						default: Abort(0);  Stop.InvalidInstruction=1;
+						}
+					} break;
+
+
+				case 0x56: AbortOnOverflow=true ; break; // EAO
 				case 0x57: AbortOnOverflow=false; break; // DAO
 				case 0x76: if(UserMode()) Abort(0);  ParityChecking=true;  break; // EPE
 				case 0x86: if(UserMode()) Abort(0);  ParityChecking=false;  break; // DPE
@@ -1976,8 +2130,10 @@ public:
 				case 0xd5: Ld (BW,AIndex(2)); break; // LDBX  WReg,Mod,Offset ; Load indexed register into BW register
 			//	case 0xC7: ??
 
-				case 0xD7: if(UserMode()) Abort(0);   Stop.InvalidInstruction=1; break; // SAR - not implemented yet??
-				case 0xE6: if(UserMode()) Abort(0);  Stop.InvalidInstruction=1; break; // LAR - not implemented yet??
+				case 0xd7: { if(UserMode()) Abort(0);  uint8_t op2=Fetch1U();  // SAR
+					uint16_t V=Reg[op2]; V<<=8; V+=Reg[op2|1];  RegW(AW,V); } break;
+				case 0xe6: { if(UserMode()) Abort(0);  uint8_t op2=Fetch1U();  // LAR
+					uint16_t V=RegW(AW);  Reg[op2]=uint8_t(V>>8); Reg[op2|1]=uint8_t(V);  } break; // LAR
 
 				case 0xc8: case 0xc9: case 0xca: case 0xcb: case 0xcc: case 0xcd: case 0xce: case 0xcf:
 					LdB(BL,RegW((op&7)<<1)); break; // LDBBA WReg ; Load byte from memory address stored in WReg into BL register
@@ -2031,10 +2187,10 @@ public:
 				case 0x7c: Jsr(ARelInd()); break; // JSRRI Rel ; Jump to subroutine at indirect Program Counter offset by N address
 				case 0x7d: Jsr(AIndex(2)); break; // JSRX WReg,Mod,Offset ; Jump to subroutine at indexed mode register
 
-				case 0x66: { // SVC aka JSYS - System call
-					uint8_t arg = Fetch1U();
-					PushW(CcrStore().u);   PushW(RegW(XW));
-					RegW(XW,PC);
+				case 0x66: { // SVC aka JSYS - System call, see RSV
+					uint8_t arg = Fetch1U();  // get SVC #
+					PushW(CcrStore().u);  // push CCR & mapBase & IL
+					PushW(RegW(XW));  RegW(XW,PC);  // push X, X=PC
 					PushB(arg);
 					MapBase = 0;                  // Switch to mmu bank 0
 					PC = 0x100;                   // jump to 0x100
@@ -2042,16 +2198,14 @@ public:
 
 
 				case 0x77: { // MUL 16x16=32 unsigned multiply
-					unsigned __int32 D=RRRead(Fetch1U());
-					uint32_t R = D * uint32_t(RRSrcValue);
+					unsigned __int32 S=RRRead(Fetch1U()), D=RegW(RRDestReg), R = D * S;
 					RegW(RRDestReg,unsigned __int16(R>>16));  RegW(RRDestReg+2,unsigned __int16(R));
 					Fault=0; Value=R!=0;  Minus=0; Link=0;
 					} break;
 
 				case 0x78: { // DIV 32/16=16,16 unsigned divide
-					unsigned __int32 D=RRRead(Fetch1U());
-					uint32_t R = D / uint32_t(RRSrcValue);
-					unsigned expected_sign = (D ^ RRSrcValue) & 0x8000;
+					unsigned __int32 S=RRRead(Fetch1U()), D=RegW(RRDestReg), R = D / S;
+					unsigned expected_sign = (D ^ S) & 0x8000;
 					unsigned sign = R & 0x8000;
 					RegW(RRDestReg,unsigned __int16(R));
 					Fault= (sign != expected_sign || R > 0xffff);
@@ -2075,9 +2229,6 @@ public:
 			if(Perf) Perf->Cnt(PC0,Cycles-Cycles0);
 			} while(ExecSpecial==0 && --NumInst && !Stop.u && PC!=bkpt && (PC<=bkpt1 || PC>bkpt1+12 ));
 		}
-
-
-
 
 
 	void DisplayState(void) { // trace???????????????????????????????????????????????????????
@@ -2109,7 +2260,7 @@ public:
 				printf(" %02x%02x%02x%02x",Map[y*32+x+0],Map[y*32+x+0],Map[y*32+x+0],Map[y*32+x+0]);
 			printf("\n");  }
 		printf("MapBase=$%x \n",MapBase);
-		printf("RRDestReg=$%x RRSrcValue=$%x \n",RRDestReg,RRSrcValue);
+		printf("RRDestReg=$%x \n",RRDestReg);
 
 		printf("ExecSpecial=%u \n",ExecSpecial);
 		printf("CCDP_Ix=$%x CCDP_Len=$%x CCDP_Adr=$%x \n",CCDP_Ix,CCDP_Len,CCDP_Adr);
@@ -2118,9 +2269,9 @@ public:
 
 	} ; // CPU
 
+int Debug278377824=12;
 
-/*********************************************************/
-struct CPU6DISASSEMBLER { // instruction disassembler
+struct CPU6DISASSEMBLER { // instruction disassembler ****************************************************
 	unsigned __int32 PC, PC0, Next1, Next2, Ref;
 	unsigned __int8 opcode;
 	struct PARMS { uint8_t Width;  // instruction inline data (0=none, 1=byte, 2=word
@@ -2131,7 +2282,7 @@ struct CPU6DISASSEMBLER { // instruction disassembler
 
 	struct MEMINFO { // info about each byte of memory
 		unsigned __int8 IsUsed:1, IsOpcode:1, IsFlowbreak:1, IsLabel:1, IsEntrypoint:1,
-		IsFixupWord:1, IsLoaded:1;
+			IsFixupWord:1, IsLoaded:1, IsWord:1;
 		} *MemInfo;
 	void MemInfoInit(void) {
 		MemInfo=new MEMINFO[MaxMem+1];  memset(MemInfo,0,sizeof(*MemInfo)*(MaxMem+1));  }
@@ -2167,45 +2318,52 @@ private:
 	void AInh(char const *lbl) { sprintf_s(String,sizeof(String),"%s",lbl); }
 	void ARegA(char const *lbl) { sprintf_s(String,sizeof(String),"%s (%s)",lbl,RegNameW((opcode&7)<<1)); }
 	void AMRegW(char const *lbl1, char const *lbl2, int KOffset) { unsigned __int8 RV=Fetch1();
-	char const *lbl=(RV&0x10)?lbl2:lbl1;
+		char const *lbl=(RV&0x10)?lbl2:lbl1;
 		sprintf_s(String,sizeof(String),"%s %s,%u",lbl,RegNameW(RV>>4),(RV&0xf)+KOffset);  }
 	void AMRegB(char const *lbl, int KOffset) { unsigned __int8 RV=Fetch1();
 		sprintf_s(String,sizeof(String),"%s %s,%u",lbl,RegNameB(RV>>4),(RV&0xf)+KOffset); }
 	void AMReg2W(char const *Op) { unsigned __int8 M=Fetch1(), DR=M&0xe, SR=(M>>4)&0xe;
+		char S[32];
 		switch(M&0x11) {
-			case 0x01: // dest <- src op literal
-				sprintf_s(String,sizeof(String),"%s %s,%s,$%x",Op,RegNameW(DR),RegNameW(SR),Fetch2()); break;
+			case 0x01: { // dest <- src op literal
+				uint16_t V=Fetch2();  sprintf_s(S,sizeof(S),"$04x",V);  if(V>=1024) {
+					Ref=V;  sprintf_s(S,sizeof(S),"%d",V); if(MemInfo) {
+						MemInfo[Ref].IsLabel=1;  sprintf_s(S,sizeof(S),"%c_%04x",MemInfo[V].IsEntrypoint?'E':'L',V); } }
+				sprintf_s(String,sizeof(String),"%s %s,#%s",Op,RegNameW(DR),S); } break;
 			case 0x10: // dest <- src op (direct)
-				sprintf_s(String,sizeof(String),"%s %s,%s,#$%x",Op,RegNameW(DR),RegNameW(SR),Fetch2()); break;
+				Ref=Fetch2(); sprintf_s(S,sizeof(S),"$%04x",Ref);  if(MemInfo) {
+					MemInfo[Ref].IsLabel=1; MemInfo[Ref].IsWord=1; sprintf_s(S,sizeof(S),"%c_%04x",MemInfo[Ref].IsEntrypoint?'E':'C',Ref); }
+				sprintf_s(String,sizeof(String),"%s %s,%s",Op,RegNameW(DR),S); break;
 			case 0x11: // dest <- src(index) op dest
-				sprintf_s(String,sizeof(String),"%s %s,%s??index",Op,RegNameW(DR),RegNameW(SR)); break;
+				sprintf_s(String,sizeof(String),"%s %s,%d(%s)",Op,RegNameW(DR),Fetch2(),RegNameW(SR)); break;
 			default: // register to register
 				sprintf_s(String,sizeof(String),"%s %s,%s",Op,RegNameW(DR),RegNameW(SR));
 			} }
 	void AMReg2B(char *lbl) { unsigned __int8 RR=Fetch1();
 		sprintf_s(String,sizeof(String),"%s %s,%s",lbl,RegNameB(RR&0xf),RegNameB(RR>>4)); }
 
-	void ALitB(char *lbl) { sprintf_s(String,sizeof(String),"%s #$%02x",lbl,Fetch1()); }
-	void ALitW(char *lbl) {
-		MEMINFO F; memset(&F,0,sizeof(F));  if(MemInfo) F=MemInfo[PC];
-		char const *Fmt=(F.IsFixupWord)?("%s,#L_%04X"):"%s #$%x";
-		sprintf_s(String,Fmt,lbl,Fetch2());
+	void ALitB(char const *Opcode) { sprintf_s(String,sizeof(String),"%s #%d",Opcode,Fetch1()); }
+	void ALitW(char const *Opcode) {
+		char const *Fmt=(MemInfo && MemInfo[PC].IsFixupWord)?("%s #L_%04X"):"%s #$%x";
+		sprintf_s(String,Fmt,Opcode,Fetch2());
 		}
-	void ADir(char *lbl) { Ref=Fetch2();
+	void ADir(char *Opcode, uint8_t Size) { Ref=Fetch2();  if(MemInfo) { MemInfo[Ref].IsLabel=1;  if(Size==2) MemInfo[Ref].IsWord=1; }
 		char const *Fmt=(MemInfo && MemInfo[Ref].IsEntrypoint) ? "%s E_%04X" : "%s L_%04X";
-		sprintf_s(String,sizeof(String),Fmt,lbl,Ref); }
+		sprintf_s(String,sizeof(String),Fmt,Opcode,Ref); }
 	void AIndir(char *lbl) { Ref=Fetch2();
+		if(MemInfo) { MemInfo[Ref].IsLabel=1;  MemInfo[Ref].IsWord=1; }
 		char const *Fmt=(MemInfo && MemInfo[Ref].IsEntrypoint) ? "%s (E_%04X)" : "%s (L_%04X)";
 		sprintf_s(String,sizeof(String),Fmt,lbl,Ref); }
-	void ARel(char *lbl) { signed __int8 R=signed __int8(Fetch1());  Ref=PC+R;
+	void ARel(char const *Opcode, uint8_t Size) { signed __int8 R=signed __int8(Fetch1());  Ref=PC+R;
+		if(MemInfo) { MemInfo[Ref].IsLabel=1; if(Size==2) MemInfo[Ref].IsWord=1; }
 		char const *Fmt=(MemInfo && MemInfo[Ref].IsEntrypoint) ? "%s E_%04X" : "%s L_%04X";
-		sprintf_s(String,sizeof(String),Fmt,lbl,Ref); }
-	void ARelInd(char *lbl) { signed __int8 R=signed __int8(Fetch1());  Ref=PC+R;
+		sprintf_s(String,sizeof(String),Fmt,Opcode,Ref); }
+	void ARelInd(char *lbl) { signed __int8 R=signed __int8(Fetch1());  Ref=PC+R;  if(MemInfo) { MemInfo[Ref].IsLabel=1; MemInfo[Ref].IsWord=1; }
 		sprintf_s(String,sizeof(String),"%s (L_%04x)",lbl,Ref); }
 	void AIndex(char *lbl,unsigned __int8 Size) {
 		unsigned __int8 M=Fetch1();
 		char *S1=(M&4)?"@":"";
-		char S2[10]; S2[0]=0; if(M&8) sprintf_s(S2,sizeof(S2),"$%02x",Fetch1());
+		char S2[10]; S2[0]=0; if(M&8) sprintf_s(S2,sizeof(S2),"%d",signed __int8(Fetch1()));
 		char S3[10]; switch(M&3) {
 			case 0: sprintf_s(S3,"(%s)",RegNameW(M>>4)); break;	// (r)	Index
 			case 1: sprintf_s(S3,"(%s+)",RegNameW(M>>4)); break; // (r+)	Index; Index returned, incremented by ^
@@ -2214,72 +2372,67 @@ private:
 			}
 		sprintf_s(String,sizeof(String),"%s %s%s%s",lbl,S1,S2,S3);  }
 
-	struct EXT { // take apart CPU6 extended addressing bits
-		uint8_t Mode;
-		uint8_t Regs;  uint8_t RegsSet;
-		uint8_t RegsGet(CPU6DISASSEMBLER &D) {
-			if(!RegsSet) { Regs=D.Fetch1(); RegsSet=2; }
-			RegsSet-=1;  uint8_t r=Regs>>4; Regs<<=4; return r; }
-		struct OP {
-			uint16_t Adr;
-			char Str[32];
-			void Eval(CPU6DISASSEMBLER &D, EXT &E, uint8_t Mode, unsigned __int8 Size) {
-				switch(Mode&3) {
-					case 0: Adr=D.Fetch2(); // EA <- (PC)	Direct
-						sprintf_s(Str,",L_%04X",Adr);
-						break;
-					case 1: {  // EA <- P + imm8 + r1 + r2 (if r2 is not AW) r1/r2 are
-						// 16 bit registers indicated in byte following instruction high and low nibble respectively. imm8 follows r1/r2
-						uint8_t R=E.RegsGet(D);  uint8_t Off=D.Fetch1();
-						sprintf_s(Str,",$%02x(%s)?",Off,D.RegNameW(R&0xe));
-						} break;
-					case 2: { Adr=0; // EA <- R, R in high or low nibble of byte at PC determined by microcode	Register
-						uint8_t R=E.RegsGet(D);
-						sprintf_s(Str,",(%S)",D.RegNameW(R&0xe));
-						} break;
-					case 3: { // EA <- PC	Literal (illegal when address must be specified). Size provided in microcode.
-						Adr=D.PC; D.PC+=Size;
-						sprintf_s(Str,",#?");
-						} break;
-					default: strcpy(Str,",???");
-					}
-				}
-			} Op1, Op2;
-		EXT(CPU6DISASSEMBLER &D) {
-			Mode=D.Fetch1();
-			Regs=0; RegsSet=0;
+	void ARegArray(char const *Op) {
+		uint8_t B2=Fetch1();
+		sprintf_s(String,sizeof(String),"%s AW,IL%d(%s)",Op,B2>>4,RegNameW(B2&0xf));
+		}
+
+	struct SSMN { // take apart CPU6 ssssmmnn (extended addressing) bytes
+		uint8_t ssssmmnn;
+		char Str1[32], Str2[32];
+		} ;
+	void ExtGet1(SSMN &C) { // get ssssmmnn byte
+		C.ssssmmnn=Fetch1();
+		C.Str1[0]=0;  C.Str2[0]=0; }
+	void ExtGet2(SSMN &C, uint8_t Size1, uint8_t Size2) { // get m & n operands
+		uint16_t Adr;
+		uint8_t RR=0;
+		switch((C.ssssmmnn>>2)&3) {
+			case 0: Adr=Fetch2(); // EA <- (PC)	Direct
+				sprintf_s(C.Str1,sizeof(C.Str1),"L_%04X",Adr);
+				break;
+			case 1: {  // EA <- P + imm8 + r1 + r2 (if r2 is not AW) r1/r2 are
+				// 16 bit registers indicated in byte following instruction high and low nibble respectively. imm8 follows r1/r2
+				RR=Fetch1();  signed __int8 Off=Fetch1();
+				sprintf_s(C.Str1,sizeof(C.Str1),"%d(%s)",Off,RegNameW((RR>>4)&0xe));
+				} break;
+			case 2: { Adr=0; // EA <- R, R in high or low nibble of byte at PC determined by microcode	Register
+				RR=Fetch1();
+				sprintf_s(C.Str1,sizeof(C.Str1),"(%s)",RegNameW((RR>>4)&0xe));
+				} break;
+			case 3: { // EA <- PC	Literal (illegal when address must be specified). Size provided in microcode.
+				Adr=PC; PC+=Size1;
+				sprintf_s(C.Str1,sizeof(C.Str1),"#???");
+				} break;
+			default: __debugbreak();
 			}
-		void Eval1(CPU6DISASSEMBLER &D, uint16_t Size) { Op1.Eval(D,*this,Mode>>2,Size); }
-		void Eval2(CPU6DISASSEMBLER &D, uint16_t Size) { Op2.Eval(D,*this,Mode   ,Size); }
+		switch((C.ssssmmnn)&3) {
+			case 0: Adr=Fetch2(); // EA <- (PC)	Direct
+				sprintf_s(C.Str2,sizeof(C.Str2),"L_%04X",Adr);
+				break;
+			case 1: {  // EA <- P + imm8 + r1 + r2 (if r2 is not AW) r1/r2 are
+				// 16 bit registers indicated in byte following instruction high and low nibble respectively. imm8 follows r1/r2
+				RR=Fetch1();  signed __int8 Off=Fetch1();
+				sprintf_s(C.Str2,sizeof(C.Str2),"%d(%s)",Off,RegNameW(RR&0xe));
+				} break;
+			case 2: { Adr=0; // EA <- R, R in high or low nibble of byte at PC determined by microcode	Register
+				if((C.ssssmmnn&0xf)!=0xa) RR=Fetch1();
+				sprintf_s(C.Str2,sizeof(C.Str2),"(%s)",RegNameW(RR&0xe));
+				} break;
+			case 3: { // EA <- PC	Literal (illegal when address must be specified). Size provided in microcode.
+				Adr=PC;  PC+=Size2;
+				sprintf_s(C.Str2,sizeof(C.Str2),"#???");
+				} break;
+			default: __debugbreak();
+			}
+
 		} ;
 
-	void MemBlock(bool LengthInA) { // do memory block instructions
-		if(PC==0x39f+1)
-			printf("I'm here!\n");
-		uint16_t Len=(LengthInA)?0:uint16_t(Fetch1())+1;
-		EXT Ext(*this); // ssssmmnn followed by the operands. m and n are the CPU6 addressing modes, where addresses only are permitted.
-		switch(Ext.Mode>>4) {
-			case  0: sprintf_s(String,sizeof(String),"CVX"); Ext.Eval2(*this,2); Ext.Eval1(*this,2); break;  // binload?
-			case  1: sprintf_s(String,sizeof(String),"CPV"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // compare, variable length?
-			case  2: sprintf_s(String,sizeof(String),"MVV"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // move variable length?
-			case  3: sprintf_s(String,sizeof(String),"SCN"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // scan?
-			case  4: sprintf_s(String,sizeof(String),"MVF"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // copy block of memory from first argument to second argument
-			case  5: sprintf_s(String,sizeof(String),"ANC"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // bitwise and?
-			case  6: sprintf_s(String,sizeof(String),"ORC"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // bitwise or?
-			case  7: sprintf_s(String,sizeof(String),"XRC"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // bitwise xor?
-			case  8: sprintf_s(String,sizeof(String),"CPF"); Ext.Eval2(*this,1  ); Ext.Eval1(*this,Len); break;  // compare two blocks of memory, fixed length?
-			case  9: sprintf_s(String,sizeof(String),"FIL"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len); break;  // fill memory
-			default: sprintf_s(String,sizeof(String),"???"); Ext.Eval2(*this,Len); Ext.Eval1(*this,Len);
-			}
-		char S[32];
-		if(LengthInA) strcat_s(String," (A)"); else { sprintf_s(S," %d",Len); strcat(String,S); }
-		strcat_s(String,Ext.Op1.Str);  strcat_s(String,Ext.Op2.Str);
-		}
 
 public:
 	void disasm(void) {
 		Next1=1;  Next2=0;  Ref=0;  PC0=PC;
-		Comment=0;
+		Comment="";
 		for(unsigned i=0; i<_countof(Inline); i++) { Inline[i].Width=0; Inline[i].Comment=0; }
 		opcode=Fetch1();
 		switch(opcode) {
@@ -2298,23 +2451,23 @@ public:
 			case 0x0c: AInh("SYN"); break; // ???
 			case 0x0d: AInh("PCX"); break;  // Transfer PC to X - X=address of next instruction
 			case 0x0e: AInh("DLY"); break; //  Delay 4.55 ms - for TTY bit timing
-			case 0x0f: AInh("RSV"); break; // Return from SVC or similar (pops a byte, then the new value of X, then a byte, then the new ipl)
-			case 0x10: ARel("BL" ); Next2=Ref; break; // BL adr  ; Branch if Link (Carry) Set
-			case 0x11: ARel("BNL"); Next2=Ref; break; // BNL adr ; Branch if Link (Carry) not Set
-			case 0x12: ARel("BF" ); Next2=Ref; break; // BF adr  ; Branch if Fault (Overflow) Set
-			case 0x13: ARel("BNF"); Next2=Ref; break; // BNF adr ; Branch if Fault (Overflow) not Set
-			case 0x14: ARel("BZ" ); Next2=Ref; break; // BZ adr  ; Branch if V (Z) flag set
-			case 0x15: ARel("BNZ"); Next2=Ref; break; // BNZ adr ; Branch if V (Z) flag clear
-			case 0x16: ARel("BM" ); Next2=Ref; break; // BM adr  ; Branch if Minus flag set
-			case 0x17: ARel("BP" ); Next2=Ref; break; // BP adr  ; Branch on Positive (Minus flag clear)
-			case 0x18: ARel("BGZ"); Next2=Ref; break; // BGZ adr ; Branch if Greater Than 0 (!V && !Minus)
-			case 0x19: ARel("BLE"); Next2=Ref; break; // BLE adr ; Branch if Less Than or Equal to 0 (V | Minus)
-			case 0x1a: ARel("BS1"); Next2=Ref; break; // BS1 adr ; Branch if Sense Switch 1 Set
-			case 0x1b: ARel("BS2"); Next2=Ref; break; // BS2 adr ; Branch if Sense Switch 2 Set
-			case 0x1c: ARel("BS3"); Next2=Ref; break; // BS3 adr ; Branch if Sense Switch 3 Set
-			case 0x1d: ARel("BS4"); Next2=Ref; break; // BS4 adr ; Branch if Sense Switch 4 Set
-			case 0x1e: ARel("BI" ); Next2=Ref; break; // BI  Rel ; Branch on ??? (Changed for CPU6?)
-			case 0x1f: ARel("BCK"); Next2=Ref; break; // BCK Rel ; Branch on clock interrupt enabled?
+			case 0x0f: AInh("RSV"); Next1=0; break; // Return from SVC or similar (pops a byte, then the new value of X, then a byte, then the new ipl)
+			case 0x10: ARel("BL" ,1); Next2=Ref; break; // BL adr  ; Branch if Link (Carry) Set
+			case 0x11: ARel("BNL",1); Next2=Ref; break; // BNL adr ; Branch if Link (Carry) not Set
+			case 0x12: ARel("BF" ,1); Next2=Ref; break; // BF adr  ; Branch if Fault (Overflow) Set
+			case 0x13: ARel("BNF",1); Next2=Ref; break; // BNF adr ; Branch if Fault (Overflow) not Set
+			case 0x14: ARel("BZ" ,1); Next2=Ref; break; // BZ adr  ; Branch if V (Z) flag set
+			case 0x15: ARel("BNZ",1); Next2=Ref; break; // BNZ adr ; Branch if V (Z) flag clear
+			case 0x16: ARel("BM" ,1); Next2=Ref; break; // BM adr  ; Branch if Minus flag set
+			case 0x17: ARel("BP" ,1); Next2=Ref; break; // BP adr  ; Branch on Positive (Minus flag clear)
+			case 0x18: ARel("BGZ",1); Next2=Ref; break; // BGZ adr ; Branch if Greater Than 0 (!V && !Minus)
+			case 0x19: ARel("BLE",1); Next2=Ref; break; // BLE adr ; Branch if Less Than or Equal to 0 (V | Minus)
+			case 0x1a: ARel("BS1",1); Next2=Ref; break; // BS1 adr ; Branch if Sense Switch 1 Set
+			case 0x1b: ARel("BS2",1); Next2=Ref; break; // BS2 adr ; Branch if Sense Switch 2 Set
+			case 0x1c: ARel("BS3",1); Next2=Ref; break; // BS3 adr ; Branch if Sense Switch 3 Set
+			case 0x1d: ARel("BS4",1); Next2=Ref; break; // BS4 adr ; Branch if Sense Switch 4 Set
+			case 0x1e: ARel("BI" ,1); Next2=Ref; break; // BI  Rel ; Branch on ??? (Changed for CPU6?)
+			case 0x1f: ARel("BCK",1); Next2=Ref; break; // BCK Rel ; Branch on clock interrupt enabled?
 
 			case 0x20: AMRegB("INRB",1); break; // INRB BReg	; increment register upper byte or lower byte
 			case 0x21: AMRegB("DCRB",1); break; // DCRB BReg	; decrement register upper byte or lower byte
@@ -2331,18 +2484,18 @@ public:
 			case 0x2c: AInh("SRAB"); break; // SRAB		; Shift AL register right (sign extend)
 			case 0x2d: AInh("SLAB"); break; // SLAB		; Shift AL register left (0 shifted in)
 			case 0x2e: { // Memory mapping
-				EXT Ext(*this); Ext.Eval1(*this,1); Ext.Eval2(*this,1);
-				switch(Ext.Mode>>4) {
-					case 0: sprintf_s(String,sizeof(String),"WPF"); break; // Low 3 bits: page table base. High 5 bits: count	Address	Write Page File - write count page table entries with page table base from Operand 2 address
-					case 1: sprintf_s(String,sizeof(String),"RPF"); break; // Low 3 bits: page table base. High 5 bits: count	Address	Read Page File - read count page table entries with page table base to Operand 2 address. Set top bit from MSR
-					case 2: sprintf_s(String,sizeof(String),"WPF1"); break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Write Page File 1 entry from Operand 2 address
-					case 3: sprintf_s(String,sizeof(String),"RPF1"); break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Read Page File 1 entry to Operand 2 address. Set top bit from MSR
-					case 4: sprintf_s(String,sizeof(String),"WPF32"); break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Write Page File 32 entries from Operand 2 address
-					case 5: sprintf_s(String,sizeof(String),"RPF32"); break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Read Page File 32 entries to Operand 2 address. Set top bit from MSR
-				//	case 6:	System call?		Possibly just illegal
-				//	case 7:	System call?		Possibly just illegal
-					default: sprintf_s(String,sizeof(String),"$2e%02x???",Ext.Mode);
+				SSMN E; ExtGet1(E); ExtGet2(E,1,1);
+				char const *Opcode=0;
+				switch(E.ssssmmnn>>4) {
+					case 0: Opcode="WPF"; break; // Low 3 bits: page table base. High 5 bits: count	Address	Write Page File - write count page table entries with page table base from Operand 2 address
+					case 1: Opcode="RPF"; break; // Low 3 bits: page table base. High 5 bits: count	Address	Read Page File - read count page table entries with page table base to Operand 2 address. Set top bit from MSR
+					case 2: Opcode="WPF1"; break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Write Page File 1 entry from Operand 2 address
+					case 3: Opcode="RPF1"; break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Read Page File 1 entry to Operand 2 address. Set top bit from MSR
+					case 4: Opcode="WPF32"; break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Write Page File 32 entries from Operand 2 address
+					case 5: Opcode="RPF32"; break; // Low 3 bits: page table base. High 5 bits: Page table index	Address	Read Page File 32 entries to Operand 2 address. Set top bit from MSR
+					default: Opcode="???";
 					}
+				sprintf_s(String,sizeof(String),"%s %s,%s",Opcode,E.Str1,E.Str2);
 				} break;
 			case 0x2f: { // built-in DMA
 				unsigned __int8 M=Fetch1();  char const *Reg=RegNameW(M>>4);
@@ -2393,25 +2546,50 @@ public:
 			case 0x45: AMReg2B("XFRB"); break; // DestReg,SrcReg ; Copy byte of Src register into byte of Dest register
 			case 0x46: { // big number operations.
 				uint8_t LK=Fetch1(), L=(LK>>4)+1, K=(LK&0xf)+1; // llllkkkk where l is the size of operand 1, k is the size of operand 2
-				EXT Ext(*this); Ext.Eval1(*this,L); Ext.Eval2(*this,K);
-				switch(Ext.Mode>>4) {
-					case  0: sprintf_s(String,"A"); break; // Adds two big numbers. Dest = Src + Dest
-					case  1: sprintf_s(String,"S"); break; // Subtracts two big numbers. Dest = Src - Dest
-					case  2: sprintf_s(String,"C"); break; // compare
-					case  3: sprintf_s(String,"ZAD"); break; // zero & add, aka move
-					case  4: sprintf_s(String,"ZSU"); break; // zero & subtract, aka move negated
-					case  5: sprintf_s(String,"M"); break; // multiply
-					case  6: sprintf_s(String,"D"); break; // divide
-					case  7: sprintf_s(String,"DRM"); break; // divide remainder
-					case  8: sprintf_s(String,"CTB"); break; // cvt to binary
-					case  9: sprintf_s(String,"CFB"); break; // cvt from binary
-					default: sprintf_s(String,"???");
+				SSMN E; ExtGet1(E); ExtGet2(E,L,K);
+				char const *Opcode="???";
+				switch(E.ssssmmnn>>4) {
+					case  0: Opcode="A"  ; break; // Adds two big numbers. Dest = Src + Dest
+					case  1: Opcode="S"  ; break; // Subtracts two big numbers. Dest = Src - Dest
+					case  2: Opcode="C"  ; break; // compare
+					case  3: Opcode="ZAD"; break; // zero & add, aka move
+					case  4: Opcode="ZSU"; break; // zero & subtract, aka move negated
+					case  5: Opcode="M"  ; break; // multiply
+					case  6: Opcode="D"  ; break; // divide
+					case  7: Opcode="DRM"; break; // divide remainder
+					case  8: Opcode="CTB"; break; // cvt to binary
+					case  9: Opcode="CFB"; break; // cvt from binary
 					}
 				char S[32];
-				sprintf_s(S," %d",L); strcat_s(String,S); strcat_s(String,Ext.Op1.Str);
-				sprintf_s(S,",%d",K); strcat_s(String,S); strcat_s(String,Ext.Op2.Str);
+				sprintf_s(String,sizeof(String),"%s %s(%d),%s(%d)",Opcode,E.Str1,L,E.Str2,K);
 				} break;
-			case 0x47: MemBlock(0);  break;
+			case 0x67:
+			case 0x47: { // memory block instructions
+				bool LengthInA=(opcode=0x67);
+				SSMN E; ExtGet1(E); // ssssmmnn followed by the operands. m and n are the CPU6 addressing modes, where addresses only are permitted.
+				char const *Opcode="???";
+				uint16_t Len1=0, Len2=0;
+				bool HasLength=1, HasExtra=0;
+				switch(E.ssssmmnn>>4) {
+					case  0: Opcode="CVX"; HasLength=0;              Len1=2; Len2=2; break;  // binload
+					case  1: Opcode="CPV"; HasLength=0;  HasExtra=1;                 break;  // compare, variable length
+					case  2: Opcode="MVV";               HasExtra=1;                 break;  // move variable length
+					case  3: Opcode="SCN";               HasExtra=1;                 break;  // scan
+					case  4: Opcode="MVF";                                           break;  // copy block of memory from first argument to second argument
+					case  5: Opcode="ANC";                                           break;  // bitwise and
+					case  6: Opcode="ORC";                                           break;  // bitwise or
+					case  7: Opcode="XRC";                                           break;  // bitwise xor
+					case  8: Opcode="CPF";                                           break;  // compare two blocks of memory, fixed length
+					case  9: Opcode="FIL";                           Len1=1;         break;  // fill memory
+					}
+				if(HasLength) Len2=(LengthInA?0:Fetch1())+uint16_t(1);
+				if(Len1==0) Len1=Len2;
+				uint8_t Extra=0;  if(HasExtra) Extra=Fetch1();
+				ExtGet2(E,Len1,Len2);
+				char SLen[32]; SLen[0]=0; if(HasLength) { if(LengthInA) sprintf_s(SLen,sizeof(SLen),"(A)"); else sprintf_s(SLen,sizeof(SLen),"%d,",Len2); }
+				char SExtra[32]; SExtra[0]=0; if(HasExtra) sprintf_s(SExtra,sizeof(SExtra),"$02x,",Extra);
+				sprintf_s(String,sizeof(String),"%s %s%s%s,%s",Opcode,SLen,SExtra,E.Str2,E.Str1);
+				} break;
 			case 0x48: AInh("AABB"); break; // BL+=AL
 			case 0x49: AInh("SABB"); break; // BL=AL-BL
 			case 0x4a: AInh("NABB"); break; // BL&=AL
@@ -2437,11 +2615,11 @@ public:
 			case 0x5e: AInh("XAZ"); break; // ZW=AW
 			case 0x5f: AInh("XAS"); break; // SW=AW
 
-			case 0x60: ALitW  ("LDX"); break; // LDXL Lit ; Load immediate into XW
-			case 0x61: ADir   ("LDX"); break; // LDXD Direct ;	Load direct address into XW
-			case 0x62: AIndir ("LDX"); break; // LDXI Indirect ; Load indirect address into XW
-			case 0x63: ARel   ("LDX"); break; // LDXR Rel ; Load direct Program Counter offset by N address into XW
-			case 0x64: ARelInd("LDX"); break; // LDXRI Rel ; Load indirect Program Counter offset by N address into XW
+			case 0x60: ALitW  ("LDX");   break; // LDXL Lit ; Load immediate into XW
+			case 0x61: ADir   ("LDX",2); break; // LDXD Direct ;	Load direct address into XW
+			case 0x62: AIndir ("LDX");   break; // LDXI Indirect ; Load indirect address into XW
+			case 0x63: ARel   ("LDX",2); break; // LDXR Rel ; Load direct Program Counter offset by N address into XW
+			case 0x64: ARelInd("LDX");   break; // LDXRI Rel ; Load indirect Program Counter offset by N address into XW
 			case 0x65: AIndex ("LDX",2); break; // LDXX WReg,Mod,Offset ; Load indexed mode register into XW
 			case 0x66: { uint8_t Index=Fetch1();
 				sprintf_s(String,sizeof(String),"SVC $%02x",Index);
@@ -2523,122 +2701,117 @@ public:
 				//	case 0x68:
 					}
 				} break;
-			case 0x67: MemBlock(1); break;
-			case 0x68: ALitW  ("STX"); break; // STXL Lit ; Store XW into literal address
-			case 0x69: ADir   ("STX"); break; // STXD Direct ; Store XW into direct address
-			case 0x6a: AIndir ("STX"); break; // STXI Indirect ; Store XW into indirect address
-			case 0x6b: ARel   ("STX"); break; // STXR Rel ; Store XW into direct Program Counter offset by N address
-			case 0x6c: ARelInd("STX"); break; // STXRI Rel ; Store XW into indirect Program Counter offset by N address
+			case 0x68: ALitW  ("STX");   break; // STXL Lit ; Store XW into literal address
+			case 0x69: ADir   ("STX",2); break; // STXD Direct ; Store XW into direct address
+			case 0x6a: AIndir ("STX");   break; // STXI Indirect ; Store XW into indirect address
+			case 0x6b: ARel   ("STX",2); break; // STXR Rel ; Store XW into direct Program Counter offset by N address
+			case 0x6c: ARelInd("STX");   break; // STXRI Rel ; Store XW into indirect Program Counter offset by N address
 			case 0x6d: AIndex ("STX",2); break; // STXX WReg,Mod,Offset ; Store XW into indexed register
 			case 0x6E: AInh("LST??"); break;
 			case 0x6F: AInh("SST??"); break;
 
 		//	case 0x70: ??
-			case 0x71: ADir   ("JMP"); Next1=0; Next2=Ref; break; // JMPD Direct ; Jump to direct address
-			case 0x72: AIndir ("JMP"); Next1=0; Next2=Ref; break; // JMPI Indirect ; Jump to indirect address
-			case 0x73: ARel   ("JMP"); Next1=0; Next2=Ref; break; // JMPR Rel ; Jump to direct Program Counter offset by N address
-			case 0x74: ARelInd("JMP"); Next1=0; Next2=Ref; break; // JMPRI Rel ; Jump to indirect Program Counter offset by N address
+			case 0x71: ADir   ("JMP",1); Next1=0; Next2=Ref; break; // JMPD Direct ; Jump to direct address
+			case 0x72: AIndir ("JMP");   Next1=0; Next2=Ref; break; // JMPI Indirect ; Jump to indirect address
+			case 0x73: ARel   ("JMP",1); Next1=0; Next2=Ref; break; // JMPR Rel ; Jump to direct Program Counter offset by N address
+			case 0x74: ARelInd("JMP");   Next1=0; Next2=Ref; break; // JMPRI Rel ; Jump to indirect Program Counter offset by N address
 			case 0x75: AIndex ("JMP",1); Next1=0; Next2=Ref; break; // JMPX WReg,Mod,Offset ;Jump to indexed mode register
 			case 0x76: AInh("EPE"); break; // ???
 			case 0x77: AMReg2W("ADD"); break; // MUL
 
 		//	case 0x78: ??
-			case 0x79: if(MemInfo) {
-				uint16_t A=MRead2(0);
-				MemInfo[A].IsEntrypoint=1; }
-			           ADir   ("JSR"); Next2=Ref;  break; // JSRD Direct ; Jump to subroutine at direct address
-			case 0x7a: AIndir ("JSR"); Next2=Ref; break; // JSRI Indirect ; Jump to subroutine at indirect address
-			case 0x7b:  if(MemInfo) MemInfo[signed __int8(MRead1(0))+PC+1].IsEntrypoint=1;
-			           ARel   ("JSR"); Next2=Ref; break;  // JSRR Rel ; Jump to subroutine at Program Counter offset by N address
-			case 0x7c: ARelInd("JSR"); Next2=Ref; break; // JSRRI Rel ; Jump to subroutine at indirect Program Counter offset by N address
+			case 0x79: ADir   ("JSR",1); Next2=Ref;  if(MemInfo) MemInfo[Ref].IsEntrypoint=1; break; // JSRD Direct ; Jump to subroutine at direct address
+			case 0x7a: AIndir ("JSR");   Next2=Ref; break; // JSRI Indirect ; Jump to subroutine at indirect address
+			case 0x7b: ARel   ("JSR",1); Next2=Ref;  if(MemInfo) MemInfo[Ref].IsEntrypoint=1; break;  // JSRR Rel ; Jump to subroutine at Program Counter offset by N address
+			case 0x7c: ARelInd("JSR");   Next2=Ref; break; // JSRRI Rel ; Jump to subroutine at indirect Program Counter offset by N address
 			case 0x7d: AIndex ("JSR",1); Next2=Ref; break; // JSRX WReg,Mod,Offset ; Jump to subroutine at indexed mode register
 			case 0x7e: { unsigned __int8 B=Fetch1();  // aka PUSH
 				sprintf_s(String,sizeof(String),"STK %s,%u",RegNameB(B>>4),(B&0xf)+1); } break;
 			case 0x7f: { unsigned __int8 B=Fetch1();
 				sprintf_s(String,sizeof(String),"POP %s,%u",RegNameB(B>>4),(B&0xf)+1); } break;
 
-			case 0x80: ALitB  ("LDAB"); break; // LDABL Lit ; Load literal address into AL register
-			case 0x81: ADir   ("LDAB"); break; // LDABD Direct ; Load direct address into AL register
-			case 0x82: AIndir ("LDAB"); break; // LDABI Indirect ; Load indirect address into AL register
-			case 0x83: ARel   ("LDAB"); break; // LDABR Rel ; Load direct Program Counter offset by N address into AL register
-			case 0x84: ARelInd("LDAB"); break; // LDABRI Rel ; Load indirect Program Counter offset by N address into byte of AL register
+			case 0x80: ALitB  ("LDAB");   break; // LDABL Lit ; Load literal address into AL register
+			case 0x81: ADir   ("LDAB",1); break; // LDABD Direct ; Load direct address into AL register
+			case 0x82: AIndir ("LDAB");   break; // LDABI Indirect ; Load indirect address into AL register
+			case 0x83: ARel   ("LDAB",1); break; // LDABR Rel ; Load direct Program Counter offset by N address into AL register
+			case 0x84: ARelInd("LDAB");   break; // LDABRI Rel ; Load indirect Program Counter offset by N address into byte of AL register
 			case 0x85: AIndex ("LDAB",1); break; // LDABX WReg,Mod,Offset ; Load indexed register into byte of AL register
 			case 0x86: AInh("DPE"); break; // ??
 		//	case 0x87: ??
 			case 0x88: case 0x89: case 0x8a: case 0x8b: case 0x8c: case 0x8d: case 0x8e: case 0x8f:
 				ARegA("LDAB"); break; // LDABA WReg ; Load byte from memory address stored in WReg into AL register
 
-			case 0x90: ALitW  ("LDA"); break; // LDAL Lit ; Load literal address into full word of AW register
-			case 0x91: ADir   ("LDA"); break; // LDAD Direct ; Load direct address into full word of AW register
-			case 0x92: AIndir ("LDA"); break; // LDAI Indirect ; Load indirect address into full word of AW register
-			case 0x93: ARel   ("LDA"); break; // LDAR Rel ; Load direct Program Counter offset by N address into full word of AW register
-			case 0x94: ARelInd("LDA"); break; // LDARI Rel ; Load indirect Program Counter offset by N address into full word of AW register
+			case 0x90: ALitW  ("LDA");   break; // LDAL Lit ; Load literal address into full word of AW register
+			case 0x91: ADir   ("LDA",2); break; // LDAD Direct ; Load direct address into full word of AW register
+			case 0x92: AIndir ("LDA");   break; // LDAI Indirect ; Load indirect address into full word of AW register
+			case 0x93: ARel   ("LDA",2); break; // LDAR Rel ; Load direct Program Counter offset by N address into full word of AW register
+			case 0x94: ARelInd("LDA");   break; // LDARI Rel ; Load indirect Program Counter offset by N address into full word of AW register
 			case 0x95: AIndex ("LDA",2); break; // LDAX WReg,Mod,Offset ; Load indexed register into full word of AW register
 			case 0x96: AInh("SOP"); break;
 		//	case 0x97: ??
 			case 0x98: case 0x99: case 0x9a: case 0x9b: case 0x9c: case 0x9d: case 0x9e: case 0x9f:
-				ARegA("LDA"); break; // LDAA WReg ; Load byte from memory address stored in WReg into AL register
+				ARegA("LDA"); break; // LDAA WReg ; Load word from memory address stored in WReg into AW register
 
-			case 0xa0: ALitB  ("STAB"); break; // STABL Lit ; Store byte of AL register into literal address (Not possible?)
-			case 0xa1: ADir   ("STAB"); break; // STABD Direct ; Store byte of AL register into direct address
-			case 0xa2: AIndir ("STAB"); break; // STABI Indirect ; Store byte of AL register into indirect address
-			case 0xa3: ARel   ("STAB"); break; // STABR Rel ; Store byte of AL register into direct Program Counter offset by N address
-			case 0xa4: ARelInd("STAB"); break; // STABRI Rel ; Store byte of AL register into indirect Program Counter offset by N address
+			case 0xa0: ALitB  ("STAB");   break; // STABL Lit ; Store byte of AL register into literal address (Not possible?)
+			case 0xa1: ADir   ("STAB",1); break; // STABD Direct ; Store byte of AL register into direct address
+			case 0xa2: AIndir ("STAB");   break; // STABI Indirect ; Store byte of AL register into indirect address
+			case 0xa3: ARel   ("STAB",1); break; // STABR Rel ; Store byte of AL register into direct Program Counter offset by N address
+			case 0xa4: ARelInd("STAB");   break; // STABRI Rel ; Store byte of AL register into indirect Program Counter offset by N address
 			case 0xa5: AIndex ("STAB",1); break; // STABX WReg,Mod,Offset ; Store byte of AL register into indexed register
 			case 0xa6: AInh("SEP"); break;
 		//	case 0xa7: ??
 			case 0xa8: case 0xa9: case 0xaa: case 0xab: case 0xac: case 0xad: case 0xae: case 0xaf:
 				ARegA("STAB"); break; // STABA WReg ; Store AL register to memory address stored in WReg
 
-			case 0xb0: ALitW  ("STA"); break; // STAL Lit ; Store word of AW register into literal address (Not possible?)
-			case 0xb1: ADir   ("STA"); break; // STAD Direct ; Store word of AW register into direct address
-			case 0xb2: AIndir ("STA"); break; // STAI Indirect ; Store word of AW register into indirect address
-			case 0xb3: ARel   ("STA"); break; // STAR Rel ; Store word of AW register into direct Program Counter offset by N address
-			case 0xb4: ARelInd("STA"); break; // STARI Rel ; Store word of AW register into indirect Program Counter offset by N address
+			case 0xb0: ALitW  ("STA");   break; // STAL Lit ; Store word of AW register into literal address (Not possible?)
+			case 0xb1: ADir   ("STA",2); break; // STAD Direct ; Store word of AW register into direct address
+			case 0xb2: AIndir ("STA");   break; // STAI Indirect ; Store word of AW register into indirect address
+			case 0xb3: ARel   ("STA",2); break; // STAR Rel ; Store word of AW register into direct Program Counter offset by N address
+			case 0xb4: ARelInd("STA");   break; // STARI Rel ; Store word of AW register into indirect Program Counter offset by N address
 			case 0xb5: AIndex ("STA",2); break; // STAX WReg,Mod,Offset ; Store word of AW register into indexed register
 			case 0xB6: AInh("ECK"); break; // enable clock interrupt?
 		//	case 0xb7: ??
 			case 0xb8: case 0xb9: case 0xba: case 0xbb: case 0xbc: case 0xbd: case 0xbe: case 0xbf:
 				ARegA("STA"); break; // STAA WReg ; Store AW register to memory address stored in WReg
 
-			case 0xc0: ALitB  ("LDBB"); break; // LDBBL Lit ; Load literal address into BL register
-			case 0xc1: ADir   ("LDBB"); break; // LDBBD Direct ; Load direct address into BL register
-			case 0xc2: AIndir ("LDBB"); break; // LDBBI Indirect ; Load indirect address into BL register
-			case 0xc3: ARel   ("LDBB"); break; // LDBBR Rel ; Load direct Program Counter offset by N address into BL register
-			case 0xc4: ARelInd("LDBB"); break; // LDBBRI Rel ; Load indirect Program Counter offset by N address into BL register
+			case 0xc0: ALitB  ("LDBB");   break; // LDBBL Lit ; Load literal address into BL register
+			case 0xc1: ADir   ("LDBB",1); break; // LDBBD Direct ; Load direct address into BL register
+			case 0xc2: AIndir ("LDBB");   break; // LDBBI Indirect ; Load indirect address into BL register
+			case 0xc3: ARel   ("LDBB",1); break; // LDBBR Rel ; Load direct Program Counter offset by N address into BL register
+			case 0xc4: ARelInd("LDBB");   break; // LDBBRI Rel ; Load indirect Program Counter offset by N address into BL register
 			case 0xc5: AIndex ("LDBB",1); break; // LDBBX WReg,Mod,Offset ; Load indexed register into BL register
-			case 0xC6: AInh("DCK"); break;  // disable clock interrupt?
+			case 0xC6: AInh("DCK"); break;  // disable clock interrupt
 		//	case 0xC7: ??
 			case 0xc8: case 0xc9: case 0xca: case 0xcb: case 0xcc: case 0xcd: case 0xce: case 0xcf:
 				ARegA("LDBB"); break; // LDBBA WReg ; Load byte from memory address stored in WReg into BL register
 
-			case 0xd0: ALitW  ("LDB"); break; // LDBL Lit ; Load literal address into BW register
-			case 0xd1: ADir   ("LDB"); break; // LDBD Direct ; Load direct address into BW register
-			case 0xd2: AIndir ("LDB"); break; // LDBI Indirect ; Load indirect address into BW register
-			case 0xd3: ARel   ("LDB"); break; // LDBR Rel ; Load direct Program Counter offset by N address into BW register
-			case 0xd4: ARelInd("LDB"); break; // LDBRI Rel ; Load indirect Program Counter offset by N address into BW register
+			case 0xd0: ALitW  ("LDB");   break; // LDBL Lit ; Load literal address into BW register
+			case 0xd1: ADir   ("LDB",2); break; // LDBD Direct ; Load direct address into BW register
+			case 0xd2: AIndir ("LDB");   break; // LDBI Indirect ; Load indirect address into BW register
+			case 0xd3: ARel   ("LDB",2); break; // LDBR Rel ; Load direct Program Counter offset by N address into BW register
+			case 0xd4: ARelInd("LDB");   break; // LDBRI Rel ; Load indirect Program Counter offset by N address into BW register
 			case 0xd5: AIndex ("LDB",2); break; // LDBX WReg,Mod,Offset ; Load indexed register into BW register
-			case 0xD6: AInh("STR??"); break;
-			case 0xD7: AInh("SAR??"); break;
+			case 0xD6: AIndex("STR",2); break;
+			case 0xD7: ARegArray("SAR"); break;
 			case 0xd8: case 0xd9: case 0xda: case 0xdb: case 0xdc: case 0xdd: case 0xde: case 0xdf:
 				ARegA("LDB"); break; // LDBA WReg ; Load word from memory address stored i0xn WReg into BW register
 
-			case 0xe0: ALitB  ("STBB"); break; // STBBL Lit ; Store byte of BL register into literal address (Not possible?)
-			case 0xe1: ADir   ("STBB"); break; // STBBD Direct ; Store BL into direct address
-			case 0xe2: AIndir ("STBB"); break; // STBBI Indirect ; Store BL into indirect address
-			case 0xe3: ARel   ("STBB"); break; // STBBR Rel ; Store BL into direct Program Counter offset by N address
-			case 0xe4: ARelInd("STBB"); break; // STBBRI Rel ; Store BL into indirect Program Counter offset by N address
+			case 0xe0: ALitB  ("STBB");   break; // STBBL Lit ; Store byte of BL register into literal address (Not possible?)
+			case 0xe1: ADir   ("STBB",1); break; // STBBD Direct ; Store BL into direct address
+			case 0xe2: AIndir ("STBB");   break; // STBBI Indirect ; Store BL into indirect address
+			case 0xe3: ARel   ("STBB",1); break; // STBBR Rel ; Store BL into direct Program Counter offset by N address
+			case 0xe4: ARelInd("STBB");   break; // STBBRI Rel ; Store BL into indirect Program Counter offset by N address
 			case 0xe5: AIndex ("STBB",1); break; // STBBX WReg,Mod,Offset ; Store BL into indexed register
-			case 0xE6: AInh("LAR??"); break;
+			case 0xE6: ARegArray("LAR"); break;
 		//	case 0xE7: ??
 			case 0xe8: case 0xe9: case 0xea: case 0xeb: case 0xec: case 0xed: case 0xee: case 0xef:
 				ARegA("STBB"); break; // STBBA WReg ; Store byte from BL register to memory address stored in WReg
 
-			case 0xf0: ALitW  ("STB"); break; // STBL Lit ; Store BW into literal address (Not possible?)
-			case 0xf1: ADir   ("STB"); break; // STBD Direct ; Store BW into direct address
-			case 0xf2: AIndir ("STB"); break; // STBI Indirect ; Store BW into indirect address
-			case 0xf3: ARel   ("STB"); break; // STBR Rel ; Store BW into direct Program Counter offset by N address
-			case 0xf4: ARelInd("STB"); break; // STBRI Rel ; Store BW into indirect Program Counter offset by N address
+			case 0xf0: ALitW  ("STB");   break; // STBL Lit ; Store BW into literal address (Not possible?)
+			case 0xf1: ADir   ("STB",2); break; // STBD Direct ; Store BW into direct address
+			case 0xf2: AIndir ("STB");   break; // STBI Indirect ; Store BW into indirect address
+			case 0xf3: ARel   ("STB",2); break; // STBR Rel ; Store BW into direct Program Counter offset by N address
+			case 0xf4: ARelInd("STB");   break; // STBRI Rel ; Store BW into indirect Program Counter offset by N address
 			case 0xf5: AIndex ("STB",2); break; // STBX WReg,Mod,Offset ; Store BW into indexed register
 			case 0xF6: { // LIO & SIO : opsys ALWAYS uses this instruction for accessing MMIO.
 				// It might do something special on the bus, or with page-tables
@@ -2669,6 +2842,8 @@ public:
 		if(Next1==1) Next1=PC;
 		}
 	} ; // DISASMCPU6
+
+int Debug78273787283=1;
 
 //*********************************************************
 struct CBIN { // Centurion binary loader
@@ -3018,12 +3193,7 @@ static void DisasmToFile(char const *AdrFname, char const *OutFname, CBIN_LOAD c
 		unsigned __int32 b=D.PC;
 		if      (D.MemInfo[b].IsEntrypoint) { fprintf(disfile,"E_%04X:",b); }
 		else if (D.MemInfo[b].IsLabel     ) { fprintf(disfile,"L_%04X:",b); }
-		if(D.MemInfo[b].IsFixupWord) {
-			D.PC+=2;
-			unsigned __int16 v=Mem.ReadU1(b); v<<=8; v|=Mem.ReadU1(b+1);
-			fprintf(disfile,"\tDW L_%04X\t;%04X %02X %02X  fixupword\n",v,b,v>>8,v&0xff);
-			}
-		else if(D.MemInfo[b].IsOpcode) {
+		if(D.MemInfo[b].IsOpcode) {
 			D.disasm();
 			fprintf(disfile,"\t%s\t;%04X",D.String,b);
 			bool Fixup=0;
@@ -3046,11 +3216,16 @@ static void DisasmToFile(char const *AdrFname, char const *OutFname, CBIN_LOAD c
 				}
 			}
 		else {
-			D.PC+=1;
-			unsigned __int8 c=Mem.ReadU1(b);  char S1[8]; if((c&0x7f)>=0x20) { S1[0]=' '; S1[1]=';'; S1[2]=c&0x7f; S1[3]=0; } else S1[0]=0;
-			fprintf(disfile,"\tDB %02X%s\t;%04X %02X",c,S1,b,c);
-			if(D.MemInfo[b].IsFixupWord) fprintf(disfile," Fixupword");
-			fprintf(disfile,"\n");
+			if(D.MemInfo[b].IsWord || D.MemInfo[b].IsFixupWord) {
+				unsigned __int16 v=Mem.ReadU1(b); v<<=8; v|=Mem.ReadU1(b+1);
+				fprintf(disfile,"\tDW L_%04X\t;%04X %02X %02X  %s\n",v,b,v>>8,v&0xff,(D.MemInfo[b].IsFixupWord?"fixupword":""));
+				D.PC+=2;
+				}
+			else {
+				unsigned __int8 c=Mem.ReadU1(b);  char S1[8]; if((c&0x7f)>=0x20) { S1[0]=' '; S1[1]=';'; S1[2]=c&0x7f; S1[3]=0; } else S1[0]=0;
+				fprintf(disfile,"\tDB %02X%s\t;%04X %02X\n",c,S1,b,c);
+				D.PC+=1;
+				}
 			}
 		if(D.MemInfo[b].IsFlowbreak) fprintf(disfile,"\n");
 		}
@@ -3238,9 +3413,11 @@ int main( int argc, char *argv[] ) {
 		PARSE P(r0);  P.SkipWhite();  char const cmd=P.GetC(); P.SkipWhite();
 		switch(toupper(cmd)) {
 
-			case '$': { // load Centurion CBIN file
-				if(CBin_Load) delete(CBin_Load); CBin_Load=new CBIN_LOAD(P.Ptr,0x200,&C);
-				printf("Entry=0x%x \n",CBin_Load->entry_addr); } break;
+			case '$': { // load Centurion CBIN (relocatable executable) file
+				unsigned Base=P.GetHex();  P.SkipWhite();  char const *Fn=P.Ptr;
+				if(CBin_Load) delete(CBin_Load);
+				CBin_Load=new CBIN_LOAD(Fn,Base,&C);
+				printf("Base=0x%x Entry=0x%x \n",Base,CBin_Load->entry_addr); } break;
 			case 'L': // load hex or CA65 listing file
 				Loader.Load(P.Ptr);  break;
 			case 'V': { // load binary file
@@ -3363,7 +3540,7 @@ int main( int argc, char *argv[] ) {
 		//			case 'V': // Centurion disk load
 
 			default : printf("I don't know command '%c'\n"
-				"$fn  : Load Centurion CBIN file\n"
+				"$base fn  : Load Centurion CBIN file at base\n"
 				"Lfn  : Load hex or CA65 listing file\n"
 				"V hex_offset fn : Load binary file at offset\n"
 				"\n"
