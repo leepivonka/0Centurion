@@ -599,6 +599,11 @@ RAt:	LDAA SW			; get top of return stack of my caller
 	.endif
 
 
+ FHdr 'RDrop',0 ; ( R: n -- )  ; drop top return stack entry
+	INR SW,2
+	RSR
+
+
  FHdr 'R>',0 ; ( R: n -- ) ( -- n )  https://forth-standard.org/standard/core/Rfrom
    ; Remove the top value from the return stack and leave it on the param stack.
    ; See >R and R@
